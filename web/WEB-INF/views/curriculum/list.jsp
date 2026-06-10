@@ -1,0 +1,329 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curriculum List — LTMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+        .sidebar {
+            width: 260px; min-height: 100vh; position: fixed; left: 0; top: 0;
+            background: #161b27; border-right: 1px solid #1e2a3a;
+            padding: 1.5rem 0; z-index: 100;
+        }
+        .brand { padding: 0 1.5rem 1.5rem; font-size: 1.3rem; font-weight: 700;
+                  color: #fff; border-bottom: 1px solid #1e2a3a; letter-spacing: -0.5px; }
+        .brand span { color: #4fc3f7; }
+        .nav-section { padding: 1rem 1rem 0.25rem; font-size: 0.7rem; font-weight: 600;
+                        color: #4a5568; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-link { color: #94a3b8; padding: 0.6rem 1.5rem; border-radius: 0; display: flex;
+                    align-items: center; gap: 0.75rem; font-size: 0.88rem; transition: all 0.15s; }
+        .nav-link:hover, .nav-link.active {
+            color: #4fc3f7; background: rgba(79,195,247,0.08);
+            border-left: 3px solid #4fc3f7; padding-left: calc(1.5rem - 3px);
+        }
+        .main-content { margin-left: 260px; padding: 2rem; }
+        .topbar { display: flex; justify-content: space-between; align-items: center;
+                  margin-bottom: 2rem; }
+        .page-title { font-size: 1.5rem; font-weight: 700; color: #fff; }
+        .page-subtitle { color: #64748b; font-size: 0.85rem; }
+        .user-badge { background: rgba(79,195,247,0.1); border: 1px solid rgba(79,195,247,0.2);
+                      border-radius: 50px; padding: 0.4rem 1rem; display: flex;
+                      align-items: center; gap: 0.5rem; color: #4fc3f7; font-size: 0.85rem; }
+        .card-dark { background: #161b27; border: 1px solid #1e2a3a; border-radius: 16px; }
+        .search-bar { background: #1e2535; border: 1px solid #2a3448; border-radius: 10px;
+                      color: #e2e8f0; padding: 0.65rem 1rem; }
+        .search-bar:focus { background: #1e2535; border-color: #4fc3f7;
+                            box-shadow: 0 0 0 3px rgba(79,195,247,0.1); color: #e2e8f0; }
+        .search-bar::placeholder { color: #4a5568; }
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #4fc3f7, #0288d1);
+            border: none; border-radius: 8px; color: #fff; padding: 0.6rem 1.25rem;
+            font-weight: 500; font-size: 0.875rem; transition: all 0.15s;
+        }
+        .btn-primary-custom:hover { transform: translateY(-1px); color: #fff;
+            box-shadow: 0 6px 15px rgba(79,195,247,0.3); }
+        .table-dark-custom { --bs-table-bg: transparent; color: #e2e8f0; }
+        .table-dark-custom thead th { background: #1a2236; color: #64748b;
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px; border-color: #1e2a3a; padding: 1rem; }
+        .table-dark-custom tbody tr { border-color: #1e2a3a; transition: background 0.15s; }
+        .table-dark-custom tbody tr:hover { background: rgba(79,195,247,0.04); }
+        .table-dark-custom td { padding: 0.9rem 1rem; vertical-align: middle; border-color: #1e2a3a; }
+        .badge-status { border-radius: 20px; padding: 0.3rem 0.75rem; font-size: 0.75rem; font-weight: 500; }
+        .badge-draft    { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .badge-pending  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+        .badge-approved { background: rgba(52,211,153,0.15);  color: #34d399; }
+        .badge-archived { background: rgba(100,116,139,0.15); color: #64748b; }
+        .btn-action { border-radius: 8px; padding: 0.3rem 0.75rem; font-size: 0.8rem;
+                      font-weight: 500; border: none; transition: all 0.15s; }
+        .btn-view  { background: rgba(79,195,247,0.1); color: #4fc3f7; }
+        .btn-view:hover { background: rgba(79,195,247,0.2); color: #4fc3f7; }
+        .stat-card { background: #161b27; border: 1px solid #1e2a3a; border-radius: 14px;
+                     padding: 1.25rem 1.5rem; }
+        .stat-number { font-size: 1.8rem; font-weight: 700; color: #fff; line-height: 1; }
+        .stat-label  { color: #64748b; font-size: 0.8rem; margin-top: 4px; }
+        .alert-success-dark { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+                              border-radius: 10px; color: #34d399; }
+        select.form-select-dark { background: #1e2535; border: 1px solid #2a3448;
+                                   border-radius: 10px; color: #e2e8f0; padding: 0.65rem 1rem; }
+        select.form-select-dark:focus { border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(79,195,247,0.1); color: #e2e8f0; background: #1e2535; }
+        option { background: #1e2535; }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="brand">LT<span>MS</span></div>
+    <div class="nav-section">Main Menu</div>
+    <a class="nav-link active" href="${pageContext.request.contextPath}/curriculum/list">
+        <i class="bi bi-book"></i> Curriculums
+    </a>
+    <a class="nav-link" href="${pageContext.request.contextPath}/subject/list">
+        <i class="bi bi-journal-text"></i> Subjects
+    </a>
+    <a class="nav-link" href="${pageContext.request.contextPath}/syllabus/list">
+        <i class="bi bi-file-earmark-text"></i> Syllabuses
+    </a>
+
+    <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer'}">
+        <div class="nav-section">Review</div>
+        <a class="nav-link" href="${pageContext.request.contextPath}/review/list">
+            <i class="bi bi-clipboard-check"></i> Review List
+        </a>
+    </c:if>
+    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+        <div class="nav-section">Administration</div>
+        <a class="nav-link" href="${pageContext.request.contextPath}/admin/users">
+            <i class="bi bi-people"></i> User Management
+        </a>
+    </c:if>
+
+    <div style="position:absolute; bottom:1.5rem; left:0; right:0; padding: 0 1.5rem;">
+        <c:choose>
+            <c:when test="${not empty sessionScope.loggedUser}">
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+                    <div style="width:36px;height:36px;background:linear-gradient(135deg,#4fc3f7,#0288d1);
+                                border-radius:50%;display:flex;align-items:center;justify-content:center;
+                                font-weight:700;color:#fff;font-size:0.9rem;">
+                        ${sessionScope.loggedUser.fullName.charAt(0)}
+                    </div>
+                    <div>
+                        <div style="color:#fff;font-size:0.85rem;font-weight:500;">${sessionScope.loggedUser.fullName}</div>
+                        <div style="color:#64748b;font-size:0.75rem;">${sessionScope.loggedUser.role.roleName}</div>
+                    </div>
+                </div>
+                <a href="${pageContext.request.contextPath}/logout"
+                   class="nav-link" style="border-radius:8px;color:#ef4444;">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </c:when>
+            <c:otherwise>
+                <a href="${pageContext.request.contextPath}/login" class="nav-link">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </a>
+            </c:otherwise>
+        </c:choose>
+    </div>
+</div>
+
+<!-- Main -->
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <div class="page-title">Curriculum Management</div>
+            <div class="page-subtitle">Browse and manage training programs</div>
+        </div>
+        <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+            <a href="${pageContext.request.contextPath}/curriculum/create" class="btn btn-primary-custom">
+                <i class="bi bi-plus-lg me-1"></i> New Curriculum
+            </a>
+        </c:if>
+    </div>
+
+    <!-- Alert -->
+    <c:if test="${param.msg == 'created'}">
+        <div class="alert alert-success-dark d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-check-circle-fill"></i> Curriculum created successfully.
+        </div>
+    </c:if>
+    <c:if test="${param.msg == 'submitted'}">
+        <div class="alert alert-success-dark d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-send-check"></i> Curriculum submitted for review.
+        </div>
+    </c:if>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number">${totalCount}</div>
+                <div class="stat-label"><i class="bi bi-book me-1"></i>Total Curriculums</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" style="color:#34d399;">
+                    <c:set var="approvedCount" value="0"/>
+                    <c:forEach var="c" items="${curriculums}">
+                        <c:if test="${c.status == 'Approved'}"><c:set var="approvedCount" value="${approvedCount + 1}"/></c:if>
+                    </c:forEach>
+                    ${approvedCount}
+                </div>
+                <div class="stat-label"><i class="bi bi-check-circle me-1"></i>Approved</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" style="color:#fbbf24;">
+                    <c:set var="pendingCount" value="0"/>
+                    <c:forEach var="c" items="${curriculums}">
+                        <c:if test="${c.status == 'Pending'}"><c:set var="pendingCount" value="${pendingCount + 1}"/></c:if>
+                    </c:forEach>
+                    ${pendingCount}
+                </div>
+                <div class="stat-label"><i class="bi bi-hourglass me-1"></i>Pending Review</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-number" style="color:#94a3b8;">
+                    <c:set var="draftCount" value="0"/>
+                    <c:forEach var="c" items="${curriculums}">
+                        <c:if test="${c.status == 'Draft'}"><c:set var="draftCount" value="${draftCount + 1}"/></c:if>
+                    </c:forEach>
+                    ${draftCount}
+                </div>
+                <div class="stat-label"><i class="bi bi-pencil-square me-1"></i>Draft</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="card-dark p-3 mb-3">
+        <form method="get" action="${pageContext.request.contextPath}/curriculum/list">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text" style="background:#1e2535;border:1px solid #2a3448;border-right:0;color:#64748b;">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="keyword" class="search-bar form-control border-start-0"
+                               style="border-left:0;" placeholder="Search by name, code..." value="${keyword}">
+                    </div>
+                </div>
+                <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer'}">
+                    <div class="col-md-3">
+                        <select name="status" class="form-select form-select-dark w-100">
+                            <option value="">All Status</option>
+                            <option value="Draft"    ${selectedStatus=='Draft'    ? 'selected' : ''}>Draft</option>
+                            <option value="Pending"  ${selectedStatus=='Pending'  ? 'selected' : ''}>Pending Review</option>
+                            <option value="Approved" ${selectedStatus=='Approved' ? 'selected' : ''}>Approved</option>
+                            <option value="Archived" ${selectedStatus=='Archived' ? 'selected' : ''}>Archived</option>
+                        </select>
+                    </div>
+                </c:if>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary-custom w-100">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                </div>
+                <div class="col-md-1">
+                    <a href="${pageContext.request.contextPath}/curriculum/list" class="btn w-100"
+                       style="background:#1e2535;border:1px solid #2a3448;color:#94a3b8;">
+                        <i class="bi bi-x"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card-dark">
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Code</th>
+                        <th>Curriculum Name</th>
+                        <th>Program</th>
+                        <th>Credits</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Decision Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${empty curriculums}">
+                            <tr>
+                                <td colspan="9" class="text-center py-5" style="color:#4a5568;">
+                                    <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                                    No curriculum found matching your search criteria.
+                                </td>
+                            </tr>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="c" items="${curriculums}" varStatus="st">
+                                <tr>
+                                    <td style="color:#4a5568;">${st.count}</td>
+                                    <td><code style="color:#4fc3f7;background:rgba(79,195,247,0.08);
+                                              padding:2px 8px;border-radius:4px;">${c.curriculumCode}</code></td>
+                                    <td>
+                                        <div style="font-weight:500;color:#fff;">${c.curriculumName}</div>
+                                        <div style="font-size:0.78rem;color:#64748b;">${c.englishName}</div>
+                                    </td>
+                                    <td style="color:#94a3b8;">${c.program.programName}</td>
+                                    <td><span style="color:#fff;font-weight:500;">${c.totalCredits}</span>
+                                        <span style="color:#64748b;font-size:0.8rem;"> cr</span></td>
+                                    <td style="color:#94a3b8;">${c.version}</td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${c.status == 'Approved'}">
+                                                <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                                            </c:when>
+                                            <c:when test="${c.status == 'Pending'}">
+                                                <span class="badge-status badge-pending"><i class="bi bi-hourglass me-1"></i>Pending</span>
+                                            </c:when>
+                                            <c:when test="${c.status == 'Draft'}">
+                                                <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Draft</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge-status badge-archived">${c.status}</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td style="color:#94a3b8;">
+                                        <c:if test="${not empty c.decisionDate}">
+                                            <fmt:formatDate value="${c.decisionDate}" pattern="dd/MM/yyyy"/>
+                                        </c:if>
+                                    </td>
+                                    <td>
+                                        <a href="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}"
+                                           class="btn btn-action btn-view">
+                                            <i class="bi bi-eye me-1"></i>View
+                                        </a>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
