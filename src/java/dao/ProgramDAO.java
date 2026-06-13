@@ -59,4 +59,38 @@ public class ProgramDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
+
+    public boolean updateProgram(Program p) {
+        String sql = "UPDATE Programs SET Program_Code=?, Program_Name=?, Description=? WHERE Program_ID=?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, p.getProgramCode());
+            ps.setString(2, p.getProgramName());
+            ps.setString(3, p.getDescription());
+            ps.setString(4, p.getProgramId());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public boolean toggleActive(String programId, boolean isActive) {
+        String sql = "UPDATE Programs SET Is_Active=? WHERE Program_ID=?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, isActive ? 1 : 0);
+            ps.setString(2, programId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public boolean deleteProgram(String programId) {
+        String sql = "DELETE FROM Programs WHERE Program_ID=?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, programId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
 }

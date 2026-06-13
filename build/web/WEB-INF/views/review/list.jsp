@@ -30,9 +30,9 @@
         <div class="alert alert-success-dark mb-3"><i class="bi bi-x-circle me-1"></i>Curriculum rejected.</div>
     </c:if>
 
-    <div class="card-dark mb-4">
-        <div class="p-3 border-bottom" style="border-color:#1e2a3a!important;">
-            <h6 class="mb-0 text-white"><i class="bi bi-hourglass me-2" style="color:#fbbf24;"></i>Pending Curriculums (${pendingCurriculums.size()})</h6>
+        <div class="card-dark mb-4">
+        <div class="p-3 border-bottom">
+            <h6 class="mb-0"><i class="bi bi-hourglass me-2" style="color:#fbbf24;"></i>Pending Curriculums (${pendingCurriculums.size()})</h6>
         </div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
@@ -40,7 +40,7 @@
                 <tbody>
                     <c:choose>
                         <c:when test="${empty pendingCurriculums}">
-                            <tr><td colspan="5" class="text-center py-4" style="color:#4a5568;">No pending curriculums.</td></tr>
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No pending curriculums.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="c" items="${pendingCurriculums}">
@@ -78,14 +78,14 @@
     </div>
 
     <div class="card-dark">
-        <div class="p-3 border-bottom" style="border-color:#1e2a3a!important;"><h6 class="mb-0 text-white">Review History</h6></div>
+    <div class="p-3 border-bottom"><h6 class="mb-0">Review History</h6></div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>Date</th><th>Curriculum</th><th>Reviewer</th><th>Status</th><th>Comment</th></tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty reviews}">
-                            <tr><td colspan="5" class="text-center py-4" style="color:#4a5568;">No review records.</td></tr>
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No review records.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="rv" items="${reviews}">

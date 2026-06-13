@@ -29,18 +29,15 @@
         <c:choose>
             <c:when test="${not empty sessionScope.loggedUser}">
                 <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
-                    <div style="width:36px;height:36px;background:linear-gradient(135deg,#4fc3f7,#0288d1);
-                                border-radius:50%;display:flex;align-items:center;justify-content:center;
-                                font-weight:700;color:#fff;font-size:0.9rem;">
+                    <div style="width:36px;height:36px;background:linear-gradient(135deg,#4fc3f7,#0288d1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:0.9rem;">
                         ${sessionScope.loggedUser.fullName.charAt(0)}
                     </div>
                     <div>
-                        <div style="color:#fff;font-size:0.85rem;font-weight:500;">${sessionScope.loggedUser.fullName}</div>
-                        <div style="color:#64748b;font-size:0.75rem;">${sessionScope.loggedUser.role.roleName}</div>
+                        <div class="detail-value" style="font-size:0.85rem;">${sessionScope.loggedUser.fullName}</div>
+                        <div class="text-muted" style="font-size:0.75rem;">${sessionScope.loggedUser.role.roleName}</div>
                     </div>
                 </div>
-                <a href="${pageContext.request.contextPath}/logout"
-                   class="nav-link" style="border-radius:8px;color:#ef4444;">
+                <a href="${pageContext.request.contextPath}/logout" class="nav-link text-danger" style="border-radius:8px;">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a>
             </c:when>

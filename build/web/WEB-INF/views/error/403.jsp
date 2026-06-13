@@ -5,13 +5,16 @@
     <meta charset="UTF-8">
     <title>403 — Access Denied</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>body{background:#0f1117;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;}</style>
+    <%@ include file="/WEB-INF/views/common/styles.jsp" %>
 </head>
 <body>
-    <div class="text-center">
-        <h1 style="font-size:5rem;color:#ef4444;">403</h1>
-        <p class="text-secondary">You do not have permission to access this page.</p>
-        <a href="${pageContext.request.contextPath}/curriculum/list" class="btn btn-primary mt-3">Go Home</a>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;">
+    <div class="card-dark" style="max-width:720px;text-align:center;padding:48px;">
+        <div style="font-size:4.25rem;color:var(--accent);font-weight:700">403</div>
+        <h4 style="margin-top:12px;color:#111827">Access denied</h4>
+        <p style="color:var(--muted)">You do not have permission to access this page.</p>
+        <a href="${pageContext.request.contextPath}/curriculum/list" class="btn btn-primary-custom mt-3">Go Home</a>
     </div>
+</div>
 </body>
 </html>

@@ -30,6 +30,8 @@ public class UserDAO {
         try { u.setPhoneNumber(rs.getString("Phone_Number")); } catch (SQLException ignored) {}
         try { u.setDepartment(rs.getString("Department")); } catch (SQLException ignored) {}
         try { u.setProfileImageUrl(rs.getString("Profile_Image_URL")); } catch (SQLException ignored) {}
+        try { u.setReviewer(rs.getBoolean("Is_Reviewer")); } catch (SQLException ignored) {}
+        try { u.setDesigner(rs.getBoolean("Is_Designer")); } catch (SQLException ignored) {}
         // join Role if available
         try {
             Role r = new Role();
@@ -154,7 +156,15 @@ public class UserDAO {
             ps.setInt(2, u.getRoleId());
             ps.setInt(3, (u.getStatus() != null && u.getStatus().equalsIgnoreCase("Active")) ? 1 : 0);
             ps.setString(4, u.getUserId());
-            return ps.executeUpdate() > 0;
+            int updated = ps.executeUpdate();
+            // Try updating optional reviewer/designer flags if columns exist
+            try (PreparedStatement ps2 = con.prepareStatement("UPDATE Users SET Is_Reviewer=?, Is_Designer=? WHERE User_ID=?")) {
+                ps2.setInt(1, u.isReviewer() ? 1 : 0);
+                ps2.setInt(2, u.isDesigner() ? 1 : 0);
+                ps2.setString(3, u.getUserId());
+                ps2.executeUpdate();
+            } catch (Exception ignored) {}
+            return updated > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }

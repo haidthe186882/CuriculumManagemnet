@@ -66,7 +66,7 @@
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="6" class="text-center py-5" style="color:#4a5568;">No subjects found.</td></tr>
+                            <tr><td colspan="6" class="text-center py-5 text-muted">No subjects found.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="s" items="${subjects}" varStatus="st">
@@ -74,10 +74,10 @@
                                     <td>${st.count}</td>
                                     <td><code style="color:#4fc3f7;">${s.subjectCode}</code></td>
                                     <td>
-                                        <div style="font-weight:500;color:#fff;">${s.subjectName}</div>
-                                        <div style="font-size:0.78rem;color:#64748b;">${s.englishName}</div>
+                                        <div class="detail-value">${s.subjectName}</div>
+                                        <div class="text-muted" style="font-size:0.78rem;">${s.englishName}</div>
                                     </td>
-                                    <td style="color:#94a3b8;">${s.department}</td>
+                                    <td class="text-muted">${s.department}</td>
                                     <td>${s.credits}</td>
                                     <td>
                                         <a href="${pageContext.request.contextPath}/subject/detail?id=${s.subjectId}" class="btn btn-action btn-view">

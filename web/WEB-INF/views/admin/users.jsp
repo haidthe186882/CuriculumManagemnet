@@ -57,9 +57,22 @@
                         <tbody>
                             <c:forEach var="u" items="${users}">
                                 <tr>
-                                    <td style="color:#fff;font-weight:500;">${u.fullName}</td>
-                                    <td style="color:#94a3b8;">${u.email}</td>
-                                    <td><span class="badge-status badge-approved">${u.role.roleName}</span></td>
+                                    <td class="detail-value">${u.fullName}</td>
+                                    <td class="text-muted">${u.email}</td>
+                                    <td>
+                                        <form method="post" action="${pageContext.request.contextPath}/admin/users" class="d-inline">
+                                            <input type="hidden" name="action" value="update">
+                                            <input type="hidden" name="userId" value="${u.userId}">
+                                            <select name="roleId" class="form-select form-select-dark form-select-sm" style="width:140px;display:inline-block;">
+                                                <c:forEach var="r" items="${roles}">
+                                                    <option value="${r.roleId}" ${r.roleId == u.role.roleId ? 'selected' : ''}>${r.roleName}</option>
+                                                </c:forEach>
+                                            </select>
+                                            <label class="ms-2"><input type="checkbox" name="isReviewer" ${u.reviewer ? 'checked' : ''}/> Reviewer</label>
+                                            <label class="ms-2"><input type="checkbox" name="isDesigner" ${u.designer ? 'checked' : ''}/> Designer</label>
+                                            <button type="submit" class="btn btn-action btn-primary-custom btn-sm ms-2">Update</button>
+                                        </form>
+                                    </td>
                                     <td>${u.department}</td>
                                     <td>${u.status}</td>
                                     <td>
@@ -90,7 +103,7 @@
 
         <div class="col-lg-4">
             <div class="card-dark p-4">
-                <h6 class="text-white mb-3">Add New User</h6>
+                <h6 class="mb-3">Add New User</h6>
                 <form method="post" action="${pageContext.request.contextPath}/admin/users">
                     <input type="hidden" name="action" value="add">
                     <div class="mb-2">
@@ -111,6 +124,14 @@
                                 <option value="${r.roleId}">${r.roleName}</option>
                             </c:forEach>
                         </select>
+                    </div>
+                    <div class="mb-2 form-check">
+                        <input class="form-check-input" type="checkbox" id="isReviewer" name="isReviewer">
+                        <label class="form-check-label" for="isReviewer">Grant Reviewer</label>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="isDesigner" name="isDesigner">
+                        <label class="form-check-label" for="isDesigner">Grant Designer</label>
                     </div>
                     <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-person-plus me-1"></i>Add User</button>
                 </form>

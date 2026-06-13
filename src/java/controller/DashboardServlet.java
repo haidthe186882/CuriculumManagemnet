@@ -21,8 +21,9 @@ public class DashboardServlet extends HttpServlet {
         User user = (User) session.getAttribute("loggedUser");
         String role = user.getRole() != null ? user.getRole().getRoleName() : "";
         switch (role) {
-            case "Admin":    res.sendRedirect(req.getContextPath() + "/admin/users"); break;
+            case "Admin":    res.sendRedirect(req.getContextPath() + "/admin/home"); break;
             case "Reviewer": res.sendRedirect(req.getContextPath() + "/review/list"); break;
+            case "Teacher":  res.sendRedirect(req.getContextPath() + "/teacher/home"); break;
             default:         res.sendRedirect(req.getContextPath() + "/curriculum/list"); break;
         }
     }

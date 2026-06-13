@@ -16,10 +16,10 @@
 <body>
 <%@ include file="/WEB-INF/views/common/sidebar.jsp" %>
 <div class="main-content">
-    <div class="topbar">
+            <div class="topbar">
         <div>
             <div class="page-title">${curriculum.curriculumName}</div>
-            <div class="page-subtitle"><code style="color:#4fc3f7;">${curriculum.curriculumCode}</code> · ${curriculum.program.programName}</div>
+            <div class="page-subtitle"><code style="color:var(--accent);">${curriculum.curriculumCode}</code> · ${curriculum.program.programName}</div>
         </div>
         <div class="d-flex gap-2">
             <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
@@ -52,7 +52,7 @@
     <div class="row g-3 mb-4">
         <div class="col-md-8">
             <div class="card-dark p-4">
-                <h6 class="text-secondary mb-3">General Information</h6>
+                <h6 class="mb-3">General Information</h6>
                 <div class="row">
                     <div class="col-md-6"><div class="detail-label">English Name</div><div class="detail-value">${curriculum.englishName}</div></div>
                     <div class="col-md-3"><div class="detail-label">Version</div><div class="detail-value">${curriculum.version}</div></div>
@@ -95,20 +95,20 @@
     </div>
 
     <div class="card-dark mb-4">
-        <div class="p-3 border-bottom" style="border-color:#1e2a3a!important;"><h6 class="mb-0 text-white">Subjects in Curriculum</h6></div>
+    <div class="p-3 border-bottom"><h6 class="mb-0">Subjects in Curriculum</h6></div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th></tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="6" class="text-center py-4" style="color:#4a5568;">No subjects linked yet.</td></tr>
+                            <tr><td colspan="6" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
                                 <tr>
                                     <td>${st.count}</td>
-                                    <td><code style="color:#4fc3f7;">${cs.subject.subjectCode}</code></td>
+                                    <td><code style="color:var(--accent);">${cs.subject.subjectCode}</code></td>
                                     <td>${cs.subject.subjectName}</td>
                                     <td>${cs.semesterNo}</td>
                                     <td>${cs.subject.credits}</td>
@@ -123,14 +123,14 @@
     </div>
 
     <div class="card-dark">
-        <div class="p-3 border-bottom" style="border-color:#1e2a3a!important;"><h6 class="mb-0 text-white">Review History</h6></div>
+    <div class="p-3 border-bottom"><h6 class="mb-0">Review History</h6></div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>Date</th><th>Reviewer</th><th>Status</th><th>Comment</th></tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty reviews}">
-                            <tr><td colspan="4" class="text-center py-4" style="color:#4a5568;">No reviews yet.</td></tr>
+                            <tr><td colspan="4" class="text-center py-4 text-muted">No reviews yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="rv" items="${reviews}">

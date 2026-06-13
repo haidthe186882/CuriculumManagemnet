@@ -59,13 +59,13 @@
                 <tbody>
                     <c:choose>
                         <c:when test="${empty syllabuses}">
-                            <tr><td colspan="6" class="text-center py-5" style="color:#4a5568;">No syllabuses found.</td></tr>
+                            <tr><td colspan="6" class="text-center py-5 text-muted">No syllabuses found.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="sy" items="${syllabuses}" varStatus="st">
                                 <tr>
                                     <td>${st.count}</td>
-                                    <td><code style="color:#4fc3f7;">${sy.subject.subjectCode}</code> — ${sy.subject.subjectName}</td>
+                                    <td><code style="color:var(--accent);">${sy.subject.subjectCode}</code> — ${sy.subject.subjectName}</td>
                                     <td>${sy.syllabusName}</td>
                                     <td>${sy.version}</td>
                                     <td>

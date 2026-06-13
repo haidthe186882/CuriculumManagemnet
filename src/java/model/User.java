@@ -15,6 +15,8 @@ public class User {
     private Date createdDate;
     // join
     private Role role;
+    private boolean reviewer;
+    private boolean designer;
 
     public User() {}
 
@@ -40,4 +42,8 @@ public class User {
     public void setCreatedDate(Date createdDate) { this.createdDate = createdDate; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+    public boolean isReviewer() { return reviewer; }
+    public void setReviewer(boolean reviewer) { this.reviewer = reviewer; }
+    public boolean isDesigner() { return designer; }
+    public void setDesigner(boolean designer) { this.designer = designer; }
 }

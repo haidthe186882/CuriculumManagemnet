@@ -10,73 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: #0f1117; color: #e2e8f0; min-height: 100vh; }
-        .sidebar {
-            width: 260px; min-height: 100vh; position: fixed; left: 0; top: 0;
-            background: #161b27; border-right: 1px solid #1e2a3a;
-            padding: 1.5rem 0; z-index: 100;
-        }
-        .brand { padding: 0 1.5rem 1.5rem; font-size: 1.3rem; font-weight: 700;
-                  color: #fff; border-bottom: 1px solid #1e2a3a; letter-spacing: -0.5px; }
-        .brand span { color: #4fc3f7; }
-        .nav-section { padding: 1rem 1rem 0.25rem; font-size: 0.7rem; font-weight: 600;
-                        color: #4a5568; text-transform: uppercase; letter-spacing: 1px; }
-        .nav-link { color: #94a3b8; padding: 0.6rem 1.5rem; border-radius: 0; display: flex;
-                    align-items: center; gap: 0.75rem; font-size: 0.88rem; transition: all 0.15s; }
-        .nav-link:hover, .nav-link.active {
-            color: #4fc3f7; background: rgba(79,195,247,0.08);
-            border-left: 3px solid #4fc3f7; padding-left: calc(1.5rem - 3px);
-        }
-        .main-content { margin-left: 260px; padding: 2rem; }
-        .topbar { display: flex; justify-content: space-between; align-items: center;
-                  margin-bottom: 2rem; }
-        .page-title { font-size: 1.5rem; font-weight: 700; color: #fff; }
-        .page-subtitle { color: #64748b; font-size: 0.85rem; }
-        .user-badge { background: rgba(79,195,247,0.1); border: 1px solid rgba(79,195,247,0.2);
-                      border-radius: 50px; padding: 0.4rem 1rem; display: flex;
-                      align-items: center; gap: 0.5rem; color: #4fc3f7; font-size: 0.85rem; }
-        .card-dark { background: #161b27; border: 1px solid #1e2a3a; border-radius: 16px; }
-        .search-bar { background: #1e2535; border: 1px solid #2a3448; border-radius: 10px;
-                      color: #e2e8f0; padding: 0.65rem 1rem; }
-        .search-bar:focus { background: #1e2535; border-color: #4fc3f7;
-                            box-shadow: 0 0 0 3px rgba(79,195,247,0.1); color: #e2e8f0; }
-        .search-bar::placeholder { color: #4a5568; }
-        .btn-primary-custom {
-            background: linear-gradient(135deg, #4fc3f7, #0288d1);
-            border: none; border-radius: 8px; color: #fff; padding: 0.6rem 1.25rem;
-            font-weight: 500; font-size: 0.875rem; transition: all 0.15s;
-        }
-        .btn-primary-custom:hover { transform: translateY(-1px); color: #fff;
-            box-shadow: 0 6px 15px rgba(79,195,247,0.3); }
-        .table-dark-custom { --bs-table-bg: transparent; color: #e2e8f0; }
-        .table-dark-custom thead th { background: #1a2236; color: #64748b;
-            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 0.5px; border-color: #1e2a3a; padding: 1rem; }
-        .table-dark-custom tbody tr { border-color: #1e2a3a; transition: background 0.15s; }
-        .table-dark-custom tbody tr:hover { background: rgba(79,195,247,0.04); }
-        .table-dark-custom td { padding: 0.9rem 1rem; vertical-align: middle; border-color: #1e2a3a; }
-        .badge-status { border-radius: 20px; padding: 0.3rem 0.75rem; font-size: 0.75rem; font-weight: 500; }
-        .badge-draft    { background: rgba(148,163,184,0.15); color: #94a3b8; }
-        .badge-pending  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
-        .badge-approved { background: rgba(52,211,153,0.15);  color: #34d399; }
-        .badge-archived { background: rgba(100,116,139,0.15); color: #64748b; }
-        .btn-action { border-radius: 8px; padding: 0.3rem 0.75rem; font-size: 0.8rem;
-                      font-weight: 500; border: none; transition: all 0.15s; }
-        .btn-view  { background: rgba(79,195,247,0.1); color: #4fc3f7; }
-        .btn-view:hover { background: rgba(79,195,247,0.2); color: #4fc3f7; }
-        .stat-card { background: #161b27; border: 1px solid #1e2a3a; border-radius: 14px;
-                     padding: 1.25rem 1.5rem; }
-        .stat-number { font-size: 1.8rem; font-weight: 700; color: #fff; line-height: 1; }
-        .stat-label  { color: #64748b; font-size: 0.8rem; margin-top: 4px; }
-        .alert-success-dark { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
-                              border-radius: 10px; color: #34d399; }
-        select.form-select-dark { background: #1e2535; border: 1px solid #2a3448;
-                                   border-radius: 10px; color: #e2e8f0; padding: 0.65rem 1rem; }
-        select.form-select-dark:focus { border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(79,195,247,0.1); color: #e2e8f0; background: #1e2535; }
-        option { background: #1e2535; }
-    </style>
+    <%@ include file="/WEB-INF/views/common/styles.jsp" %>
 </head>
 <body>
 
@@ -213,11 +147,11 @@
             <div class="row g-2">
                 <div class="col-md-6">
                     <div class="input-group">
-                        <span class="input-group-text" style="background:#1e2535;border:1px solid #2a3448;border-right:0;color:#64748b;">
+                           <span class="input-group-text">
                             <i class="bi bi-search"></i>
                         </span>
-                        <input type="text" name="keyword" class="search-bar form-control border-start-0"
-                               style="border-left:0;" placeholder="Search by name, code..." value="${keyword}">
+                           <input type="text" name="keyword" class="search-bar form-control border-start-0"
+                               placeholder="Search by name, code..." value="${keyword}">
                     </div>
                 </div>
                 <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer'}">
@@ -237,8 +171,7 @@
                     </button>
                 </div>
                 <div class="col-md-1">
-                    <a href="${pageContext.request.contextPath}/curriculum/list" class="btn w-100"
-                       style="background:#1e2535;border:1px solid #2a3448;color:#94a3b8;">
+                    <a href="${pageContext.request.contextPath}/curriculum/list" class="btn btn-secondary-custom w-100">
                         <i class="bi bi-x"></i>
                     </a>
                 </div>
@@ -267,7 +200,7 @@
                     <c:choose>
                         <c:when test="${empty curriculums}">
                             <tr>
-                                <td colspan="9" class="text-center py-5" style="color:#4a5568;">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox display-6 d-block mb-2"></i>
                                     No curriculum found matching your search criteria.
                                 </td>
@@ -276,17 +209,16 @@
                         <c:otherwise>
                             <c:forEach var="c" items="${curriculums}" varStatus="st">
                                 <tr>
-                                    <td style="color:#4a5568;">${st.count}</td>
-                                    <td><code style="color:#4fc3f7;background:rgba(79,195,247,0.08);
-                                              padding:2px 8px;border-radius:4px;">${c.curriculumCode}</code></td>
+                                    <td class="text-muted">${st.count}</td>
+                                    <td><code style="color:var(--accent);background:rgba(255,106,0,0.06);padding:2px 8px;border-radius:4px;">${c.curriculumCode}</code></td>
                                     <td>
-                                        <div style="font-weight:500;color:#fff;">${c.curriculumName}</div>
-                                        <div style="font-size:0.78rem;color:#64748b;">${c.englishName}</div>
+                                        <div class="detail-value">${c.curriculumName}</div>
+                                        <div class="text-muted" style="font-size:0.78rem;">${c.englishName}</div>
                                     </td>
-                                    <td style="color:#94a3b8;">${c.program.programName}</td>
-                                    <td><span style="color:#fff;font-weight:500;">${c.totalCredits}</span>
-                                        <span style="color:#64748b;font-size:0.8rem;"> cr</span></td>
-                                    <td style="color:#94a3b8;">${c.version}</td>
+                                    <td class="text-muted">${c.program.programName}</td>
+                                    <td><span class="detail-value">${c.totalCredits}</span>
+                                        <span class="text-muted" style="font-size:0.8rem;"> cr</span></td>
+                                    <td class="text-muted">${c.version}</td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${c.status == 'Approved'}">
@@ -303,7 +235,7 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <td style="color:#94a3b8;">
+                                    <td class="text-muted">
                                         <c:if test="${not empty c.decisionDate}">
                                             <fmt:formatDate value="${c.decisionDate}" pattern="dd/MM/yyyy"/>
                                         </c:if>
