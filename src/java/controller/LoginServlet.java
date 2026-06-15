@@ -7,8 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
-import java.security.MessageDigest;
-import org.mindrot.jbcrypt.BCrypt;
 
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
@@ -37,41 +35,10 @@ public class LoginServlet extends HttpServlet {
         }
 
         UserDAO dao = new UserDAO();
-        User user = dao.getUserByEmail(email.trim());
+        // Delegate authentication to DAO: DB contains hashed password already.
+        User user = dao.login(email.trim(), password.trim());
 
         if (user == null) {
-            req.setAttribute("error", "Invalid email or password.");
-            req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, res);
-            return;
-        }
-
-        String storedHash = user.getPasswordHash();
-        boolean ok = false;
-
-        if (storedHash != null && (storedHash.startsWith("$2a$") || storedHash.startsWith("$2b$") || storedHash.startsWith("$2y$"))) {
-            // bcrypt
-            ok = BCrypt.checkpw(password, storedHash);
-        } else if (storedHash.equals(password)) {
-            // stored plaintext (legacy/mistake) -> accept and migrate to bcrypt
-            ok = true;
-            try {
-                String b = BCrypt.hashpw(password, BCrypt.gensalt(12));
-                dao.updatePassword(user.getUserId(), b);
-            } catch (Exception ignored) {}
-        } else {
-            // fallback MD5
-            String md5 = hashMD5(password.trim());
-            if (md5.equalsIgnoreCase(storedHash)) {
-                ok = true;
-                // migrate to bcrypt
-                try {
-                    String b = BCrypt.hashpw(password, BCrypt.gensalt(12));
-                    dao.updatePassword(user.getUserId(), b);
-                } catch (Exception ignored) {}
-            }
-        }
-
-        if (!ok) {
             req.setAttribute("error", "Invalid email or password.");
             req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, res);
             return;
@@ -91,13 +58,5 @@ public class LoginServlet extends HttpServlet {
         }
     }
 
-    private String hashMD5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] bytes = md.digest(input.getBytes("UTF-8"));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : bytes) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) { return input; }
-    }
+    // Authentication now delegated to `UserDAO.login(email, password)`
 }
