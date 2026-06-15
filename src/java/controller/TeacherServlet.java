@@ -5,6 +5,10 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import model.User;
+import model.Material;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +41,25 @@ public class TeacherServlet extends HttpServlet {
             return;
         }
         if ("/upload".equals(path)) {
+            // prepare list of uploaded materials for this user
+            String uploadsRel = "/uploads/teacher/" + u.getUserId();
+            String uploadsAbs = getServletContext().getRealPath(uploadsRel);
+            List<Material> materials = new ArrayList<>();
+            if (uploadsAbs != null) {
+                java.io.File dir = new java.io.File(uploadsAbs);
+                if (dir.exists() && dir.isDirectory()) {
+                    java.io.File[] files = dir.listFiles();
+                    if (files != null) {
+                        for (java.io.File f : files) {
+                            if (f.isFile()) {
+                                String status = "Published";
+                                materials.add(new Material(f.getName(), "MAT001", "", f.length(), new Date(f.lastModified()), status));
+                            }
+                        }
+                    }
+                }
+            }
+            req.setAttribute("materials", materials);
             req.getRequestDispatcher("/WEB-INF/views/teacher/upload.jsp").forward(req, resp);
             return;
         }

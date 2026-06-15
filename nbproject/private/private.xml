@@ -8,6 +8,7 @@
             <file>file:/D:/CurriculumManagement/web/WEB-INF/views/admin/users.jsp</file>
             <file>file:/D:/CurriculumManagement/src/java/dal/DBContext.java</file>
             <file>file:/D:/CurriculumManagement/src/java/controller/LoginServlet.java</file>
+            <file>file:/D:/CurriculumManagement/src/java/controller/ProgramServlet.java</file>
             <file>file:/D:/CurriculumManagement/src/java/controller/SyllabusServlet.java</file>
             <file>file:/D:/CurriculumManagement/src/java/controller/CurriculumServlet.java</file>
             <file>file:/D:/CurriculumManagement/web/META-INF/context.xml</file>

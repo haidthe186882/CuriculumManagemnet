@@ -81,7 +81,7 @@ public class ProgramServlet extends HttpServlet {
         res.sendRedirect(req.getContextPath() + "/program/list?msg=toggled");
     }
 
-    private void doDelete(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    protected void doDelete(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (!requireAdmin(req, res)) return;
         String id = req.getParameter("programId");
         programDAO.deleteProgram(id);
