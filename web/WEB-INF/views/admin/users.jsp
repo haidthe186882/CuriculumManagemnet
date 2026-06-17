@@ -21,7 +21,13 @@
             <div class="page-title">User Management</div>
             <div class="page-subtitle">Manage system users and roles</div>
         </div>
+        <div class="mb-3">
+            <a href="${pageContext.request.contextPath}/admin/home" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back To Admin Dashboard
+            </a>
+        </div>
     </div>
+    
 
     <c:if test="${not empty param.msg}">
         <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Operation successful.</div>
