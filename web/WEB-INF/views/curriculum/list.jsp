@@ -39,6 +39,9 @@
         <a class="nav-link" href="${pageContext.request.contextPath}/admin/users">
             <i class="bi bi-people"></i> User Management
         </a>
+            <a class="nav-link" href="${pageContext.request.contextPath}/admin/home">
+            <i class="bi bi-grid-1x2-fill"></i> Admin Dashboard
+        </a>
     </c:if>
 
     <div style="position:absolute; bottom:1.5rem; left:0; right:0; padding: 0 1.5rem;">
@@ -76,10 +79,11 @@
             <div class="page-title">Curriculum Management</div>
             <div class="page-subtitle">Browse and manage training programs</div>
         </div>
+        
         <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
             <a href="${pageContext.request.contextPath}/curriculum/create" class="btn btn-primary-custom">
                 <i class="bi bi-plus-lg me-1"></i> New Curriculum
-            </a>
+            </a>            
         </c:if>
     </div>
 
