@@ -19,6 +19,11 @@
             <div class="page-title">Program Management</div>
             <div class="page-subtitle">Create and maintain academic programs</div>
         </div>
+        <div class="mb-3">
+            <a href="${pageContext.request.contextPath}/admin/home" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back To Admin Dashboard
+            </a>
+        </div>
     </div>
 
     <div class="row g-3">
