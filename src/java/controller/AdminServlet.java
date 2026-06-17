@@ -41,7 +41,7 @@ public class AdminServlet extends HttpServlet {
             case "add":          doAdd(req, res); break;
             case "update":       doUpdate(req, res); break;
             case "updateStatus": doUpdateStatus(req, res); break;
-            default: res.sendRedirect(req.getContextPath() + "/admin/users");
+            default: res.sendRedirect(req.getContextPath() + "/admin/home");
         }
     }
 
