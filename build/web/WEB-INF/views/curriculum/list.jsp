@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<c:set var="activeMenu" value="curriculum"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,6 @@
 <body>
 
 <!-- Sidebar -->
-<c:set var="activeMenu" value="curriculum"/>
 <%@ include file="/WEB-INF/views/common/sidebar.jsp" %>
 
 <!-- Main -->
@@ -25,10 +25,11 @@
             <div class="page-title">Curriculum Management</div>
             <div class="page-subtitle">Browse and manage training programs</div>
         </div>
+        
         <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
             <a href="${pageContext.request.contextPath}/curriculum/create" class="btn btn-primary-custom">
                 <i class="bi bi-plus-lg me-1"></i> New Curriculum
-            </a>
+            </a>            
         </c:if>
     </div>
 
