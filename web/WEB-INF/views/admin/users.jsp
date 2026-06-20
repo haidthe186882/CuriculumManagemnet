@@ -240,11 +240,6 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label text-light small">Department</label>
-                            <input type="text" name="department" class="form-control bg-dark text-white border-secondary w-100" value="${u.department}">
-                        </div>
-                        
-                        <div class="mb-3">
                             <label class="form-label text-light small">Status</label>
                             <select name="status" class="form-select bg-dark text-white border-secondary w-100">
                                 <option value="Active" ${u.status == 'Active' ? 'selected' : ''}>Active</option>
