@@ -22,6 +22,27 @@
         .modal-footer { border-top: 1px solid #2b2b40; }
         .table-detail th { width: 35%; color: #a1a5b7; font-weight: 500;}
         .table-detail td { color: #fff; }
+        .dark-theme .form-control,
+    .dark-theme .form-select {
+        background-color: #151521 !important; /* Ép nền thành màu tối */
+        color: #ffffff !important; /* Ép chữ thành màu trắng */
+        border: 1px solid #2b2b40 !important;
+    }
+    
+    /* Đổi màu viền khi click vào ô nhập liệu (Focus) */
+    .dark-theme .form-control:focus,
+    .dark-theme .form-select:focus {
+        background-color: #1a1a27 !important;
+        color: #ffffff !important;
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    }
+    
+    /* Phân biệt màu nền riêng cho ô Role (Read-only/Không cho sửa) */
+    .dark-theme .form-control[readonly] {
+        background-color: #2a2a3c !important; 
+        color: #a1a5b7 !important;
+    }
     </style>
 </head>
 <body>
@@ -164,31 +185,32 @@
 <c:forEach var="u" items="${users}">
     <div class="modal fade" id="viewUserModal_${u.userId}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content dark-theme">
-                <div class="modal-header">
+            <div class="modal-content bg-dark text-white" data-bs-theme="dark" style="border: 1px solid #495057;">
+                <div class="modal-header border-secondary">
                     <h5 class="modal-title"><i class="bi bi-person-lines-fill me-2"></i>User Details</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <table class="table table-borderless table-detail mb-0 m-3 w-auto">
-                        <tr><th>User ID:</th><td>${u.userId}</td></tr>
-                        <tr><th>Full Name:</th><td>${u.fullName}</td></tr>
-                        <tr><th>Email:</th><td>${u.email}</td></tr>
-                        <tr><th>Phone:</th><td>${u.phoneNumber != null && !u.phoneNumber.isEmpty() ? u.phoneNumber : 'N/A'}</td></tr>
-                        <tr><th>Primary Role:</th><td><span class="badge bg-primary">${u.role.roleName}</span></td></tr>
-                        <tr><th>Additional Roles:</th>
+                    <table class="table table-dark table-borderless mb-0 m-3 w-auto">
+                        <tr><th class="text-secondary" style="width: 35%;">User ID:</th><td>${u.userId}</td></tr>
+                        <tr><th class="text-secondary">Full Name:</th><td>${u.fullName}</td></tr>
+                        <tr><th class="text-secondary">Email:</th><td>${u.email}</td></tr>
+                        <tr><th class="text-secondary">Phone:</th><td>${u.phoneNumber != null && !u.phoneNumber.isEmpty() ? u.phoneNumber : 'N/A'}</td></tr>
+                        <tr><th class="text-secondary">Department:</th><td>${u.department != null && !u.department.isEmpty() ? u.department : 'N/A'}</td></tr>
+                        <tr><th class="text-secondary">Primary Role:</th><td><span class="badge bg-primary">${u.role.roleName}</span></td></tr>
+                        <tr><th class="text-secondary">Additional Roles:</th>
                             <td>
                                 <c:if test="${u.reviewer}"><span class="badge bg-info text-dark me-1">Reviewer</span></c:if>
                                 <c:if test="${u.designer}"><span class="badge bg-warning text-dark">Designer</span></c:if>
                                 <c:if test="${!u.reviewer && !u.designer}">None</c:if>
                             </td>
                         </tr>
-                        <tr><th>Status:</th>
+                        <tr><th class="text-secondary">Status:</th>
                             <td><span class="badge ${u.status == 'Active' ? 'bg-success' : 'bg-danger'}">${u.status}</span></td>
                         </tr>
                     </table>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -197,10 +219,10 @@
 
     <div class="modal fade" id="editUserModal_${u.userId}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content dark-theme">
-                <div class="modal-header">
+            <div class="modal-content bg-dark text-white" data-bs-theme="dark" style="border: 1px solid #495057;">
+                <div class="modal-header border-secondary">
                     <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit User Information</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="${pageContext.request.contextPath}/admin/users">
                     <input type="hidden" name="action" value="update">
@@ -208,43 +230,48 @@
                     
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label text-muted small">Full Name *</label>
-                            <input type="text" name="fullName" class="form-control form-control-dark w-100" value="${u.fullName}" required>
+                            <label class="form-label text-light small">Full Name *</label>
+                            <input type="text" name="fullName" class="form-control bg-dark text-white border-secondary w-100" value="${u.fullName}" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label text-muted small">Phone Number</label>
-                            <input type="text" name="phoneNumber" class="form-control form-control-dark w-100" value="${u.phoneNumber}">
+                            <label class="form-label text-light small">Phone Number</label>
+                            <input type="text" name="phoneNumber" class="form-control bg-dark text-white border-secondary w-100" value="${u.phoneNumber}">
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label text-muted small">Status</label>
-                            <select name="status" class="form-select form-select-dark w-100">
+                            <label class="form-label text-light small">Department</label>
+                            <input type="text" name="department" class="form-control bg-dark text-white border-secondary w-100" value="${u.department}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-light small">Status</label>
+                            <select name="status" class="form-select bg-dark text-white border-secondary w-100">
                                 <option value="Active" ${u.status == 'Active' ? 'selected' : ''}>Active</option>
                                 <option value="Inactive" ${u.status == 'Inactive' ? 'selected' : ''}>Inactive</option>
                             </select>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label text-muted small">Current Primary Role</label>
-                            <input type="text" class="form-control form-control-dark bg-secondary w-100" value="${u.role.roleName}" readonly>
+                            <label class="form-label text-light small">Current Primary Role</label>
+                            <input type="text" class="form-control bg-secondary text-light border-secondary w-100" value="${u.role.roleName}" readonly>
                             <input type="hidden" name="roleId" value="${u.role.roleId}">
                         </div>
                         
                         <div class="d-flex gap-4">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editReviewer_${u.userId}" name="isReviewer" ${u.reviewer ? 'checked' : ''}>
-                                <label class="form-check-label" for="editReviewer_${u.userId}">Reviewer</label>
+                                <input class="form-check-input border-secondary" type="checkbox" id="editReviewer_${u.userId}" name="isReviewer" ${u.reviewer ? 'checked' : ''}>
+                                <label class="form-check-label text-light" for="editReviewer_${u.userId}">Reviewer</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDesigner_${u.userId}" name="isDesigner" ${u.designer ? 'checked' : ''}>
-                                <label class="form-check-label" for="editDesigner_${u.userId}">Designer</label>
+                                <input class="form-check-input border-secondary" type="checkbox" id="editDesigner_${u.userId}" name="isDesigner" ${u.designer ? 'checked' : ''}>
+                                <label class="form-check-label text-light" for="editDesigner_${u.userId}">Designer</label>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer border-secondary">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary-custom">Save Changes</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>
             </div>
