@@ -195,8 +195,6 @@
                         <tr><th class="text-secondary" style="width: 35%;">User ID:</th><td>${u.userId}</td></tr>
                         <tr><th class="text-secondary">Full Name:</th><td>${u.fullName}</td></tr>
                         <tr><th class="text-secondary">Email:</th><td>${u.email}</td></tr>
-                        <tr><th class="text-secondary">Phone:</th><td>${u.phoneNumber != null && !u.phoneNumber.isEmpty() ? u.phoneNumber : 'N/A'}</td></tr>
-                        <tr><th class="text-secondary">Department:</th><td>${u.department != null && !u.department.isEmpty() ? u.department : 'N/A'}</td></tr>
                         <tr><th class="text-secondary">Primary Role:</th><td><span class="badge bg-primary">${u.role.roleName}</span></td></tr>
                         <tr><th class="text-secondary">Additional Roles:</th>
                             <td>
