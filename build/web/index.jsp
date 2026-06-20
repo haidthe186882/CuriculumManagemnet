@@ -33,16 +33,3 @@
 </div>
 </body>
 </html>
-</head>
-<body>
-<div class="card shadow-sm text-center">
-	<h2>Welcome to LTMS</h2>
-	<p class="text-muted">Please login to continue</p>
-	<div class="d-flex justify-content-center gap-3 mt-3">
-		<a class="btn btn-primary" href="${pageContext.request.contextPath}/login">Login</a>
-        
-	</div>
-	<p class="mt-4 text-muted" style="font-size:0.9rem">Or, if you already have a session, you will be redirected.</p>
-</div>
-</body>
-</html>
