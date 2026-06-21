@@ -67,7 +67,7 @@
         </div>
         <div class="col-md-4">
             <div class="card-dark p-4">
-                <div class="detail-label">Status</div>
+                <div class="detail-label">isActive</div>
                 <div class="mb-3">
                     <c:choose>
                         <c:when test="${curriculum.status == 'Approved'}"><span class="badge-status badge-approved">${curriculum.status}</span></c:when>

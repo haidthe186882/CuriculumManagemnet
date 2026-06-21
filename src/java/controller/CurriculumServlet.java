@@ -1,7 +1,7 @@
 package controller;
 
 import dao.CurriculumDAO;
-import dao.ProgramDAO;
+import dao.MajorDAO;
 import dao.SubjectDAO;
 import dao.ReviewDAO;
 import model.Curriculum;
@@ -17,7 +17,7 @@ import java.util.List;
 public class CurriculumServlet extends HttpServlet {
 
     private final CurriculumDAO curriculumDAO = new CurriculumDAO();
-    private final ProgramDAO    programDAO    = new ProgramDAO();
+    private final MajorDAO    majorDAO    = new MajorDAO();
     private final SubjectDAO    subjectDAO    = new SubjectDAO();
     private final ReviewDAO     reviewDAO     = new ReviewDAO();
 
@@ -83,7 +83,7 @@ public class CurriculumServlet extends HttpServlet {
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         if (!requireRole(req, res, "Designer", "Admin")) return;
-        req.setAttribute("programs", programDAO.getAllPrograms());
+        req.setAttribute("majors", majorDAO.getAllMajors());
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -92,7 +92,7 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin")) return;
         String id = req.getParameter("id");
         req.setAttribute("curriculum", curriculumDAO.getCurriculumById(id));
-        req.setAttribute("programs",   programDAO.getAllPrograms());
+        req.setAttribute("majors",   majorDAO.getAllMajors());
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -146,7 +146,7 @@ public class CurriculumServlet extends HttpServlet {
 
     private Curriculum buildFromRequest(HttpServletRequest req) {
         Curriculum c = new Curriculum();
-        c.setProgramId(req.getParameter("programId"));
+        c.setMajorId(req.getParameter("majorId"));
         c.setCurriculumCode(req.getParameter("curriculumCode"));
         c.setCurriculumName(req.getParameter("curriculumName"));
         c.setEnglishName(req.getParameter("englishName"));
