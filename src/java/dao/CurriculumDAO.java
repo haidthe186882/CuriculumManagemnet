@@ -14,10 +14,6 @@ public class CurriculumDAO {
         Curriculum c = new Curriculum();
         c.setCurriculumId(rs.getString("Curriculum_ID"));
         c.setMajorId(rs.getString("Major_ID"));
-<<<<<<< HEAD
-=======
-        c.setMajorName(rs.getString("Major_Name"));
->>>>>>> main
         c.setCreatedBy(rs.getString("Created_By"));
         c.setCurriculumCode(rs.getString("Curriculum_Code"));
         c.setCurriculumName(rs.getString("Curriculum_Name"));
@@ -125,7 +121,6 @@ public class CurriculumDAO {
      * Them curriculum moi
      */
     public boolean addCurriculum(Curriculum c) {
-<<<<<<< HEAD
 
         String sql =
             "INSERT INTO Curriculums (" +
@@ -148,14 +143,6 @@ public class CurriculumDAO {
         ) {
 
             ps.setString(1, c.getMajorId());
-=======
-        String sql = "INSERT INTO Curriculums (Curriculum_ID, Major_Name, Created_By, Curriculum_Code, "
-                + "Curriculum_Name, English_Name, Description, Total_Credits, Version, Decision_No, "
-                + "Decision_Date, Is_Active, Created_Date) "
-                + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, GETDATE())";
-        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, c.getMajorName());
->>>>>>> main
             ps.setString(2, c.getCreatedBy());
             ps.setString(3, c.getCurriculumCode());
             ps.setString(4, c.getCurriculumName());
@@ -177,17 +164,11 @@ public class CurriculumDAO {
             }
 
             return ps.executeUpdate() > 0;
-<<<<<<< HEAD
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-=======
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
->>>>>>> main
         return false;
 }
 
