@@ -14,6 +14,7 @@ public class CurriculumDAO {
         Curriculum c = new Curriculum();
         c.setCurriculumId(rs.getString("Curriculum_ID"));
         c.setMajorId(rs.getString("Major_ID"));
+        c.setMajorName(rs.getString("Major_Name"));
         c.setCreatedBy(rs.getString("Created_By"));
         c.setCurriculumCode(rs.getString("Curriculum_Code"));
         c.setCurriculumName(rs.getString("Curriculum_Name"));

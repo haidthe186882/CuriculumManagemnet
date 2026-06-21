@@ -26,6 +26,7 @@ public class CurriculumServlet extends HttpServlet {
 
     private final CurriculumDAO curriculumDAO = new CurriculumDAO();
 
+
     private final MajorDAO majorDAO = new MajorDAO();
     private final SubjectDAO subjectDAO = new SubjectDAO();
     private final ReviewDAO reviewDAO = new ReviewDAO();

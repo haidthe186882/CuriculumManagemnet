@@ -15,7 +15,8 @@ public class Curriculum {
     private Date createdDate;
     private Date updatedDate;
     private boolean isActive;
-    // joins
+    
+    // Các trường dữ liệu phục vụ liên kết bảng (Joins) - Giữ bản sạch từ main
     private String majorId;
     private String majorName;
     private String createdBy;
