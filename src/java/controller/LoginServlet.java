@@ -25,7 +25,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        String email    = req.getParameter("email");
+        String email = req.getParameter("email");
         String password = req.getParameter("password");
 
         if (email == null || password == null || email.trim().isEmpty() || password.trim().isEmpty()) {
@@ -49,7 +49,6 @@ public class LoginServlet extends HttpServlet {
         session.setAttribute("loggedUser", user);
         session.setMaxInactiveInterval(30 * 60); // 30 min timeout
 
-        // Redirect based on primary role (User_Roles table may assign multiple roles;
         // we use the first one returned, priority: Admin > Designer > Reviewer > Teacher > Student)
         String role = user.getRole() != null ? user.getRole().getRoleName() : "";
 
@@ -62,12 +61,6 @@ public class LoginServlet extends HttpServlet {
                 break;
             case "Reviewer":
                 res.sendRedirect(req.getContextPath() + "/review/list");
-                break;
-            case "Teacher":
-                res.sendRedirect(req.getContextPath() + "/teacher/home");
-                break;
-            case "Student":
-                res.sendRedirect(req.getContextPath() + "/curriculum/list");
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
