@@ -1,103 +1,154 @@
 package controller;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import model.User;
-import model.Material;
-import java.util.ArrayList;
-import java.util.Date;
+import model.TeacherMaterial;
+import dao.TeacherMaterialDAO;
+import dao.SyllabusDAO;
+
+import java.io.IOException;
 import java.util.List;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-
-@WebServlet(name = "TeacherServlet", urlPatterns = {"/teacher/*"})
-@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 50 * 1024 * 1024)
+@WebServlet(name = "TeacherServlet", urlPatterns = { "/teacher/*" })
 public class TeacherServlet extends HttpServlet {
+
+    private final TeacherMaterialDAO materialDAO = new TeacherMaterialDAO();
+    private final SyllabusDAO syllabusDAO = new SyllabusDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("loggedUser") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        User u = requireTeacher(req, resp);
+        if (u == null)
             return;
-        }
-        User u = (User) session.getAttribute("loggedUser");
-        String role = u.getRole() != null ? u.getRole().getRoleName() : "";
-        // Allow Admin always; allow Teacher or users with reviewer/designer flags to access teacher pages
-        if (!"Admin".equals(role) && !"Teacher".equals(role) && !u.isReviewer() && !u.isDesigner()) {
-            resp.sendRedirect(req.getContextPath() + "/curriculum/list");
-            return;
-        }
+
         String path = req.getPathInfo();
         if (path == null || "/home".equals(path)) {
-            resp.sendRedirect(req.getContextPath() + "/curriculum/list");
+            resp.sendRedirect(req.getContextPath() + "/teacher/upload");
             return;
         }
-        if ("/upload".equals(path)) {
-            // prepare list of uploaded materials for this user
-            String uploadsRel = "/uploads/teacher/" + u.getUserId();
-            String uploadsAbs = getServletContext().getRealPath(uploadsRel);
-            List<Material> materials = new ArrayList<>();
-            if (uploadsAbs != null) {
-                java.io.File dir = new java.io.File(uploadsAbs);
-                if (dir.exists() && dir.isDirectory()) {
-                    java.io.File[] files = dir.listFiles();
-                    if (files != null) {
-                        for (java.io.File f : files) {
-                            if (f.isFile()) {
-                                String status = "Published";
-                                materials.add(new Material(f.getName(), "MAT001", "", f.length(), new Date(f.lastModified()), status));
-                            }
-                        }
-                    }
-                }
-            }
-            req.setAttribute("materials", materials);
-            req.getRequestDispatcher("/WEB-INF/views/teacher/upload.jsp").forward(req, resp);
-            return;
+        switch (path) {
+            case "/upload":
+                showUploadList(req, resp, u);
+                break;
+            case "/edit":
+                showEditForm(req, resp, u);
+                break;
+            default:
+                resp.sendRedirect(req.getContextPath() + "/teacher/upload");
         }
-        resp.sendRedirect(req.getContextPath() + "/teacher/home");
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+        User u = requireTeacher(req, resp);
+        if (u == null)
+            return;
+
+        String action = req.getParameter("action");
+        if (action == null)
+            action = "";
+
+        switch (action) {
+            case "create":
+                doCreate(req, resp, u);
+                break;
+            case "update":
+                doUpdate(req, resp, u);
+                break;
+            case "delete":
+                doDelete(req, resp, u);
+                break;
+            default:
+                resp.sendRedirect(req.getContextPath() + "/teacher/upload");
+        }
+    }
+
+    // ===== GET handlers =====
+
+    private void showUploadList(HttpServletRequest req, HttpServletResponse resp, User u)
+            throws ServletException, IOException {
+        System.out.println("[TeacherServlet] showUploadList - userId: " + u.getUserId() + ", name: " + u.getFullName());
+        List<TeacherMaterial> materials = materialDAO.getMaterialsByUser(u.getUserId());
+        System.out.println("[TeacherServlet] showUploadList - materials count: " + materials.size());
+        req.setAttribute("materials", materials);
+        req.setAttribute("syllabuses", syllabusDAO.searchSyllabuses(null, null, true));
+        req.getRequestDispatcher("/WEB-INF/views/teacher/upload.jsp").forward(req, resp);
+    }
+
+    private void showEditForm(HttpServletRequest req, HttpServletResponse resp, User u)
+            throws ServletException, IOException {
+        String idStr = req.getParameter("id");
+        if (idStr != null && !idStr.trim().isEmpty()) {
+            TeacherMaterial tm = materialDAO.getMaterialById(idStr.trim());
+            // chỉ cho phép chỉnh sửa tài liệu của chính mình
+            if (tm != null && tm.getUserId().equals(u.getUserId())) {
+                req.setAttribute("editMaterial", tm);
+            }
+        }
+        req.setAttribute("syllabuses", syllabusDAO.searchSyllabuses(null, null, true));
+        req.setAttribute("materials", materialDAO.getMaterialsByUser(u.getUserId()));
+        req.getRequestDispatcher("/WEB-INF/views/teacher/upload.jsp").forward(req, resp);
+    }
+
+    // ===== POST handlers =====
+
+    private void doCreate(HttpServletRequest req, HttpServletResponse resp, User u) throws IOException {
+        TeacherMaterial tm = new TeacherMaterial();
+        tm.setUserId(u.getUserId());
+        tm.setMaterialName(req.getParameter("materialName"));
+        tm.setSyllabusId(req.getParameter("syllabusId"));
+        tm.setMaterialType(req.getParameter("materialType"));
+        tm.setDescription(req.getParameter("description"));
+        tm.setMaterialUrl(req.getParameter("materialUrl"));
+        boolean ok = materialDAO.addMaterial(tm);
+        if (ok) {
+            req.getSession().setAttribute("msg", "Material uploaded successfully!");
+        } else {
+            req.getSession().setAttribute("msg", "ERROR: Could not upload material. Please try again.");
+        }
+        resp.sendRedirect(req.getContextPath() + "/teacher/upload");
+    }
+
+    private void doUpdate(HttpServletRequest req, HttpServletResponse resp, User u) throws IOException {
+        TeacherMaterial tm = new TeacherMaterial();
+        tm.setUserId(u.getUserId());
+        tm.setMaterialId(req.getParameter("materialId"));
+        tm.setMaterialName(req.getParameter("materialName"));
+        tm.setSyllabusId(req.getParameter("syllabusId"));
+        tm.setMaterialType(req.getParameter("materialType"));
+        tm.setDescription(req.getParameter("description"));
+        tm.setMaterialUrl(req.getParameter("materialUrl"));
+        materialDAO.updateMaterial(tm);
+        req.getSession().setAttribute("msg", "Material updated successfully!");
+        resp.sendRedirect(req.getContextPath() + "/teacher/upload");
+    }
+
+    private void doDelete(HttpServletRequest req, HttpServletResponse resp, User u) throws IOException {
+        String idStr = req.getParameter("materialId");
+        if (idStr != null && !idStr.trim().isEmpty()) {
+            materialDAO.deleteMaterial(idStr.trim(), u.getUserId());
+            req.getSession().setAttribute("msg", "Material deleted successfully!");
+        }
+        resp.sendRedirect(req.getContextPath() + "/teacher/upload");
+    }
+
+    // ===== Helper =====
+
+    private User requireTeacher(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("loggedUser") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
-            return;
+            return null;
         }
         User u = (User) session.getAttribute("loggedUser");
         String role = u.getRole() != null ? u.getRole().getRoleName() : "";
         if (!"Admin".equals(role) && !"Teacher".equals(role) && !u.isReviewer() && !u.isDesigner()) {
             resp.sendRedirect(req.getContextPath() + "/curriculum/list");
-            return;
+            return null;
         }
-        String path = req.getPathInfo();
-        if ("/upload".equals(path)) {
-            Part filePart = req.getPart("file");
-            if (filePart != null && filePart.getSize() > 0) {
-                String uploads = getServletContext().getRealPath("/uploads/teacher/") + File.separator + u.getUserId();
-                File dir = new File(uploads);
-                if (!dir.exists()) {
-                    dir.mkdirs();
-                }
-                String submitted = Path.of(filePart.getSubmittedFileName()).getFileName().toString();
-                Path target = Path.of(uploads, submitted);
-                try (InputStream in = filePart.getInputStream()) {
-                    Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
-                }
-                req.getSession().setAttribute("msg", "File uploaded: " + submitted);
-            }
-            resp.sendRedirect(req.getContextPath() + "/teacher/upload");
-            return;
-        }
-        resp.sendRedirect(req.getContextPath() + "/teacher/home");
+        return u;
     }
 }
