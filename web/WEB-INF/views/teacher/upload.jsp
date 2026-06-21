@@ -19,7 +19,6 @@
             <div class="topbar">
                 <div>
                     <div class="page-title">Upload Material</div>
-                    <div class="page-subtitle">5 materials · 4 published</div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <div class="me-2">
@@ -27,13 +26,6 @@
                             <option>All Courses</option>
                             <option>swp1</option>
                             <option>m1201</option>
-                        </select>
-                    </div>
-                    <div class="me-2">
-                        <select class="form-select form-select-dark">
-                            <option>All Status</option>
-                            <option>Published</option>
-                            <option>Draft</option>
                         </select>
                     </div>
                     <div class="me-3">
@@ -51,7 +43,7 @@
             <div class="card-dark mt-3">
                 <div class="table-responsive">
                     <table class="table table-dark-custom mb-0 align-middle">
-                        <thead><tr><th>File</th><th>Course</th><th>Description</th><th>Size</th><th>Uploaded</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>STT</th><th>Course</th><th>Description</th><th>Uploaded</th><th>Actions</th></tr></thead>
                         <tbody>
                             <c:choose>
                                 <c:when test="${empty materials}">
