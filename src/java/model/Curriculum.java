@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class Curriculum {
     private String curriculumId;
-    private String programId;
+    private String majorId;
     private String createdBy;
     private String curriculumCode;
     private String curriculumName;
@@ -27,8 +27,8 @@ public class Curriculum {
 
     public String getCurriculumId() { return curriculumId; }
     public void setCurriculumId(String curriculumId) { this.curriculumId = curriculumId; }
-    public String getProgramId() { return programId; }
-    public void setProgramId(String programId) { this.programId = programId; }
+    public String getMajorId() { return majorId; }
+    public void setMajorId(String programId) { this.majorId = majorId; }
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
     public String getCurriculumCode() { return curriculumCode; }
