@@ -233,11 +233,6 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label class="form-label text-light small">Phone Number</label>
-                            <input type="text" name="phoneNumber" class="form-control bg-dark text-white border-secondary w-100" value="${u.phoneNumber}">
-                        </div>
-                        
-                        <div class="mb-3">
                             <label class="form-label text-light small">Status</label>
                             <select name="status" class="form-select bg-dark text-white border-secondary w-100">
                                 <option value="Active" ${u.status == 'Active' ? 'selected' : ''}>Active</option>
