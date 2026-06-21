@@ -10,6 +10,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @WebServlet(name = "AdminServlet", urlPatterns = {"/admin/*"})
 public class AdminServlet extends HttpServlet {
@@ -50,9 +51,11 @@ public class AdminServlet extends HttpServlet {
         String keyword = req.getParameter("keyword");
         String status  = req.getParameter("status");
         List<User> users = userDAO.getAllUsers(keyword, status);
-        List<Role> roles = userDAO.getAllRoles();
+        List<Role> allRoles = userDAO.getAllRoles();
+        List<Role> filteredRoles = allRoles.stream().filter(r -> r.getRoleName().equals("Teacher") || 
+                r.getRoleName().equals("Student")).collect(Collectors.toList());
         req.setAttribute("users", users);
-        req.setAttribute("roles", roles);
+        req.setAttribute("roles", filteredRoles);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
         req.getRequestDispatcher("/WEB-INF/views/admin/users.jsp").forward(req, res);

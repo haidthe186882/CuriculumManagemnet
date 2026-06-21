@@ -166,7 +166,7 @@
                         <div class="input-with-icon" style="position:relative">
                             <i class="bi-left-icon bi-lock"></i>
                             <input type="password" name="password" id="password" class="form-control" placeholder="Enter password">
-                            <i class="bi bi-eye password-toggle" id="togglePwd"></i>
+                            <i class="bi-right-icon bi-eye password-toggle" id="togglePwd"></i>
                         </div>
                     </div>
 

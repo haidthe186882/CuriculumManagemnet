@@ -11,6 +11,8 @@
     <a class="nav-link ${activeMenu == 'syllabus' ? 'active' : ''}" href="${pageContext.request.contextPath}/syllabus/list">
         <i class="bi bi-file-earmark-text"></i> Syllabuses
     </a>
+
+    <!--Teacher upload document-->
     <c:if test="${sessionScope.loggedUser.role.roleName == 'Teacher'}">
         <div class="nav-section">Upload</div>
         <a class="nav-link ${activeMenu == 'teacher' ? 'active' : ''}"
@@ -18,6 +20,7 @@
             <i class="bi bi-upload"></i> Document Management
         </a>
     </c:if>
+
     <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
         <div class="nav-section">ReFview</div>
         <a class="nav-link ${activeMenu == 'review' ? 'active' : ''}" href="${pageContext.request.contextPath}/review/list">
