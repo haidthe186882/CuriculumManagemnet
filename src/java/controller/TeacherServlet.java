@@ -85,7 +85,9 @@ public class TeacherServlet extends HttpServlet {
             if (filePart != null && filePart.getSize() > 0) {
                 String uploads = getServletContext().getRealPath("/uploads/teacher/") + File.separator + u.getUserId();
                 File dir = new File(uploads);
-                if (!dir.exists()) dir.mkdirs();
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
                 String submitted = Path.of(filePart.getSubmittedFileName()).getFileName().toString();
                 Path target = Path.of(uploads, submitted);
                 try (InputStream in = filePart.getInputStream()) {

@@ -13,6 +13,7 @@
     <%@ include file="/WEB-INF/views/common/styles.jsp" %>
 </head>
 <body>
+<c:set var="activeMenu" value="teacher"/>
 <%@ include file="/WEB-INF/views/common/sidebar.jsp" %>
 <div class="main-content">
     <div class="topbar">
