@@ -2,8 +2,7 @@ package dao;
 
 import dal.DBContext;
 import model.Curriculum;
-import model.Program;
-import model.User;
+import model.Major;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -15,6 +14,10 @@ public class CurriculumDAO {
         Curriculum c = new Curriculum();
         c.setCurriculumId(rs.getString("Curriculum_ID"));
         c.setMajorId(rs.getString("Major_ID"));
+<<<<<<< HEAD
+=======
+        c.setMajorName(rs.getString("Major_Name"));
+>>>>>>> main
         c.setCreatedBy(rs.getString("Created_By"));
         c.setCurriculumCode(rs.getString("Curriculum_Code"));
         c.setCurriculumName(rs.getString("Curriculum_Name"));
@@ -24,75 +27,105 @@ public class CurriculumDAO {
         c.setVersion(rs.getString("Version"));
         c.setDecisionNo(rs.getString("Decision_No"));
         c.setDecisionDate(rs.getDate("Decision_Date"));
-        try { c.setStatus(rs.getString("Status")); } catch (SQLException ignored) {}
-        try { c.setCreatedDate(rs.getTimestamp("Created_Date")); } catch (SQLException ignored) {}
-        c.setUpdatedDate(rs.getTimestamp("Updated_Date"));
-        try { c.setPublic(rs.getBoolean("Is_Public")); } catch (SQLException ignored) {}
-        try { c.setActive(rs.getBoolean("Is_Active")); } catch (SQLException ignored) {}
-        // join Program
         try {
-            Program p = new Program();
-            p.setProgramId(rs.getString("Program_ID"));
-            p.setProgramName(rs.getString("Program_Name"));
-            p.setProgramCode(rs.getString("Program_Code"));
-            c.setProgram(p);
-        } catch (SQLException ignored) {}
+            c.setIsActive(rs.getBoolean("Is_Active"));
+        } catch (SQLException ignored) {
+            ignored.printStackTrace();
+        }
+        try {
+            c.setCreatedDate(rs.getTimestamp("Created_Date"));
+        } catch (SQLException ignored) {
+            ignored.printStackTrace();
+        }
+        c.setUpdatedDate(rs.getTimestamp("Updated_Date"));
+        // join Major
+        try {
+            Major m = new Major();
+            m.setMajorId(rs.getString("Major_ID"));
+            m.setMajorName(rs.getString("Major_Name"));
+            m.setMajorCode(rs.getString("Major_Code"));
+            c.setMajorId(m.getMajorId());
+        } catch (SQLException ignored) {
+            ignored.printStackTrace();
+        }
         return c;
     }
 
-    /** Tim kiem curriculum (public: chi hien Approved + IsPublic) */
-    public List<Curriculum> searchCurriculums(String keyword, String status, boolean publicOnly) {
+    /**
+     * Tim kiem curriculum (public: chi hien Approved + IsPublic)
+     */
+    public List<Curriculum> searchCurriculums(String keyword, String isActive, boolean publicOnly) {
         List<Curriculum> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT c.*, p.Program_Name, p.Program_Code FROM Curriculums c "
-          + "JOIN Programs p ON c.Program_ID = p.Program_ID WHERE 1=1");
-        if (publicOnly) sql.append(" AND c.Is_Active=1");
-        if (keyword != null && !keyword.trim().isEmpty())
+                "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
+                + "JOIN Majors m ON c.Major_ID = m.Major_ID WHERE 1=1");
+        if (publicOnly) {
+            sql.append(" AND c.Is_Active=1");
+        }
+        if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (c.Curriculum_Name LIKE ? OR c.Curriculum_Code LIKE ? OR c.English_Name LIKE ?)");
-        if (status != null && !status.trim().isEmpty() && !publicOnly)
-            ; // Status column removed in new schema; ignore status filter
+        }
+        if (isActive != null && !isActive.trim().isEmpty() && !publicOnly) {
+            sql.append(" AND c.Is_Active = ?");
+        }
         sql.append(" ORDER BY c.Created_Date DESC");
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql.toString())) {
             int idx = 1;
             if (keyword != null && !keyword.trim().isEmpty()) {
                 ps.setString(idx++, "%" + keyword + "%");
                 ps.setString(idx++, "%" + keyword + "%");
                 ps.setString(idx++, "%" + keyword + "%");
             }
-            if (status != null && !status.trim().isEmpty() && !publicOnly)
-                ps.setString(idx, status);
+            if (isActive != null && !isActive.trim().isEmpty() && !publicOnly) {
+                ps.setInt(idx, Integer.parseInt(isActive));
+            }
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapCurriculum(rs));
-        } catch (Exception e) { e.printStackTrace(); }
+            while (rs.next()) {
+                list.add(mapCurriculum(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
-    /** Lay curriculum theo ID */
+    /**
+     * Lay curriculum theo ID
+     */
     public Curriculum getCurriculumById(String id) {
-        String sql = "SELECT c.*, p.Program_Name, p.Program_Code FROM Curriculums c "
-                   + "JOIN Programs p ON c.Program_ID = p.Program_ID WHERE c.Curriculum_ID = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
+                + "JOIN Majors m ON c.Major_ID = m.Major_ID WHERE c.Curriculum_ID = ?";
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return mapCurriculum(rs);
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next()) {
+                return mapCurriculum(rs);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
-    /** Lay danh sach cho Designer/Admin (tat ca trang thai) */
-    public List<Curriculum> getAllCurriculums(String keyword, String status) {
-        return searchCurriculums(keyword, status, false);
+    /**
+     * Lay danh sach cho Designer/Admin (tat ca trang thai)
+     */
+    public List<Curriculum> getAllCurriculums(String keyword, String isActive) {
+        return searchCurriculums(keyword, isActive, false);
     }
 
-    /** Lay danh sach curriculum cho Reviewer (Pending) */
+    /**
+     * Lay danh sach curriculum cho Reviewer (Pending)
+     */
     public List<Curriculum> getPendingCurriculums() {
         return searchCurriculums(null, "Pending", false);
     }
 
-    /** Them curriculum moi */
+    /**
+     * Them curriculum moi
+     */
     public boolean addCurriculum(Curriculum c) {
+<<<<<<< HEAD
 
         String sql =
             "INSERT INTO Curriculums (" +
@@ -115,6 +148,14 @@ public class CurriculumDAO {
         ) {
 
             ps.setString(1, c.getMajorId());
+=======
+        String sql = "INSERT INTO Curriculums (Curriculum_ID, Major_Name, Created_By, Curriculum_Code, "
+                + "Curriculum_Name, English_Name, Description, Total_Credits, Version, Decision_No, "
+                + "Decision_Date, Is_Active, Created_Date) "
+                + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, GETDATE())";
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, c.getMajorName());
+>>>>>>> main
             ps.setString(2, c.getCreatedBy());
             ps.setString(3, c.getCurriculumCode());
             ps.setString(4, c.getCurriculumName());
@@ -136,21 +177,28 @@ public class CurriculumDAO {
             }
 
             return ps.executeUpdate() > 0;
+<<<<<<< HEAD
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+=======
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+>>>>>>> main
         return false;
 }
 
-    /** Cap nhat curriculum */
+    /**
+     * Cap nhat curriculum
+     */
     public boolean updateCurriculum(Curriculum c) {
         String sql = "UPDATE Curriculums SET Curriculum_Name=?, English_Name=?, Description=?, "
-                   + "Total_Credits=?, Version=?, Decision_No=?, Decision_Date=?, Updated_Date=GETDATE() "
-                   + "WHERE Curriculum_ID=?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                + "Total_Credits=?, Version=?, Decision_No=?, Decision_Date=?, Updated_Date=GETDATE() "
+                + "WHERE Curriculum_ID=?";
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, c.getCurriculumName());
             ps.setString(2, c.getEnglishName());
             ps.setString(3, c.getDescription());
@@ -160,51 +208,64 @@ public class CurriculumDAO {
             ps.setDate(7, c.getDecisionDate() != null ? new java.sql.Date(c.getDecisionDate().getTime()) : null);
             ps.setString(8, c.getCurriculumId());
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
-    /** Doi trang thai: Submit for Review */
+    /**
+     * Doi trang thai: Submit for Review
+     */
     public boolean submitForReview(String curriculumId) {
         return changeStatus(curriculumId, "Pending");
     }
 
-    /** Doi trang thai: Approve */
+    /**
+     * Doi trang thai: Approve
+     */
     public boolean approveCurriculum(String curriculumId) {
         String sql = "UPDATE Curriculums SET Is_Active=1, Updated_Date=GETDATE() WHERE Curriculum_ID=?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, curriculumId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
-    /** Doi trang thai: Reject */
+    /**
+     * Doi trang thai: Reject
+     */
     public boolean rejectCurriculum(String curriculumId) {
         return changeStatus(curriculumId, "Draft");
     }
 
-    /** Toggle Is_Active */
+    /**
+     * Toggle Is_Active
+     */
     public boolean toggleActive(String curriculumId, boolean isActive) {
         String sql = "UPDATE Curriculums SET Is_Active=?, Updated_Date=GETDATE() WHERE Curriculum_ID=?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setBoolean(1, isActive);
             ps.setString(2, curriculumId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     private boolean changeStatus(String id, String status) {
         // Status column removed; just update Updated_Date to track change
         String sql = "UPDATE Curriculums SET Updated_Date=GETDATE() WHERE Curriculum_ID=?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, id);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 }
