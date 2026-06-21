@@ -26,17 +26,17 @@ DECLARE @student2      UNIQUEIDENTIFIER = NEWID();
 
 INSERT INTO Users (User_ID, Full_Name, Email, Password_Hash, Is_Active)
 VALUES
-(@admin1,      N'Nguyễn Văn An',      'an.nguyen@university.edu.vn',      'hash_placeholder_001', 1),
-(@designerIT,  N'Trần Thị Bình',      'binh.tran@university.edu.vn',      'hash_placeholder_002', 1),
-(@designerBus, N'Lê Hoàng Cường',     'cuong.le@university.edu.vn',       'hash_placeholder_003', 1),
-(@designerMkt, N'Phạm Thị Dung',      'dung.pham@university.edu.vn',      'hash_placeholder_004', 1),
-(@reviewer1,   N'Hoàng Văn Em',       'em.hoang@university.edu.vn',       'hash_placeholder_005', 1),
-(@reviewer2,   N'Vũ Thị Phương',      'phuong.vu@university.edu.vn',      'hash_placeholder_006', 1),
-(@teacher1,    N'Đặng Văn Giang',     'giang.dang@university.edu.vn',     'hash_placeholder_007', 1),
-(@teacher2,    N'Bùi Thị Hoa',        'hoa.bui@university.edu.vn',        'hash_placeholder_008', 1),
-(@teacher3,    N'Ngô Văn Inh',        'inh.ngo@university.edu.vn',        'hash_placeholder_009', 1),
-(@student1,    N'Lý Thị Kim',         'kim.ly@student.university.edu.vn', 'hash_placeholder_010', 1),
-(@student2,    N'Phan Văn Long',      'long.phan@student.university.edu.vn','hash_placeholder_011', 1);
+(@admin1,      N'Nguyễn Văn An',      'admin@cms.com', 'admin123', 1),
+(@designerIT,  N'Trần Thị Bình',      'designer@cms.com', 'designer123', 1),
+(@designerBus, N'Lê Hoàng Cường',     'designer1@cms.com', 'designer123', 1),
+(@designerMkt, N'Phạm Thị Dung',      'designer2@cms.com', 'designer123', 1),
+(@reviewer1,   N'Hoàng Văn Em',       'reviewer@cms.com', 'reviewer123', 1),
+(@reviewer2,   N'Vũ Thị Phương',      'reviewer1@cms.com', 'reviewer123', 1),
+(@teacher1,    N'Đặng Văn Giang',     'teacher@cms.com', 'teacher123', 1),
+(@teacher2,    N'Bùi Thị Hoa',        'teacher1@cms.com', 'teacher123', 1),
+(@teacher3,    N'Ngô Văn Inh',        'teacher2@cms.com', 'teacher123', 1),
+(@student1,    N'Lý Thị Kim',         'student@cms.com', 'student123', 1),
+(@student2,    N'Phan Văn Long',      'student1@cms.com', 'student123', 1);
 
 /* =========================================================
    2) USER_ROLES — gán vai trò theo Roles đã có sẵn (Admin, Designer, Reviewer, Teacher, Student)
