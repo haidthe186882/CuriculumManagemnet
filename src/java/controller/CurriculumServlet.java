@@ -26,11 +26,9 @@ import java.util.List;
 public class CurriculumServlet extends HttpServlet {
 
     private final CurriculumDAO curriculumDAO = new CurriculumDAO();
-<<<<<<< HEAD
+
     private final MajorDAO majorDAO = new MajorDAO();
-=======
-    private final MajorDAO    majorDAO    = new MajorDAO();
->>>>>>> main
+
     private final SubjectDAO    subjectDAO    = new SubjectDAO();
     private final ReviewDAO     reviewDAO     = new ReviewDAO();
 
@@ -108,7 +106,7 @@ public class CurriculumServlet extends HttpServlet {
         throws ServletException, IOException {
 
         if (!requireRole(req, res, "Designer", "Admin")) return;
-<<<<<<< HEAD
+
 
         System.out.println("===== TEST MAJOR =====");
         System.out.println("Total majors: " + majorDAO.getAllMajors().size());
@@ -116,9 +114,6 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", false); // Xác định trạng thái tạo mới
 
-=======
-        req.setAttribute("majors", majorDAO.getAllMajors());
->>>>>>> main
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -127,12 +122,9 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin")) return;
         String id = req.getParameter("id");
         req.setAttribute("curriculum", curriculumDAO.getCurriculumById(id));
-<<<<<<< HEAD
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", true); // Xác định trạng thái chỉnh sửa
-=======
-        req.setAttribute("majors",   majorDAO.getAllMajors());
->>>>>>> main
+
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
