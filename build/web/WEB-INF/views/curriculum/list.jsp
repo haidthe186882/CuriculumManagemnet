@@ -50,7 +50,7 @@
         <div class="col-6 col-md-3">
             <div class="stat-card">
                 <div class="stat-number">${totalCount}</div>
-                <div class="stat-label"><i class="bi bi-book me-1"></i>Total Curriculums</div>
+                <div class="stat-label"><i class="bi bi-book me-1"></i>Total Curriculum</div>
             </div>
         </div>
         <div class="col-6 col-md-3">

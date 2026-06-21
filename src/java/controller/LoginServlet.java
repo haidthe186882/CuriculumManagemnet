@@ -29,34 +29,49 @@ public class LoginServlet extends HttpServlet {
         String password = req.getParameter("password");
 
         if (email == null || password == null || email.trim().isEmpty() || password.trim().isEmpty()) {
-            req.setAttribute("error", "Please enter both email and password.");
+            req.setAttribute("error", "Vui lòng nhập đầy đủ email và mật khẩu.");
             req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, res);
             return;
         }
 
         UserDAO dao = new UserDAO();
-        // Delegate authentication to DAO: DB contains hashed password already.
+        // DB stores password hash; the form value is compared as-is (plain hash_placeholder).
         User user = dao.login(email.trim(), password.trim());
 
         if (user == null) {
-            req.setAttribute("error", "Invalid email or password.");
+            req.setAttribute("error", "Email hoặc mật khẩu không đúng.");
             req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, res);
             return;
         }
 
+        // Store user (with loaded roles) in session
         HttpSession session = req.getSession(true);
         session.setAttribute("loggedUser", user);
-        session.setMaxInactiveInterval(30 * 60); // 30 min timeout (NFR 4.2.4)
+        session.setMaxInactiveInterval(30 * 60); // 30 min timeout
 
-        // Redirect theo role
+        // Redirect based on primary role (User_Roles table may assign multiple roles;
+        // we use the first one returned, priority: Admin > Designer > Reviewer > Teacher > Student)
         String role = user.getRole() != null ? user.getRole().getRoleName() : "";
+
         switch (role) {
-            case "Admin":    res.sendRedirect(req.getContextPath() + "/admin/home"); break;
-            case "Reviewer": res.sendRedirect(req.getContextPath() + "/review/list"); break;
-            case "Designer": res.sendRedirect(req.getContextPath() + "/curriculum/list"); break;
-            default:         res.sendRedirect(req.getContextPath() + "/curriculum/list"); break;
+            case "Admin":
+                res.sendRedirect(req.getContextPath() + "/admin/users");
+                break;
+            case "Designer":
+                res.sendRedirect(req.getContextPath() + "/curriculum/list");
+                break;
+            case "Reviewer":
+                res.sendRedirect(req.getContextPath() + "/review/list");
+                break;
+            case "Teacher":
+                res.sendRedirect(req.getContextPath() + "/teacher/home");
+                break;
+            case "Student":
+                res.sendRedirect(req.getContextPath() + "/curriculum/list");
+                break;
+            default:
+                res.sendRedirect(req.getContextPath() + "/curriculum/list");
+                break;
         }
     }
-
-    // Authentication now delegated to `UserDAO.login(email, password)`
 }

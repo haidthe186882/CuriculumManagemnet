@@ -1,6 +1,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <div class="sidebar">
-    <div class="brand">LT<span>MS</span></div>
+    <div class="brand"><span>LTMS</span></div>
     <div class="nav-section">Main Menu</div>
     <a class="nav-link ${activeMenu == 'curriculum' ? 'active' : ''}" href="${pageContext.request.contextPath}/curriculum/list">
         <i class="bi bi-book"></i> Curriculums
@@ -22,7 +22,7 @@
     </c:if>
 
     <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
-        <div class="nav-section">Review</div>
+        <div class="nav-section">ReFview</div>
         <a class="nav-link ${activeMenu == 'review' ? 'active' : ''}" href="${pageContext.request.contextPath}/review/list">
             <i class="bi bi-clipboard-check"></i> Review List
         </a>
