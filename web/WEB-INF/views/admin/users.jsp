@@ -184,14 +184,25 @@
                                     </c:forEach>
                                 </select>
                             </div>
-                            <div class="mb-2 form-check">
-                                <input class="form-check-input" type="checkbox" id="isReviewer" name="isReviewer">
-                                <label class="form-check-label" for="isReviewer">Grant Reviewer</label>
+                            <!--                            <div class="mb-2 form-check">
+                                                            <input class="form-check-input" type="checkbox" id="isReviewer" name="isReviewer">
+                                                            <label class="form-check-label" for="isReviewer">Grant Reviewer</label>
+                                                        </div>
+                                                        <div class="mb-3 form-check">
+                                                            <input class="form-check-input" type="checkbox" id="isDesigner" name="isDesigner">
+                                                            <label class="form-check-label" for="isDesigner">Grant Designer</label>
+                                                        </div>-->
+                            <div id="extraRolesDiv">
+                                <div class="mb-2 form-check">
+                                    <input class="form-check-input border-secondary" type="checkbox" id="isReviewer" name="isReviewer">
+                                    <label class="form-check-label text-light" for="isReviewer">Grant Reviewer</label>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input class="form-check-input border-secondary" type="checkbox" id="isDesigner" name="isDesigner">
+                                    <label class="form-check-label text-light" for="isDesigner">Grant Designer</label>
+                                </div>
                             </div>
-                            <div class="mb-3 form-check">
-                                <input class="form-check-input" type="checkbox" id="isDesigner" name="isDesigner">
-                                <label class="form-check-label" for="isDesigner">Grant Designer</label>
-                            </div>
+
                             <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-person-plus me-1"></i>Add User</button>
                         </form>
                     </div>
