@@ -316,5 +316,31 @@
         </c:forEach>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+    // JS tự động ẩn/hiện quyền phụ khi tạo User mới dựa trên Role được chọn
+    document.addEventListener("DOMContentLoaded", function() {
+        const roleSelect = document.getElementById("addRoleSelect");
+        const extraRolesDiv = document.getElementById("extraRolesDiv");
+        const extraCheckboxes = extraRolesDiv.querySelectorAll("input[type=checkbox]");
+
+        function toggleExtraRoles() {
+            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+            // Nếu chọn Student thì ẩn khu vực phân quyền
+            if (selectedOption.getAttribute("data-name") === 'Student') {
+                extraRolesDiv.style.display = 'none';
+                // Bỏ tick tất cả nếu đang tick
+                extraCheckboxes.forEach(cb => cb.checked = false); 
+            } else {
+                extraRolesDiv.style.display = 'block';
+            }
+        }
+
+        // Bắt sự kiện khi người dùng thay đổi Dropdown
+        if (roleSelect) {
+            roleSelect.addEventListener("change", toggleExtraRoles);
+            toggleExtraRoles(); // Gọi hàm lần đầu khi mới load trang
+        }
+    });
+</script>
     </body>
 </html>
