@@ -37,7 +37,7 @@ public class TeacherServlet extends HttpServlet {
         }
         String path = req.getPathInfo();
         if (path == null || "/home".equals(path)) {
-            req.getRequestDispatcher("/WEB-INF/views/teacher/home.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/views/curriculum/list.jsp").forward(req, resp);
             return;
         }
         if ("/upload".equals(path)) {
