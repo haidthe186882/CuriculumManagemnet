@@ -34,21 +34,14 @@
     <div class="card-dark p-3 mb-3">
         <form method="get" action="${pageContext.request.contextPath}/subject/list">
             <div class="row g-2">
-                <div class="col-md-5">
-                    <input type="text" name="keyword" class="search-bar form-control w-100"
-                           placeholder="Search by code or name..." value="${keyword}">
-                </div>
-                <div class="col-md-3">
-                    <select name="department" class="form-select form-select-dark w-100">
-                        <option value="">All Departments</option>
-                        <c:forEach var="d" items="${departments}">
-                            <option value="${d}" ${department == d ? 'selected' : ''}>${d}</option>
-                        </c:forEach>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="number" name="credits" class="form-control form-control-dark w-100"
-                           placeholder="Credits" value="${param.credits}">
+                <div class="col-md-10">
+                    <div class="input-group">
+                        <input type="text" name="keyword" class="search-bar form-control border-end-0"
+                               placeholder="Search by code or name..." value="${keyword}">
+                        <span class="input-group-text bg-white border-start-0" style="border-color: var(--border);">
+                            <i class="bi bi-search" style="color: var(--muted);"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-search"></i> Search</button>
@@ -61,16 +54,22 @@
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead>
-                    <tr><th>#</th><th>Code</th><th>Subject Name</th><th>Department</th><th>Credits</th><th>Actions</th></tr>
+                    <tr>
+                        <th style="cursor: pointer; user-select: none;">#</th>
+                        <th class="sortable" data-sort="code" style="cursor: pointer; user-select: none;">Code <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
+                        <th class="sortable" data-sort="name" style="cursor: pointer; user-select: none;">Subject Name <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
+                        <th class="sortable" data-sort="department" style="cursor: pointer; user-select: none;">Department <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
+                        <th class="sortable" data-sort="credits" style="cursor: pointer; user-select: none;">Credits <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
+                    </tr>
                 </thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="6" class="text-center py-5 text-muted">No subjects found.</td></tr>
+                            <tr><td colspan="5" class="text-center py-5 text-muted">No subjects found.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="s" items="${subjects}" varStatus="st">
-                                <tr>
+                                <tr class="subject-row" data-detail-url="${pageContext.request.contextPath}/subject/detail?id=${s.subjectId}" style="cursor: pointer;">
                                     <td>${st.count}</td>
                                     <td><code style="color:#4fc3f7;">${s.subjectCode}</code></td>
                                     <td>
@@ -79,11 +78,6 @@
                                     </td>
                                     <td class="text-muted">${s.department}</td>
                                     <td>${s.credits}</td>
-                                    <td>
-                                        <a href="${pageContext.request.contextPath}/subject/detail?id=${s.subjectId}" class="btn btn-action btn-view">
-                                            <i class="bi bi-eye me-1"></i>View
-                                        </a>
-                                    </td>
                                 </tr>
                             </c:forEach>
                         </c:otherwise>
@@ -94,5 +88,89 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Make subject list rows clickable
+    document.addEventListener('DOMContentLoaded', function() {
+        const subjectRows = document.querySelectorAll('.subject-row');
+        subjectRows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.closest('a, button')) return;
+                const detailUrl = this.getAttribute('data-detail-url');
+                if (detailUrl) window.location.href = detailUrl;
+            });
+            
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(79, 195, 247, 0.08)';
+            });
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+        
+
+
+
+        
+        // Table sorting functionality
+        const sortableHeaders = document.querySelectorAll('th.sortable');
+        let currentSort = { column: null, direction: 'asc' };
+        
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const sortColumn = this.getAttribute('data-sort');
+                const tbody = document.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr.subject-row'));
+                
+                if (currentSort.column === sortColumn) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = sortColumn;
+                    currentSort.direction = 'asc';
+                }
+                
+                sortableHeaders.forEach(h => {
+                    const icon = h.querySelector('i');
+                    if (icon) icon.className = 'bi bi-arrow-down-up';
+                    h.style.opacity = '1';
+                });
+                const activeIcon = this.querySelector('i');
+                if (activeIcon) {
+                    activeIcon.className = currentSort.direction === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+                }
+                
+                rows.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch(sortColumn) {
+                        case 'code':
+                            aVal = a.cells[1].textContent.trim().toLowerCase();
+                            bVal = b.cells[1].textContent.trim().toLowerCase();
+                            break;
+                        case 'name':
+                            aVal = a.cells[2].textContent.trim().toLowerCase();
+                            bVal = b.cells[2].textContent.trim().toLowerCase();
+                            break;
+                        case 'department':
+                            aVal = a.cells[3].textContent.trim().toLowerCase();
+                            bVal = b.cells[3].textContent.trim().toLowerCase();
+                            break;
+                        case 'credits':
+                            aVal = parseFloat(a.cells[4].textContent.trim()) || 0;
+                            bVal = parseFloat(b.cells[4].textContent.trim()) || 0;
+                            break;
+                    }
+                    
+                    if (currentSort.direction === 'asc') {
+                        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                    } else {
+                        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                    }
+                });
+                
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+</script>
 </body>
 </html>

@@ -37,9 +37,18 @@
                 <div class="col-md-3"><div class="detail-label">Status</div><div class="detail-value">${subject.status}</div></div>
                 <div class="col-12"><div class="detail-label">Description</div><div class="detail-value">${subject.description}</div></div>
             </div>
-            <a href="${pageContext.request.contextPath}/syllabus/list?keyword=${subject.subjectCode}" class="btn btn-view btn-action">
-                <i class="bi bi-file-earmark-text me-1"></i>View Syllabuses
-            </a>
+            <c:choose>
+                <c:when test="${not empty syllabus}">
+                    <a href="${pageContext.request.contextPath}/syllabus/detail?id=${syllabus.syllabusId}" class="btn btn-view btn-action">
+                        <i class="bi bi-file-earmark-text me-1"></i>View Syllabus
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <a href="${pageContext.request.contextPath}/syllabus/list?keyword=${subject.subjectCode}" class="btn btn-view btn-action">
+                        <i class="bi bi-file-earmark-text me-1"></i>View Syllabuses
+                    </a>
+                </c:otherwise>
+            </c:choose>
         </div>
     </c:if>
 </div>
