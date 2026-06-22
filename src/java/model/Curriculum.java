@@ -15,6 +15,7 @@ public class Curriculum {
     private Date createdDate;
     private Date updatedDate;
     private boolean isActive;
+    private int status;
     
     // Các trường dữ liệu phục vụ liên kết bảng (Joins) - Giữ bản sạch từ main
     private String majorId;
@@ -120,6 +121,15 @@ public class Curriculum {
         this.isActive = isActive;
     }
 
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+    
+
     public String getMajorId() {
         return majorId;
     }
@@ -140,7 +150,7 @@ public class Curriculum {
         return createdBy;
     }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }       
+    public void setCreatedBy(String createBy) {
+        this.createdBy = createBy;
+    }    
 }
