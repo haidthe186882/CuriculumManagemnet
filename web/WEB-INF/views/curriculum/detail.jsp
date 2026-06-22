@@ -19,11 +19,11 @@
             <div class="topbar">
         <div>
             <div class="page-title">${curriculum.curriculumName}</div>
-            <div class="page-subtitle"><code style="color:var(--accent);">${curriculum.curriculumCode}</code> · ${curriculum.program.programName}</div>
+            <div class="page-subtitle"><code style="color:var(--accent);">${curriculum.curriculumCode}</code> · ${curriculum.majorName}</div>
         </div>
         <div class="d-flex gap-2">
             <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
-                <c:if test="${curriculum.status == 'Draft'}">
+                <c:if test="${not curriculum.isActive}">
                     <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                         <i class="bi bi-pencil me-1"></i>Edit
                     </a>
@@ -70,13 +70,15 @@
                 <div class="detail-label">isActive</div>
                 <div class="mb-3">
                     <c:choose>
-                        <c:when test="${curriculum.status == 'Approved'}"><span class="badge-status badge-approved">${curriculum.status}</span></c:when>
-                        <c:when test="${curriculum.status == 'Pending'}"><span class="badge-status badge-pending">${curriculum.status}</span></c:when>
-                        <c:when test="${curriculum.status == 'Draft'}"><span class="badge-status badge-draft">${curriculum.status}</span></c:when>
-                        <c:otherwise><span class="badge-status badge-archived">${curriculum.status}</span></c:otherwise>
+                        <c:when test="${curriculum.isActive}">
+                            <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Active</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
+                        </c:otherwise>
                     </c:choose>
                 </div>
-                <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' and curriculum.status == 'Pending'}">
+                <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' and not curriculum.isActive}">
                     <form method="post" action="${pageContext.request.contextPath}/curriculum/list" class="mb-2">
                         <input type="hidden" name="action" value="approve">
                         <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
@@ -98,21 +100,33 @@
     <div class="p-3 border-bottom"><h6 class="mb-0">Subjects in Curriculum</h6></div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
-                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th></tr></thead>
+                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th><th>Syllabus</th></tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="6" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
+                            <tr><td colspan="7" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
-                                <tr>
+                                <tr class="subject-row" data-detail-url="${pageContext.request.contextPath}/subject/detail?id=${cs.subject.subjectId}" style="cursor: pointer;">
                                     <td>${st.count}</td>
                                     <td><code style="color:var(--accent);">${cs.subject.subjectCode}</code></td>
                                     <td>${cs.subject.subjectName}</td>
                                     <td>${cs.semesterNo}</td>
                                     <td>${cs.subject.credits}</td>
                                     <td><c:if test="${cs.mandatory}"><i class="bi bi-check-circle text-success"></i></c:if></td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${not empty cs.subject.syllabusId}">
+                                                <a href="${pageContext.request.contextPath}/syllabus/detail?id=${cs.subject.syllabusId}" class="btn btn-sm btn-outline-info text-decoration-none py-1 px-2" style="font-size: 0.78rem;">
+                                                    <i class="bi bi-file-earmark-text me-1"></i>View Syllabus
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="text-muted" style="font-size:0.8rem;">No Syllabus</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
                                 </tr>
                             </c:forEach>
                         </c:otherwise>
@@ -122,32 +136,52 @@
         </div>
     </div>
 
-    <div class="card-dark">
-    <div class="p-3 border-bottom"><h6 class="mb-0">Review History</h6></div>
-        <div class="table-responsive">
-            <table class="table table-dark-custom mb-0">
-                <thead><tr><th>Date</th><th>Reviewer</th><th>Status</th><th>Comment</th></tr></thead>
-                <tbody>
-                    <c:choose>
-                        <c:when test="${empty reviews}">
-                            <tr><td colspan="4" class="text-center py-4 text-muted">No reviews yet.</td></tr>
-                        </c:when>
-                        <c:otherwise>
-                            <c:forEach var="rv" items="${reviews}">
-                                <tr>
-                                    <td><fmt:formatDate value="${rv.reviewDate}" pattern="dd/MM/yyyy HH:mm"/></td>
-                                    <td>${rv.reviewer.fullName}</td>
-                                    <td>${rv.status}</td>
-                                    <td>${rv.comment}</td>
-                                </tr>
-                            </c:forEach>
-                        </c:otherwise>
-                    </c:choose>
-                </tbody>
-            </table>
+    <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Reviewer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+        <div class="card-dark">
+        <div class="p-3 border-bottom"><h6 class="mb-0">Review History</h6></div>
+            <div class="table-responsive">
+                <table class="table table-dark-custom mb-0">
+                    <thead><tr><th>Date</th><th>Reviewer</th><th>Status</th><th>Comment</th></tr></thead>
+                    <tbody>
+                        <c:choose>
+                            <c:when test="${empty reviews}">
+                                <tr><td colspan="4" class="text-center py-4 text-muted">No reviews yet.</td></tr>
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach var="rv" items="${reviews}">
+                                    <tr>
+                                        <td><fmt:formatDate value="${rv.reviewDate}" pattern="dd/MM/yyyy HH:mm"/></td>
+                                        <td>${rv.reviewer.fullName}</td>
+                                        <td>${rv.status}</td>
+                                        <td>${rv.comment}</td>
+                                    </tr>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    </c:if>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const subjectRows = document.querySelectorAll('.subject-row');
+        subjectRows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.closest('a, button')) return;
+                const detailUrl = this.getAttribute('data-detail-url');
+                if (detailUrl) window.location.href = detailUrl;
+            });
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(79, 195, 247, 0.08)';
+            });
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+    });
+</script>
 </body>
 </html>

@@ -6,7 +6,7 @@ import dao.SubjectDAO;
 import dao.ReviewDAO;
 import model.Curriculum;
 import model.User;
-import util.ExcelHelper; // Import class xử lý Excel của bạn
+import util.ExcelHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -16,27 +16,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-@WebServlet(name = "CurriculumServlet", urlPatterns = { "/curriculum/*" })
-// 1. THÊM CẤU HÌNH MULTIPART ĐỂ HỆ THỐNG NHẬN BIẾT FILE UPLOAD
-@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-        maxFileSize = 1024 * 1024 * 10, // 10MB
-        maxRequestSize = 1024 * 1024 * 50 // 50MB
+@WebServlet(name = "CurriculumServlet", urlPatterns = {"/curriculum/*"})
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
+    maxFileSize = 1024 * 1024 * 10,       // 10MB
+    maxRequestSize = 1024 * 1024 * 50     // 50MB
 )
 public class CurriculumServlet extends HttpServlet {
 
     private final CurriculumDAO curriculumDAO = new CurriculumDAO();
-
-
-    private final MajorDAO majorDAO = new MajorDAO();
-    private final SubjectDAO subjectDAO = new SubjectDAO();
-    private final ReviewDAO reviewDAO = new ReviewDAO();
+    private final MajorDAO      majorDAO      = new MajorDAO();
+    private final SubjectDAO    subjectDAO    = new SubjectDAO();
+    private final ReviewDAO     reviewDAO     = new ReviewDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        String pathInfo = req.getPathInfo(); // /list, /detail, /create, /edit
-        if (pathInfo == null)
-            pathInfo = "/list";
+
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null) pathInfo = "/list";
 
         switch (pathInfo) {
             case "/list":
@@ -59,16 +57,12 @@ public class CurriculumServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-
-        // Thiết lập bộ mã hóa tiếng Việt đầu vào
         req.setCharacterEncoding("UTF-8");
-
         String pathInfo = req.getPathInfo();
         String action = req.getParameter("action");
         if (action == null)
             action = "";
 
-        // 2. CHECK ĐƯỜNG DẪN IMPORT EXCEL TRƯỚC KHI ĐI VÀO SWITCH ACTION CỦA FORM GỐC
         if ("/importExcel".equals(pathInfo)) {
             doImportExcel(req, res);
             return;
@@ -101,9 +95,12 @@ public class CurriculumServlet extends HttpServlet {
             throws ServletException, IOException {
         User user = getLoggedUser(req);
         String keyword = req.getParameter("keyword");
-        String status = req.getParameter("status");
+
+        String status  = req.getParameter("status"); // Đọc tham số bộ lọc Status từ giao diện (0, 2, 1)
+
         boolean publicOnly = (user == null || isPublicRole(user));
 
+        // Gọi hàm tìm kiếm truyền bộ lọc status sang cho DAO
         List<Curriculum> list = curriculumDAO.searchCurriculums(keyword, status, publicOnly);
         req.setAttribute("curriculums", list);
         req.setAttribute("keyword", keyword);
@@ -128,16 +125,9 @@ public class CurriculumServlet extends HttpServlet {
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-
-        if (!requireRole(req, res, "Designer", "Admin"))
-            return;
-
-        System.out.println("===== TEST MAJOR =====");
-        System.out.println("Total majors: " + majorDAO.getAllMajors().size());
-
+        if (!requireRole(req, res, "Designer", "Admin")) return;
         req.setAttribute("majors", majorDAO.getAllMajors());
-        req.setAttribute("isEdit", false); // Xác định trạng thái tạo mới
-
+        req.setAttribute("isEdit", false);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -147,28 +137,30 @@ public class CurriculumServlet extends HttpServlet {
             return;
         String id = req.getParameter("id");
         req.setAttribute("curriculum", curriculumDAO.getCurriculumById(id));
-        req.setAttribute("majors", majorDAO.getAllMajors());
-        req.setAttribute("isEdit", true); // Xác định trạng thái chỉnh sửa
+        req.setAttribute("majors",   majorDAO.getAllMajors());
+        req.setAttribute("isEdit", true);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
     // ===== POST handlers =====
 
-    // 3. HÀM XỬ LÝ IMPORT FILE EXCEL
-    private void doImportExcel(HttpServletRequest req, HttpServletResponse res)
+    private void doImportExcel(HttpServletRequest req, HttpServletResponse res) 
             throws ServletException, IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
 
         try {
-            Part filePart = req.getPart("excelFile"); // Lấy file từ thẻ <input type="file" name="excelFile">
+            Part filePart = req.getPart("excelFile"); 
             if (filePart != null && filePart.getSize() > 0) {
                 InputStream fileContent = filePart.getInputStream();
 
-                // Sử dụng ExcelHelper bóc tách dòng 1 -> 6 từ file Excel
                 Curriculum importedData = ExcelHelper.parseCurriculumExcel(fileContent);
+                
+                // ĐỒNG BỘ: Mặc định dữ liệu vừa bóc tách từ Excel nhận trạng thái tiến trình là 0 (Draft)
+                importedData.setStatus(0);
+                // Mở kích hoạt Is_Active hiển thị hệ thống mặc định
+                importedData.setIsActive(false);
 
-                // Đưa đối tượng chứa dữ liệu Excel này lên request để form JSP hứng lại
                 req.setAttribute("curriculum", importedData);
                 req.setAttribute("successMessage",
                         "Imported successfully from Excel! Please verify data and choose Major before saving.");
@@ -179,14 +171,8 @@ public class CurriculumServlet extends HttpServlet {
             e.printStackTrace();
             req.setAttribute("errorMessage", "Error parsing Excel file: " + e.getMessage());
         }
-
-        // Luôn nạp lại list Majors để Dropdown danh sách ngành học không bị trống khi
-        // render lại trang
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", false);
-
-        // Trả dữ liệu ngược lại chính giao diện Form để người dùng kiểm tra lại trước
-        // khi nhấn Submit tạo mới
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -196,6 +182,8 @@ public class CurriculumServlet extends HttpServlet {
         User user = getLoggedUser(req);
         Curriculum c = buildFromRequest(req);
         c.setCreatedBy(user.getUserId());
+        
+        // Gọi hàm addCurriculum, DB tự gán Status = 0 (Nhờ Default Constraint) và Is_Active = 1
         curriculumDAO.addCurriculum(c);
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=created");
     }
@@ -213,6 +201,8 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         String id = req.getParameter("curriculumId");
+        
+        // ĐỒNG BỘ: Sử dụng hàm phê duyệt luồng tiến trình `submitForReview` (Chuyển Status thành 2)
         curriculumDAO.submitForReview(id);
         res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + id + "&msg=submitted");
     }
@@ -223,9 +213,11 @@ public class CurriculumServlet extends HttpServlet {
         User user = getLoggedUser(req);
         String id = req.getParameter("curriculumId");
         String comment = req.getParameter("comment");
+        
+        // ĐỒNG BỘ: Sử dụng hàm phê duyệt `approveCurriculum` (Chuyển Status thành 1)
         curriculumDAO.approveCurriculum(id);
         reviewDAO.addReview(id, user.getUserId(), "Approved", comment);
-        res.sendRedirect(req.getContextPath() + "/review/list?msg=approved");
+        res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=approved");
     }
 
     private void doReject(HttpServletRequest req, HttpServletResponse res) throws IOException {
@@ -234,9 +226,11 @@ public class CurriculumServlet extends HttpServlet {
         User user = getLoggedUser(req);
         String id = req.getParameter("curriculumId");
         String comment = req.getParameter("comment");
+        
+        // ĐỒNG BỘ: Sử dụng hàm từ chối duyệt `rejectCurriculum` (Đẩy Status quay về 0)
         curriculumDAO.rejectCurriculum(id);
         reviewDAO.addReview(id, user.getUserId(), "Rejected", comment);
-        res.sendRedirect(req.getContextPath() + "/review/list?msg=rejected");
+        res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=rejected");
     }
 
     // ===== Helpers =====
@@ -254,16 +248,12 @@ public class CurriculumServlet extends HttpServlet {
         }
         c.setVersion(req.getParameter("version"));
         c.setDecisionNo(req.getParameter("decisionNo"));
-
-        // Ánh xạ thêm trường ngày quyết định từ giao diện nếu có form input ngày
         try {
             String dateParam = req.getParameter("decisionDate");
             if (dateParam != null && !dateParam.isEmpty()) {
                 c.setDecisionDate(java.sql.Date.valueOf(dateParam));
             }
-        } catch (Exception ignored) {
-        }
-
+        } catch (Exception ignored) {}
         return c;
     }
 
@@ -273,21 +263,25 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private boolean isPublicRole(User u) {
-        String role = u.getRole() != null ? u.getRole().getRoleName() : "";
+        String role = "";
+        if (u != null && u.getRole() != null) {
+            role = u.getRole().toString();
+        }
         return role.equals("Guest") || role.equals("Student");
     }
 
     private boolean requireRole(HttpServletRequest req, HttpServletResponse res, String... roles)
             throws IOException {
         User user = getLoggedUser(req);
-        if (user == null) {
-            res.sendRedirect(req.getContextPath() + "/login");
-            return false;
+        if (user == null) { res.sendRedirect(req.getContextPath() + "/login"); return false; }
+        
+        String userRole = "";
+        if (user.getRole() != null) {
+            userRole = user.getRole().toString();
         }
-        String userRole = user.getRole() != null ? user.getRole().getRoleName() : "";
-        for (String r : roles)
-            if (r.equals(userRole))
-                return true;
+        
+        for (String r : roles) if (r.equals(userRole)) return true;
+
         res.sendRedirect(req.getContextPath() + "/curriculum/list");
         return false;
     }

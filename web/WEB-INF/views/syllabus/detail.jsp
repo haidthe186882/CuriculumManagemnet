@@ -21,9 +21,12 @@
             <div class="page-title">${syllabus.syllabusName}</div>
             <div class="page-subtitle">${syllabus.subject.subjectCode} — ${syllabus.subject.subjectName}</div>
         </div>
-        <a href="${pageContext.request.contextPath}/syllabus/list" class="btn btn-secondary-custom">
-            <i class="bi bi-arrow-left me-1"></i>Back
-        </a>
+        <div class="d-flex gap-2">
+
+            <a href="${pageContext.request.contextPath}/syllabus/list" class="btn btn-secondary-custom">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
     </div>
 
     <div class="card-dark p-4">
