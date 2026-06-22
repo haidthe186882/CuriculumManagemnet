@@ -99,23 +99,10 @@ public class CurriculumDAO {
             }
 
             if (keyword != null && !keyword.trim().isEmpty()) {
-<<<<<<< HEAD
-                ps.setString(idx++, "%" + keyword + "%");
-                ps.setString(idx++, "%" + keyword + "%");
-                ps.setString(idx++, "%" + keyword + "%");
-            }
-            if (isActive != null && !isActive.trim().isEmpty() && !publicOnly) {
-                int activeVal = 0;
-                if ("Approved".equalsIgnoreCase(isActive) || "1".equals(isActive) || "Active".equalsIgnoreCase(isActive)) {
-                    activeVal = 1;
-                }
-                ps.setInt(idx, activeVal);
-=======
                 String searchKey = "%" + keyword.trim() + "%";
                 ps.setString(idx++, searchKey);
                 ps.setString(idx++, searchKey);
                 ps.setString(idx++, searchKey);
->>>>>>> origin/main
             }
 
             ResultSet rs = ps.executeQuery();
