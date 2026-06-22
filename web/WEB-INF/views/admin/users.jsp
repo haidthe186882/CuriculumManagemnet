@@ -291,6 +291,11 @@
                                             <i class="bi bi-info-circle me-1"></i> Student account can not assign Reviewer or Designer.
                                         </div>
                                     </c:when>
+                                    <c:when test="${u.role.roleName == 'Reviewer' || u.role.roleName == 'Designer'}">
+                                        <div class="alert alert-info p-2 mt-2 mb-0 small border-info text-info bg-transparent">
+                                            <i class="bi bi-shield-check me-1"></i> Primary Role <strong>${u.role.roleName}</strong>, No need addition role.
+                                        </div>
+                                    </c:when>
                                     <c:otherwise>
                                         <div class="d-flex gap-4 mt-3">
                                             <div class="form-check">
