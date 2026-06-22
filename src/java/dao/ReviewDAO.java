@@ -110,7 +110,7 @@ public class ReviewDAO {
      * Lay review theo ID
      */
     public Review getReviewById(String reviewId) {
-        String sql = "SELECT rv.*, c.Curriculum_Code, c.Curriculum_Name, c.Status AS Curr_Status, "
+        String sql = "SELECT rv.*, c.Curriculum_Code, c.Curriculum_Name, c.Is_Active AS Curr_Status, "
                 + "u.Full_Name AS Reviewer_Name FROM Reviews rv "
                 + "JOIN Curriculums c ON rv.Curriculum_ID = c.Curriculum_ID "
                 + "JOIN Users u ON rv.Reviewer_ID = u.User_ID WHERE rv.Review_ID = ?";
@@ -125,13 +125,13 @@ public class ReviewDAO {
         }
         return null;
     }
-
+ 
     /**
      * Lay lich su review cua 1 curriculum
      */
     public List<Review> getReviewsByCurriculum(String curriculumId) {
         List<Review> list = new ArrayList<>();
-        String sql = "SELECT rv.*, c.Curriculum_Code, c.Curriculum_Name, c.Status AS Curr_Status, "
+        String sql = "SELECT rv.*, c.Curriculum_Code, c.Curriculum_Name, c.Is_Active AS Curr_Status, "
                 + "u.Full_Name AS Reviewer_Name FROM Reviews rv "
                 + "JOIN Curriculums c ON rv.Curriculum_ID = c.Curriculum_ID "
                 + "JOIN Users u ON rv.Reviewer_ID = u.User_ID "

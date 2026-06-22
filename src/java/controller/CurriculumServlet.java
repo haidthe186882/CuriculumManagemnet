@@ -6,7 +6,7 @@ import dao.SubjectDAO;
 import dao.ReviewDAO;
 import model.Curriculum;
 import model.User;
-import util.ExcelHelper; // Import class xử lý Excel của bạn
+import util.ExcelHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.util.List;
 
 @WebServlet(name = "CurriculumServlet", urlPatterns = {"/curriculum/*"})
-// 1. THÊM CẤU HÌNH MULTIPART ĐỂ HỆ THỐNG NHẬN BIẾT FILE UPLOAD
 @MultipartConfig(
     fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
     maxFileSize = 1024 * 1024 * 10,       // 10MB
@@ -26,9 +25,7 @@ import java.util.List;
 public class CurriculumServlet extends HttpServlet {
 
     private final CurriculumDAO curriculumDAO = new CurriculumDAO();
-
-    private final MajorDAO majorDAO = new MajorDAO();
-
+    private final MajorDAO      majorDAO      = new MajorDAO();
     private final SubjectDAO    subjectDAO    = new SubjectDAO();
     private final ReviewDAO     reviewDAO     = new ReviewDAO();
 
@@ -50,15 +47,11 @@ public class CurriculumServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        
-        // Thiết lập bộ mã hóa tiếng Việt đầu vào
         req.setCharacterEncoding("UTF-8");
-        
         String pathInfo = req.getPathInfo();
         String action = req.getParameter("action");
         if (action == null) action = "";
 
-        // 2. CHECK ĐƯỜNG DẪN IMPORT EXCEL TRƯỚC KHI ĐI VÀO SWITCH ACTION CỦA FORM GỐC
         if ("/importExcel".equals(pathInfo)) {
             doImportExcel(req, res);
             return;
@@ -103,17 +96,10 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
-        throws ServletException, IOException {
-
+            throws ServletException, IOException {
         if (!requireRole(req, res, "Designer", "Admin")) return;
-
-
-        System.out.println("===== TEST MAJOR =====");
-        System.out.println("Total majors: " + majorDAO.getAllMajors().size());
-
         req.setAttribute("majors", majorDAO.getAllMajors());
-        req.setAttribute("isEdit", false); // Xác định trạng thái tạo mới
-
+        req.setAttribute("isEdit", false);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -122,28 +108,21 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin")) return;
         String id = req.getParameter("id");
         req.setAttribute("curriculum", curriculumDAO.getCurriculumById(id));
-        req.setAttribute("majors", majorDAO.getAllMajors());
-        req.setAttribute("isEdit", true); // Xác định trạng thái chỉnh sửa
-
+        req.setAttribute("majors",   majorDAO.getAllMajors());
+        req.setAttribute("isEdit", true);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
     // ===== POST handlers =====
 
-    // 3. HÀM XỬ LÝ IMPORT FILE EXCEL
     private void doImportExcel(HttpServletRequest req, HttpServletResponse res) 
             throws ServletException, IOException {
         if (!requireRole(req, res, "Designer", "Admin")) return;
-
         try {
-            Part filePart = req.getPart("excelFile"); // Lấy file từ thẻ <input type="file" name="excelFile">
+            Part filePart = req.getPart("excelFile");
             if (filePart != null && filePart.getSize() > 0) {
                 InputStream fileContent = filePart.getInputStream();
-                
-                // Sử dụng ExcelHelper bóc tách dòng 1 -> 6 từ file Excel
                 Curriculum importedData = ExcelHelper.parseCurriculumExcel(fileContent);
-                
-                // Đưa đối tượng chứa dữ liệu Excel này lên request để form JSP hứng lại
                 req.setAttribute("curriculum", importedData);
                 req.setAttribute("successMessage", "Imported successfully from Excel! Please verify data and choose Major before saving.");
             } else {
@@ -153,12 +132,8 @@ public class CurriculumServlet extends HttpServlet {
             e.printStackTrace();
             req.setAttribute("errorMessage", "Error parsing Excel file: " + e.getMessage());
         }
-
-        // Luôn nạp lại list Majors để Dropdown danh sách ngành học không bị trống khi render lại trang
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", false);
-        
-        // Trả dữ liệu ngược lại chính giao diện Form để người dùng kiểm tra lại trước khi nhấn Submit tạo mới
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -218,15 +193,12 @@ public class CurriculumServlet extends HttpServlet {
         try { c.setTotalCredits(Integer.parseInt(req.getParameter("totalCredits"))); } catch (Exception ignored) {}
         c.setVersion(req.getParameter("version"));
         c.setDecisionNo(req.getParameter("decisionNo"));
-        
-        // Ánh xạ thêm trường ngày quyết định từ giao diện nếu có form input ngày
         try {
             String dateParam = req.getParameter("decisionDate");
-            if(dateParam != null && !dateParam.isEmpty()){
+            if (dateParam != null && !dateParam.isEmpty()) {
                 c.setDecisionDate(java.sql.Date.valueOf(dateParam));
             }
         } catch (Exception ignored) {}
-        
         return c;
     }
 

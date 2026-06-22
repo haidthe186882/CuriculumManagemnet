@@ -74,7 +74,11 @@ public class CurriculumDAO {
                 ps.setString(idx++, "%" + keyword + "%");
             }
             if (isActive != null && !isActive.trim().isEmpty() && !publicOnly) {
-                ps.setInt(idx, Integer.parseInt(isActive));
+                int activeVal = 0;
+                if ("Approved".equalsIgnoreCase(isActive) || "1".equals(isActive) || "Active".equalsIgnoreCase(isActive)) {
+                    activeVal = 1;
+                }
+                ps.setInt(idx, activeVal);
             }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
