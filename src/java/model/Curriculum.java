@@ -150,7 +150,7 @@ public class Curriculum {
         return createdBy;
     }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }       
+    public void setCreatedBy(String createBy) {
+        this.createdBy = createBy;
+    }    
 }
