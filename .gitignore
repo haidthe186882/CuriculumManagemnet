@@ -1,3 +1,23 @@
+# Build artifacts
+build/
+*.class
+
+# NetBeans
+nbproject/private/
+
+# Compiled classes
+web/WEB-INF/classes/
+
+# Logs and OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+
+# Maven/Gradle
+target/
+.gradle/
 /nbproject/private/
 /build/
 /dist/
