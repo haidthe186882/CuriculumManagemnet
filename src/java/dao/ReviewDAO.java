@@ -105,17 +105,12 @@ public class ReviewDAO {
         }
         return false;
     }
-
     /**
      * Lay review theo ID
      */
     public Review getReviewById(String reviewId) {
         String sql = "SELECT rv.*, c.Curriculum_Code, c.Curriculum_Name, c.Is_Active AS Curr_Status, "
-<<<<<<< HEAD
                 + "u.Full_Name AS Reviewer_Name FROM Reviews rv "
-=======
-            + "u.Full_Name AS Reviewer_Name FROM Reviews rv "
->>>>>>> origin/main
                 + "JOIN Curriculums c ON rv.Curriculum_ID = c.Curriculum_ID "
                 + "JOIN Users u ON rv.Reviewer_ID = u.User_ID WHERE rv.Review_ID = ?";
         try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -129,18 +124,14 @@ public class ReviewDAO {
         }
         return null;
     }
- 
+
     /**
      * Lay lich su review cua 1 curriculum
      */
     public List<Review> getReviewsByCurriculum(String curriculumId) {
         List<Review> list = new ArrayList<>();
         String sql = "SELECT rv.*, c.Curriculum_Code, c.Curriculum_Name, c.Is_Active AS Curr_Status, "
-<<<<<<< HEAD
                 + "u.Full_Name AS Reviewer_Name FROM Reviews rv "
-=======
-            + "u.Full_Name AS Reviewer_Name FROM Reviews rv "
->>>>>>> origin/main
                 + "JOIN Curriculums c ON rv.Curriculum_ID = c.Curriculum_ID "
                 + "JOIN Users u ON rv.Reviewer_ID = u.User_ID "
                 + "WHERE rv.Curriculum_ID = ? ORDER BY rv.Review_Date DESC";
