@@ -16,6 +16,7 @@ import java.util.List;
  */
 public class UserDAO {
     
+    // Câu lệnh nền tảng
     private static final String BASE_SELECT_SQL = 
         "SELECT u.User_ID, u.Full_Name, u.Email, u.Password_Hash, u.Is_Active, u.Created_Date, " +
         "(SELECT TOP 1 r.Role_ID FROM User_Roles ur JOIN Roles r ON ur.Role_ID = r.Role_ID WHERE ur.User_ID = u.User_ID ORDER BY ur.Assigned_Date ASC) AS Primary_Role_ID, " +
@@ -24,7 +25,7 @@ public class UserDAO {
         "CAST((CASE WHEN EXISTS (SELECT 1 FROM User_Roles ur2 JOIN Roles r2 ON ur2.Role_ID = r2.Role_ID WHERE ur2.User_ID = u.User_ID AND r2.Role_Name = 'Designer') THEN 1 ELSE 0 END) AS BIT) AS Is_Designer " +
         "FROM Users u ";
 
-    // Map dữ liệu khớp 100% với model User.java
+    // Map dữ liệu
     private User mapUser(ResultSet rs) throws SQLException {
         User u = new User();
         u.setUserId(rs.getString("User_ID"));
@@ -32,25 +33,46 @@ public class UserDAO {
         u.setEmail(rs.getString("Email"));
         u.setPasswordHash(rs.getString("Password_Hash"));
 
-        // Map Status
+        // Set Status
         try { u.setStatus(rs.getBoolean("Is_Active") ? "Active" : "Inactive"); } 
         catch (SQLException ignored) { u.setStatus("Active"); }
 
-        try { u.setCreatedDate(rs.getTimestamp("Created_Date")); } catch (SQLException ignored) {}
+        // Set Created Date
+        try { 
+            Timestamp ts = rs.getTimestamp("Created_Date");
+            if (ts != null) {
+                u.setCreatedDate(new java.util.Date(ts.getTime()));
+            }
+        } catch (SQLException ignored) {}
         
-        // Bắt các cờ quyền phụ (Reviewer / Designer)
-        try { u.setReviewer(rs.getBoolean("Is_Reviewer")); } catch (SQLException ignored) {}
-        try { u.setDesigner(rs.getBoolean("Is_Designer")); } catch (SQLException ignored) {}
+        // Bắt cờ quyền phụ từ SQL
+        boolean isRev = false;
+        boolean isDes = false;
+        try { isRev = rs.getBoolean("Is_Reviewer"); } catch (SQLException ignored) {}
+        try { isDes = rs.getBoolean("Is_Designer"); } catch (SQLException ignored) {}
 
-        // Gán Role chính (Đã fix lỗi cannot find symbol tại đây)
+        // Gán Role chính và LOGIC TRIỆT TIÊU QUYỀN PHỤ
         try {
             int primaryRoleId = rs.getInt("Primary_Role_ID");
             String primaryRoleName = rs.getString("Primary_Role_Name");
             if (primaryRoleName != null) {
-                u.addRole(new Role(primaryRoleId, primaryRoleName));
+                u.addRole(new Role(primaryRoleId, primaryRoleName)); 
                 u.setRoleId(primaryRoleId);
+                
+                // Nếu Role chính đã là Reviewer thì tắt cờ phụ Reviewer
+                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
+                    isRev = false;
+                }
+                // Nếu Role chính đã là Designer thì tắt cờ phụ Designer
+                if ("Designer".equalsIgnoreCase(primaryRoleName)) {
+                    isDes = false;
+                }
             }
         } catch (SQLException ignored) {}
+        
+        // Gán lại cờ đã được lọc cho User
+        u.setReviewer(isRev);
+        u.setDesigner(isDes);
         
         return u;
     }
@@ -149,8 +171,6 @@ public class UserDAO {
         String newUserId = java.util.UUID.randomUUID().toString();
         String insertUserSql = "INSERT INTO Users (User_ID, Full_Name, Email, Password_Hash, Is_Active) VALUES (?, ?, ?, ?, 1)";
         String insertPrimaryRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) VALUES (NEWID(), ?, ?, GETDATE())";
-        
-        // Quyền phụ bị cộng thêm 1 giây để luôn đứng sau quyền chính
         String insertExtraRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) " +
                                     "SELECT NEWID(), ?, Role_ID, DATEADD(second, 1, GETDATE()) FROM Roles " +
                                     "WHERE Role_Name = ? AND NOT EXISTS (SELECT 1 FROM User_Roles ur WHERE ur.User_ID = ? AND ur.Role_ID = Roles.Role_ID)";
@@ -172,6 +192,7 @@ public class UserDAO {
                     psRole.executeUpdate();
                 }
 
+                // Chèn Role phụ
                 if (u.isReviewer()) {
                     try (PreparedStatement psExtra = con.prepareStatement(insertExtraRoleSql)) {
                         psExtra.setString(1, newUserId);
@@ -203,8 +224,6 @@ public class UserDAO {
         String updateUserSql = "UPDATE Users SET Full_Name=?, Is_Active=? WHERE User_ID=?";
         String deleteOldRolesSql = "DELETE FROM User_Roles WHERE User_ID=?";
         String insertPrimaryRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) VALUES (NEWID(), ?, ?, GETDATE())";
-        
-        // Quyền phụ bị cộng thêm 1 giây để luôn đứng sau quyền chính
         String insertExtraRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) " +
                                     "SELECT NEWID(), ?, Role_ID, DATEADD(second, 1, GETDATE()) FROM Roles " +
                                     "WHERE Role_Name = ? AND NOT EXISTS (SELECT 1 FROM User_Roles ur WHERE ur.User_ID = ? AND ur.Role_ID = Roles.Role_ID)";
@@ -219,6 +238,7 @@ public class UserDAO {
                     ps.executeUpdate();
                 }
 
+                // Xóa toàn bộ Role cũ
                 try (PreparedStatement psDel = con.prepareStatement(deleteOldRolesSql)) {
                     psDel.setString(1, u.getUserId());
                     psDel.executeUpdate();
