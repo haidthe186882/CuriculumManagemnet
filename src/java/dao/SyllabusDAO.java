@@ -25,8 +25,11 @@ public class SyllabusDAO {
         s.setMinAvgMarkToPass(rs.getDouble("Min_Avg_Mark_To_Pass"));
         s.setDecisionNo(rs.getString("Decision_No"));
         s.setApprovedDate(rs.getDate("Approved_Date"));
-        try { s.setActive(rs.getBoolean("Is_Active")); } catch (SQLException ignored) {}
-        try { s.setStatus(rs.getString("Status")); } catch (SQLException ignored) {}
+        try {
+            boolean active = rs.getBoolean("Is_Active");
+            s.setActive(active);
+            s.setStatus(active ? "Approved" : "Draft");
+        } catch (SQLException ignored) {}
         // join Subject
         try {
             Subject sub = new Subject();
@@ -96,8 +99,8 @@ public class SyllabusDAO {
     public boolean addSyllabus(Syllabus s) {
         String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, "
                    + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
-                   + "Decision_No, Approved_Date, Status, Is_Active) "
-                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Draft', 1)";
+                   + "Decision_No, Approved_Date, Is_Active) "
+                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, s.getSubjectId());
@@ -119,10 +122,11 @@ public class SyllabusDAO {
 
     /** Cap nhat trang thai */
     public boolean updateStatus(String syllabusId, String status) {
-        String sql = "UPDATE Syllabuses SET Status=? WHERE Syllabus_ID=?";
+        boolean activeVal = "Approved".equalsIgnoreCase(status) || "Active".equalsIgnoreCase(status) || "1".equals(status);
+        String sql = "UPDATE Syllabuses SET Is_Active=? WHERE Syllabus_ID=?";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, status);
+            ps.setBoolean(1, activeVal);
             ps.setString(2, syllabusId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }

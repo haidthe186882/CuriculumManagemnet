@@ -1,7 +1,9 @@
 package controller;
 
 import dao.SubjectDAO;
+import dao.SyllabusDAO;
 import model.User;
+import model.Syllabus;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,6 +14,7 @@ import java.io.IOException;
 public class SubjectServlet extends HttpServlet {
 
     private final SubjectDAO subjectDAO = new SubjectDAO();
+    private final SyllabusDAO syllabusDAO = new SyllabusDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
@@ -54,6 +57,7 @@ public class SubjectServlet extends HttpServlet {
             throws ServletException, IOException {
         String id = req.getParameter("id");
         req.setAttribute("subject", subjectDAO.getSubjectById(id));
+        req.setAttribute("syllabus", syllabusDAO.getSyllabusBySubject(id));
         req.getRequestDispatcher("/WEB-INF/views/subject/detail.jsp").forward(req, res);
     }
 

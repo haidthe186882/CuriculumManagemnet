@@ -28,4 +28,7 @@ public class Subject {
     public void setDepartment(String department) { this.department = department; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    private String syllabusId;
+    public String getSyllabusId() { return syllabusId; }
+    public void setSyllabusId(String syllabusId) { this.syllabusId = syllabusId; }
 }

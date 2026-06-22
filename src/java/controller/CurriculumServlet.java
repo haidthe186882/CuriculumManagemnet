@@ -25,10 +25,16 @@ import java.util.List;
 public class CurriculumServlet extends HttpServlet {
 
     private final CurriculumDAO curriculumDAO = new CurriculumDAO();
+<<<<<<< HEAD
+    private final MajorDAO      majorDAO      = new MajorDAO();
+    private final SubjectDAO    subjectDAO    = new SubjectDAO();
+    private final ReviewDAO     reviewDAO     = new ReviewDAO();
+=======
 
     private final MajorDAO majorDAO = new MajorDAO();
     private final SubjectDAO subjectDAO = new SubjectDAO();
     private final ReviewDAO reviewDAO = new ReviewDAO();
+>>>>>>> origin/main
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
@@ -58,15 +64,22 @@ public class CurriculumServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
+<<<<<<< HEAD
+        req.setCharacterEncoding("UTF-8");
+=======
 
         req.setCharacterEncoding("UTF-8");
 
+>>>>>>> origin/main
         String pathInfo = req.getPathInfo();
         String action = req.getParameter("action");
         if (action == null)
             action = "";
 
+<<<<<<< HEAD
+=======
         // Kiểm tra xử lý Upload file Excel trước tiên
+>>>>>>> origin/main
         if ("/importExcel".equals(pathInfo)) {
             doImportExcel(req, res);
             return;
@@ -128,6 +141,12 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
+<<<<<<< HEAD
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+        req.setAttribute("majors", majorDAO.getAllMajors());
+        req.setAttribute("isEdit", false);
+=======
 
         throws ServletException, IOException {
         if (!requireRole(req, res, "Designer", "Admin")) return;
@@ -136,6 +155,7 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", false);
 
+>>>>>>> origin/main
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -145,20 +165,36 @@ public class CurriculumServlet extends HttpServlet {
             return;
         String id = req.getParameter("id");
         req.setAttribute("curriculum", curriculumDAO.getCurriculumById(id));
+<<<<<<< HEAD
+        req.setAttribute("majors",   majorDAO.getAllMajors());
+        req.setAttribute("isEdit", true);
+=======
         req.setAttribute("majors", majorDAO.getAllMajors());
 
         req.setAttribute("isEdit", true);
 
 
+>>>>>>> origin/main
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
     // ===== POST handlers =====
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
     private void doImportExcel(HttpServletRequest req, HttpServletResponse res) 
 
             throws ServletException, IOException {
+<<<<<<< HEAD
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+        try {
+            Part filePart = req.getPart("excelFile");
+            if (filePart != null && filePart.getSize() > 0) {
+                InputStream fileContent = filePart.getInputStream();
+                Curriculum importedData = ExcelHelper.parseCurriculumExcel(fileContent);
+=======
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
 
@@ -175,6 +211,7 @@ public class CurriculumServlet extends HttpServlet {
                 importedData.setIsActive(false);
                 
 
+>>>>>>> origin/main
                 req.setAttribute("curriculum", importedData);
                 req.setAttribute("successMessage",
                         "Imported successfully from Excel! Please verify data and choose Major before saving.");
@@ -185,11 +222,16 @@ public class CurriculumServlet extends HttpServlet {
             e.printStackTrace();
             req.setAttribute("errorMessage", "Error parsing Excel file: " + e.getMessage());
         }
+<<<<<<< HEAD
+        req.setAttribute("majors", majorDAO.getAllMajors());
+        req.setAttribute("isEdit", false);
+=======
 
 
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", false);
 
+>>>>>>> origin/main
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -265,15 +307,22 @@ public class CurriculumServlet extends HttpServlet {
         }
         c.setVersion(req.getParameter("version"));
         c.setDecisionNo(req.getParameter("decisionNo"));
+<<<<<<< HEAD
+=======
         
+>>>>>>> origin/main
         try {
             String dateParam = req.getParameter("decisionDate");
             if (dateParam != null && !dateParam.isEmpty()) {
                 c.setDecisionDate(java.sql.Date.valueOf(dateParam));
             }
+<<<<<<< HEAD
+        } catch (Exception ignored) {}
+=======
         } catch (Exception ignored) {
         }
 
+>>>>>>> origin/main
         return c;
     }
 
