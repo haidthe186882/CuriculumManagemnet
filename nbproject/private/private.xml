@@ -2,6 +2,17 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/D:/CurriculumManagement/src/java/controller/LogoutServlet.java</file>
+            <file>file:/D:/CurriculumManagement/web/index.html</file>
+            <file>file:/D:/CurriculumManagement/web/WEB-INF/views/admin/users.jsp</file>
+            <file>file:/D:/CurriculumManagement/src/java/dal/DBContext.java</file>
+            <file>file:/D:/CurriculumManagement/src/java/controller/LoginServlet.java</file>
+            <file>file:/D:/CurriculumManagement/src/java/controller/ReviewServlet.java</file>
+            <file>file:/D:/CurriculumManagement/src/java/controller/SyllabusServlet.java</file>
+            <file>file:/D:/CurriculumManagement/src/java/controller/CurriculumServlet.java</file>
+            <file>file:/D:/CurriculumManagement/web/META-INF/context.xml</file>
+            <file>file:/D:/CurriculumManagement/web/index.jsp</file>
+        </group>
     </open-files>
 </project-private>
