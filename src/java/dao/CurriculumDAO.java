@@ -255,4 +255,50 @@ public class CurriculumDAO {
         }
         return false;
     }
+    /**
+     * Lưu thông tin phân công (Designer / Reviewer) vào bảng Curriculum_Assignments
+     */
+    public void assignCurriculumRoles(String curriculumId, String designerId, String reviewerId, String adminId) {
+        String deleteSql = "DELETE FROM Curriculum_Assignments WHERE Curriculum_ID = ?";
+        String insertSql = "INSERT INTO Curriculum_Assignments (Assignment_ID, Curriculum_ID, User_ID, Assignment_Type, Assigned_By, Assigned_Date) VALUES (NEWID(), ?, ?, ?, ?, GETDATE())";
+
+        try (Connection con = new dal.DBContext().getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                // 1. Xóa phân công cũ để tránh rác dữ liệu
+                try (PreparedStatement psDel = con.prepareStatement(deleteSql)) {
+                    psDel.setString(1, curriculumId);
+                    psDel.executeUpdate();
+                }
+                
+                // 2. Thêm Designer mới (nếu Admin có chọn)
+                if (designerId != null && !designerId.trim().isEmpty()) {
+                    try (PreparedStatement psIns = con.prepareStatement(insertSql)) {
+                        psIns.setString(1, curriculumId);
+                        psIns.setString(2, designerId);
+                        psIns.setString(3, "Designer");
+                        psIns.setString(4, adminId);
+                        psIns.executeUpdate();
+                    }
+                }
+                
+                // 3. Thêm Reviewer mới (nếu Admin có chọn)
+                if (reviewerId != null && !reviewerId.trim().isEmpty()) {
+                    try (PreparedStatement psIns = con.prepareStatement(insertSql)) {
+                        psIns.setString(1, curriculumId);
+                        psIns.setString(2, reviewerId);
+                        psIns.setString(3, "Reviewer");
+                        psIns.setString(4, adminId);
+                        psIns.executeUpdate();
+                    }
+                }
+                con.commit();
+            } catch (Exception e) {
+                con.rollback();
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
