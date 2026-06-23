@@ -12,6 +12,13 @@
         <i class="bi bi-file-earmark-text"></i> Syllabuses
     </a>
 
+    <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+        <div class="nav-section">Design</div>
+        <a class="nav-link ${activeMenu == 'design' ? 'active' : ''}" href="${pageContext.request.contextPath}/design/list">
+            <i class="bi bi-pencil-square"></i> My Assignments
+        </a>
+    </c:if>
+
     <!--Teacher upload document-->
     <c:if test="${sessionScope.loggedUser.role.roleName == 'Teacher'}">
         <div class="nav-section">Upload</div>
