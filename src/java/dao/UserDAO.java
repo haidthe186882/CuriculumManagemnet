@@ -313,4 +313,25 @@ public class UserDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    
+    public List<User> getUsersByRole(String roleName) {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT u.User_ID, u.Full_Name, u.Email FROM Users u " +
+                     "JOIN User_Roles ur ON u.User_ID = ur.User_ID " +
+                     "JOIN Roles r ON ur.Role_ID = r.Role_ID " +
+                     "WHERE r.Role_Name = ? AND u.Is_Active = 1";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getString("User_ID"));
+                u.setFullName(rs.getString("Full_Name"));
+                u.setEmail(rs.getString("Email"));
+                list.add(u);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
 }
