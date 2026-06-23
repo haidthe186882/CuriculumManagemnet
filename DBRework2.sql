@@ -109,7 +109,6 @@ CREATE TABLE Curriculums
     Updated_Date DATETIME,
 
     Is_Active BIT DEFAULT 1,
-    Status INT DEFAULT 0,
 
     CONSTRAINT FK_Curriculum_Major
         FOREIGN KEY(Major_ID)

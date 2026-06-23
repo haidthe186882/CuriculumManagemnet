@@ -86,22 +86,22 @@ DECLARE @curMkt UNIQUEIDENTIFIER = NEWID();
 
 INSERT INTO Curriculums
 (Curriculum_ID, Major_ID, Curriculum_Code, Curriculum_Name, English_Name, Description,
- Total_Credits, Version, Decision_No, Decision_Date, Created_By, Updated_Date, Is_Active, Status)
+ Total_Credits, Version, Decision_No, Decision_Date, Created_By, Updated_Date, Is_Active)
 VALUES
 (@curIT, @majorIT, N'IT-2024', N'Chương trình đào tạo Công nghệ thông tin 2024',
     N'Information Technology Curriculum 2024',
     N'Khung chương trình đào tạo ngành CNTT áp dụng từ năm học 2024-2025.',
-    140, N'1.0', N'QD-1201/QD-DHX', '2024-06-01', @designerIT, NULL, 1, 1),
+    140, N'1.0', N'QD-1201/QD-DHX', '2024-06-01', @designerIT, NULL, 1),
 
 (@curBus, @majorBus, N'BUS-2024', N'Chương trình đào tạo Quản trị kinh doanh 2024',
     N'Business Administration Curriculum 2024',
     N'Khung chương trình đào tạo ngành Quản trị kinh doanh áp dụng từ năm học 2024-2025.',
-    135, N'1.0', N'QD-1202/QD-DHX', '2024-06-01', @designerBus, NULL, 1, 1),
+    135, N'1.0', N'QD-1202/QD-DHX', '2024-06-01', @designerBus, NULL, 1),
 
 (@curMkt, @majorMkt, N'MKT-2024', N'Chương trình đào tạo Marketing 2024',
     N'Marketing Curriculum 2024',
     N'Khung chương trình đào tạo ngành Marketing áp dụng từ năm học 2024-2025.',
-    135, N'1.0', N'QD-1203/QD-DHX', '2024-06-01', @designerMkt, NULL, 1, 1);
+    135, N'1.0', N'QD-1203/QD-DHX', '2024-06-01', @designerMkt, NULL, 1);
 
 /* =========================================================
    5) SUBJECTS — môn học cho từng ngành (đại diện, không đủ toàn khung)
