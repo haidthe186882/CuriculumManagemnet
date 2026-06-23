@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.util.Random;
 
 /**
- * Handles OTP verification and password reset:
- *   POST /reset-password?action=verify  → verify the OTP
- *   POST /reset-password?action=reset   → update the password
- *   POST /reset-password?action=resend  → re-generate & re-send OTP
+ * @author Mai Duy An
+ * @MSSV HE197000
+ * @date 24/6/2026
+ * 
  */
 @WebServlet(name = "ResetPasswordServlet", urlPatterns = {"/reset-password"})
 public class ResetPasswordServlet extends HttpServlet {

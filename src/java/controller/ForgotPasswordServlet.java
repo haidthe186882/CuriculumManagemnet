@@ -11,9 +11,10 @@ import java.io.IOException;
 import java.util.Random;
 
 /**
- * Handles the "Forgot Password" flow:
- *   GET  /forgot-password → show email form
- *   POST /forgot-password → validate email, generate OTP, send via Gmail, forward to OTP page
+ * @author Mai Duy An
+ * @MSSV HE197000
+ * @date 24/6/2026
+ * 
  */
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = {"/forgot-password"})
 public class ForgotPasswordServlet extends HttpServlet {

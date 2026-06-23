@@ -3,7 +3,7 @@ package model;
 import java.util.Date;
 
 /**
- * Model mapping the Teacher_Materials table.
+ * Model mapping with Teacher_Material table
  * Columns: Material_ID (IDENTITY), User_ID, Syllabus_ID, Material_Type,
  *          Material_Name, Material_URL, Description, Is_Active, Created_Date
  */

@@ -2,14 +2,12 @@ package util;
 
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
+import java.io.UnsupportedEncodingException;
 import java.util.Properties;
-
 /**
- * Utility class for sending OTP emails via Gmail SMTP.
- * 
- * IMPORTANT: Replace SENDER_EMAIL and APP_PASSWORD with your real credentials.
- * - Enable 2-Step Verification on your Google Account
- * - Generate an App Password at: https://myaccount.google.com/apppasswords
+ * @author Mai Duy An
+ * @MSSV HE197000
+ * @date 24/6/2026
  */
 public class EmailUtil {
 
@@ -26,7 +24,6 @@ public class EmailUtil {
      *
      * @param toEmail recipient email address
      * @param otp     the 6-digit OTP string
-     * @throws MessagingException if the email fails to send
      * 
      */
     public static void sendOTP(String toEmail, String otp) throws MessagingException {
@@ -45,7 +42,11 @@ public class EmailUtil {
         });
 
         MimeMessage message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(SENDER_EMAIL, "Academic Management System", "UTF-8"));
+        try {
+            message.setFrom(new InternetAddress(SENDER_EMAIL, "Academic Management System", "UTF-8"));
+        } catch (UnsupportedEncodingException ex) {
+            ex.printStackTrace();
+        }
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
         message.setSubject("Password Reset OTP — Academic Management System", "UTF-8");
         message.setContent(buildHtmlBody(otp), "text/html; charset=UTF-8");
@@ -67,7 +68,6 @@ public class EmailUtil {
                 + "<tr><td align='center' style='padding-bottom:24px'>"
                 + "<div style='width:56px;height:56px;border-radius:50%;background:#0b1020;"
                 + "display:inline-flex;align-items:center;justify-content:center'>"
-                + "<span style='color:#fff;font-size:24px'>🎓</span></div>"
                 + "<h2 style='color:#0b1020;margin:14px 0 4px;font-size:20px'>Password Reset</h2>"
                 + "<p style='color:#6b7280;font-size:14px;margin:0'>Academic Management System</p>"
                 + "</td></tr>"
