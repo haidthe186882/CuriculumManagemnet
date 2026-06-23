@@ -45,7 +45,16 @@ public class ReviewServlet extends HttpServlet {
         }
         User user = (User) session.getAttribute("loggedUser");
         String role = user.getRole() != null ? user.getRole().getRoleName() : "";
-        if (!"Reviewer".equals(role) && !"Admin".equals(role)) {
+//        if (!"Reviewer".equals(role) && !"Admin".equals(role)) {
+//            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+//            return false;
+//        }
+        boolean isPrimaryReviewer = "Reviewer".equalsIgnoreCase(role) || "Admin".equalsIgnoreCase(role);
+        // 2. Kiểm tra trong danh sách Roles 
+        boolean hasRoleReviewer = user.hasRole("Reviewer") || user.hasRole("Admin");
+        // 3. Kiểm tra cờ phụ
+        boolean hasSubReviewer = user.isReviewer();
+        if (!isPrimaryReviewer && !hasRoleReviewer && !hasSubReviewer) {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
             return false;
         }

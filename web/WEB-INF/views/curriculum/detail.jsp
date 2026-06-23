@@ -22,7 +22,7 @@
             <div class="page-subtitle"><code style="color:var(--accent);">${curriculum.curriculumCode}</code> · ${curriculum.majorName}</div>
         </div>
         <div class="d-flex gap-2">
-            <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+            <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.designer}">
                 <c:if test="${not curriculum.isActive}">
                     <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                         <i class="bi bi-pencil me-1"></i>Edit
