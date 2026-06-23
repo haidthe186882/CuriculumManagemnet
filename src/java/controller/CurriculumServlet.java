@@ -180,6 +180,8 @@ public class CurriculumServlet extends HttpServlet {
 
                 Curriculum importedData = ExcelHelper.parseCurriculumExcel(fileContent);
                 
+                // ĐỒNG BỘ: Mặc định dữ liệu vừa bóc tách từ Excel nhận trạng thái tiến trình là 0 (Draft)
+                importedData.setStatus(0);
                 // Mở kích hoạt Is_Active hiển thị hệ thống mặc định
                 importedData.setIsActive(false);
 

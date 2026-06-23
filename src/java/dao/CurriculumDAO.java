@@ -32,7 +32,12 @@ public class CurriculumDAO {
             ignored.printStackTrace();
         }
         
-
+        // 2. ĐỌC CỘT STATUS DẠNG INT ĐỂ QUẢN LÝ TIẾN TRÌNH THIẾT KẾ
+        try {
+            c.setStatus(rs.getInt("Status"));
+        } catch (SQLException ignored) {
+            ignored.printStackTrace();
+        }
         
         try {
             c.setCreatedDate(rs.getTimestamp("Created_Date"));
@@ -63,11 +68,11 @@ public class CurriculumDAO {
                 "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
                 + "LEFT JOIN Majors m ON c.Major_ID = m.Major_ID WHERE 1=1");
         
-        // Nếu là khách/học sinh, chỉ xem các bản ghi đang kích hoạt (Is_Active = 1)
+        // Nếu là khách/học sinh, chỉ xem các bản ghi đã Approved (Status = 1) và đang kích hoạt (Is_Active = 1)
         if (publicOnly) {
-            sql.append(" AND c.Is_Active = 1");
+            sql.append(" AND c.Status = 1 AND c.Is_Active = 1");
         } else if (status != null && !status.trim().isEmpty()) {
-            sql.append(" AND c.Is_Active = ?");
+            sql.append(" AND c.Status = ?");
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -83,8 +88,14 @@ public class CurriculumDAO {
             
             // Điền tham số lọc Status cho Admin/Designer
             if (!publicOnly && status != null && !status.trim().isEmpty()) {
-                boolean activeVal = "Approved".equalsIgnoreCase(status) || "Active".equalsIgnoreCase(status) || "1".equals(status);
-                ps.setBoolean(idx++, activeVal);
+                try {
+                    ps.setInt(idx++, Integer.parseInt(status));
+                } catch (NumberFormatException e) {
+                    if ("Pending".equalsIgnoreCase(status)) ps.setInt(idx++, 2);
+                    else if ("Draft".equalsIgnoreCase(status)) ps.setInt(idx++, 0);
+                    else if ("Active".equalsIgnoreCase(status)) ps.setInt(idx++, 1);
+                    else idx++;
+                }
             }
 
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -188,16 +199,32 @@ public class CurriculumDAO {
         return false;
     }
 
+    /**
+     * Hàm cập nhật tiến trình thiết kế (Status)
+     */
+    public boolean updateStatus(String curriculumId, int newStatus) {
+        String sql = "UPDATE Curriculums SET Status = ?, Updated_Date = GETDATE() WHERE Curriculum_ID = ?";
+        try (Connection con = new DBContext().getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, newStatus);
+            ps.setString(2, curriculumId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean submitForReview(String curriculumId) {
-        return toggleActive(curriculumId, false); // Pending/Draft -> Inactive
+        return updateStatus(curriculumId, 2); // 2: Pending
     }
 
     public boolean approveCurriculum(String curriculumId) {
-        return toggleActive(curriculumId, true); // Approved -> Active
+        return updateStatus(curriculumId, 1); // 1: Approved
     }
 
     public boolean rejectCurriculum(String curriculumId) {
-        return toggleActive(curriculumId, false); // Rejected -> Inactive
+        return updateStatus(curriculumId, 0); // 0: Trả về nháp Draft
     }
 
     /**
