@@ -30,6 +30,8 @@ public class CurriculumServlet extends HttpServlet {
     private final MajorDAO      majorDAO      = new MajorDAO();
     private final SubjectDAO    subjectDAO    = new SubjectDAO();
     private final ReviewDAO     reviewDAO     = new ReviewDAO();
+    private final dao.UserDAO   userDAO       = new dao.UserDAO();
+    
     private final PloDAO        ploDAO        = new PloDAO();
     private final PoDAO         poDAO         = new PoDAO();
 
@@ -91,6 +93,8 @@ public class CurriculumServlet extends HttpServlet {
             case "reject":
                 doReject(req, res);
                 break;
+            case "assign": 
+                doAssign(req, res); 
             case "addPo":
                 doAddPo(req, res);
                 break;
@@ -129,6 +133,8 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
         req.setAttribute("totalCount", list.size());
+        req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
+        req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
         forward(req, res, "/WEB-INF/views/curriculum/list.jsp");
     }
 
@@ -397,4 +403,18 @@ public class CurriculumServlet extends HttpServlet {
             throws ServletException, IOException {
         req.getRequestDispatcher(path).forward(req, res);
     }
+    
+    private void doAssign(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        // Chỉ Admin mới có quyền phân công
+        if (!requireRole(req, res, "Admin")) return;
+        
+        String curriculumId = req.getParameter("curriculumId");
+        String designerId = req.getParameter("designerId");
+        String reviewerId = req.getParameter("reviewerId");
+        User admin = getLoggedUser(req);
+        
+        curriculumDAO.assignCurriculumRoles(curriculumId, designerId, reviewerId, admin.getUserId());
+        res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=assigned");
+    }
+}
 }
