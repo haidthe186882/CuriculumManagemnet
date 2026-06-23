@@ -366,21 +366,31 @@ VALUES
 ========================================================= */
 INSERT INTO Materials
 (Syllabus_ID, Material_Description, Author, Publisher, Published_Date, Edition, ISBN,
+ Link,
  Is_Main_Material, Is_Hard_Copy, Is_Online, Notes)
 VALUES
 (@syIT101, N'Giáo trình nhập môn lập trình với Python', N'Allen B. Downey', N'O''Reilly Media', '2015-01-01', N'3rd Edition', N'978-1491939369',
+    N'https://example.com/python-textbook',
     1, 1, 1, N'Tài liệu chính của môn học, có bản PDF trên hệ thống LMS.'),
+
 (@syIT101, N'Tài liệu thực hành lập trình căn bản (nội bộ)', N'Bộ môn CNTT', N'Đại học Nội bộ', '2024-01-01', N'1.0', NULL,
+    N'https://example.com/python-lab-material',
     0, 0, 1, N'Tài liệu tham khảo, cập nhật theo từng học kỳ.'),
 
 (@syBUS101, N'Quản trị học - Lý thuyết và thực hành', N'Stephen P. Robbins', N'Pearson', '2017-01-01', N'14th Edition', N'978-0134237473',
+    N'https://example.com/management-book',
     1, 1, 0, N'Tài liệu chính, sinh viên có thể mượn tại thư viện.'),
+
 (@syBUS101, N'Tuyển tập case study quản trị doanh nghiệp Việt Nam', N'Nhiều tác giả', N'NXB Kinh tế', '2022-01-01', N'1.0', NULL,
+    N'https://example.com/case-study-vn',
     0, 0, 1, N'Tài liệu tham khảo cho phần thảo luận case study.'),
 
 (@syMKT101, N'Principles of Marketing', N'Philip Kotler, Gary Armstrong', N'Pearson', '2020-01-01', N'18th Edition', N'978-0135243663',
+    N'https://example.com/marketing-book',
     1, 1, 1, N'Tài liệu chính của môn học.'),
+
 (@syMKT101, N'Báo cáo xu hướng Digital Marketing Việt Nam', N'We Are Social & Hootsuite', N'We Are Social', '2024-01-01', N'1.0', NULL,
+    N'https://example.com/digital-marketing-report',
     0, 0, 1, N'Tài liệu tham khảo, cập nhật số liệu thị trường mới nhất.');
 
 /* =========================================================
