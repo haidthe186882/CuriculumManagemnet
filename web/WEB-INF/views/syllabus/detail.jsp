@@ -22,7 +22,6 @@
             <div class="page-subtitle">${syllabus.subject.subjectCode} — ${syllabus.subject.subjectName}</div>
         </div>
         <div class="d-flex gap-2">
-
             <a href="${pageContext.request.contextPath}/syllabus/list" class="btn btn-secondary-custom">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
@@ -40,6 +39,37 @@
             <div class="col-12"><div class="detail-label">Description</div><div class="detail-value">${syllabus.description}</div></div>
             <div class="col-12"><div class="detail-label">Student Tasks</div><div class="detail-value">${syllabus.studentTasks}</div></div>
             <div class="col-12"><div class="detail-label">Tools</div><div class="detail-value">${syllabus.tools}</div></div>
+    </div>
+
+    <!-- CLO Table Card -->
+    <div class="card-dark mt-4">
+        <div class="p-3 border-bottom"><h6 class="mb-0">Course Learning Outcomes (CLOs)</h6></div>
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">#</th>
+                        <th style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">CLO Name</th>
+                        <th style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">CLO Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${empty clos}">
+                            <tr><td colspan="3" class="text-center py-4 text-muted">No CLOs defined for this syllabus yet.</td></tr>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="clo" items="${clos}" varStatus="st">
+                                <tr>
+                                    <td style="padding: 0.8rem 0.9rem;">${st.count}</td>
+                                    <td style="padding: 0.8rem 0.9rem;"><strong style="color: #111827;">${clo.cloCode}</strong></td>
+                                    <td style="padding: 0.8rem 0.9rem;">${clo.description}</td>
+                                </tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

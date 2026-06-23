@@ -4,6 +4,8 @@ import dao.CurriculumDAO;
 import dao.MajorDAO;
 import dao.SubjectDAO;
 import dao.ReviewDAO;
+import dao.PloDAO;
+import dao.PoDAO;
 import model.Curriculum;
 import model.User;
 import util.ExcelHelper;
@@ -28,6 +30,8 @@ public class CurriculumServlet extends HttpServlet {
     private final MajorDAO      majorDAO      = new MajorDAO();
     private final SubjectDAO    subjectDAO    = new SubjectDAO();
     private final ReviewDAO     reviewDAO     = new ReviewDAO();
+    private final PloDAO        ploDAO        = new PloDAO();
+    private final PoDAO         poDAO         = new PoDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
@@ -48,6 +52,9 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "/edit":
                 showEdit(req, res);
+                break;
+            case "/po":
+                showPO(req, res);
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
@@ -120,7 +127,22 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("curriculum", c);
         req.setAttribute("subjects", subjectDAO.getSubjectsByCurriculum(id));
         req.setAttribute("reviews", reviewDAO.getReviewsByCurriculum(id));
+        req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
+        req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
         forward(req, res, "/WEB-INF/views/curriculum/detail.jsp");
+    }
+
+    private void showPO(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        String id = req.getParameter("id");
+        Curriculum c = curriculumDAO.getCurriculumById(id);
+        if (c == null) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+        req.setAttribute("curriculum", c);
+        req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
+        forward(req, res, "/WEB-INF/views/curriculum/po.jsp");
     }
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)

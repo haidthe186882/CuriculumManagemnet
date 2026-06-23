@@ -36,6 +36,9 @@
                     </form>
                 </c:if>
             </c:if>
+            <a href="${pageContext.request.contextPath}/curriculum/po?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
+                <i class="bi bi-eye me-1"></i>View PO
+            </a>
             <a href="${pageContext.request.contextPath}/curriculum/list" class="btn btn-secondary-custom">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
@@ -136,6 +139,38 @@
         </div>
     </div>
 
+    <!-- PLO Table Section -->
+    <div class="card-dark mb-4">
+        <div class="p-3 border-bottom"><h6 class="mb-0">Program Learning Outcomes (PLOs)</h6></div>
+        <div class="table-responsive">
+            <table class="table table-dark-custom table-plo mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal;">#</th>
+                        <th style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal;">PLO Name</th>
+                        <th style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal;">PLO Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${empty plos}">
+                            <tr><td colspan="3" class="text-center py-4 text-muted">No PLOs linked yet.</td></tr>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="plo" items="${plos}" varStatus="st">
+                                <tr>
+                                    <td>${st.count}</td>
+                                    <td><strong style="color: #111827;">${plo.ploCode}</strong></td>
+                                    <td>${plo.description}</td>
+                                </tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Reviewer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
         <div class="card-dark">
         <div class="p-3 border-bottom"><h6 class="mb-0">Review History</h6></div>
@@ -164,6 +199,7 @@
         </div>
     </c:if>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
