@@ -3,6 +3,7 @@ package controller;
 import dao.SyllabusDAO;
 import dao.SubjectDAO;
 import dao.CloDAO;
+import dao.SessionDAO;
 import model.Syllabus;
 import model.User;
 
@@ -19,6 +20,7 @@ public class SyllabusServlet extends HttpServlet {
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
     private final SubjectDAO  subjectDAO  = new SubjectDAO();
     private final CloDAO      cloDAO      = new CloDAO();
+    private final SessionDAO  sessionDAO  = new SessionDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
@@ -79,6 +81,7 @@ public class SyllabusServlet extends HttpServlet {
         if (s == null) { res.sendRedirect(req.getContextPath() + "/syllabus/list"); return; }
         req.setAttribute("syllabus", s);
         req.setAttribute("clos", cloDAO.getCLOsBySyllabus(id));
+        req.setAttribute("sessions", sessionDAO.getSessionsBySyllabus(id));
         req.getRequestDispatcher("/WEB-INF/views/syllabus/detail.jsp").forward(req, res);
     }
 
