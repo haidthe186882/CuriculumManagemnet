@@ -94,6 +94,7 @@ public class CurriculumServlet extends HttpServlet {
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
+        
     }
 
     // ===== GET handlers =====
@@ -200,13 +201,26 @@ public class CurriculumServlet extends HttpServlet {
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
-    private void doCreate(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    private void doCreate(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         User user = getLoggedUser(req);
         Curriculum c = buildFromRequest(req);
-        c.setCreatedBy(user.getUserId());
-        
+        if (user != null) {
+            c.setCreatedBy(user.getUserId());
+        }
+        // 1. KIỂM TRA VALIDATE TRÙNG LẶP TRƯỚC KHI LƯU VÀO DB
+        if (curriculumDAO.checkCurriculumCodeExists(c.getCurriculumCode())) {
+            // Gửi thông báo lỗi và dữ liệu cũ về lại form
+            req.setAttribute("errorMessage", "Curriculum Code '" + c.getCurriculumCode() + "' already exists. Please try with another code!");
+            req.setAttribute("curriculum", c);
+            req.setAttribute("isEdit", false);
+            req.setAttribute("majors", majorDAO.getAllMajors()); 
+            
+            // Trả về trang form hiển thị lỗi
+            req.getRequestDispatcher("/WEB-INF/views/curriculum/form.jsp").forward(req, res);
+            return; // Lập tức dừng lại, chặn không cho DB insert
+        }
         // Gọi hàm addCurriculum, DB tự gán Status = 0 (Nhờ Default Constraint) và Is_Active = 1
         curriculumDAO.addCurriculum(c);
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=created");
