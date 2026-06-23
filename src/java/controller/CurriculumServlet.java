@@ -4,6 +4,8 @@ import dao.CurriculumDAO;
 import dao.MajorDAO;
 import dao.SubjectDAO;
 import dao.ReviewDAO;
+import dao.PloDAO;
+import dao.PoDAO;
 import model.Curriculum;
 import model.User;
 import util.ExcelHelper;
@@ -30,6 +32,9 @@ public class CurriculumServlet extends HttpServlet {
     private final ReviewDAO     reviewDAO     = new ReviewDAO();
     private final dao.UserDAO   userDAO       = new dao.UserDAO();
     
+    private final PloDAO        ploDAO        = new PloDAO();
+    private final PoDAO         poDAO         = new PoDAO();
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
@@ -49,6 +54,9 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "/edit":
                 showEdit(req, res);
+                break;
+            case "/po":
+                showPO(req, res);
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
@@ -87,6 +95,20 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "assign": 
                 doAssign(req, res); 
+            case "addPo":
+                doAddPo(req, res);
+                break;
+            case "deletePo":
+                doDeletePo(req, res);
+                break;
+            case "addPlo":
+                doAddPlo(req, res);
+                break;
+            case "deletePlo":
+                doDeletePlo(req, res);
+                break;
+            case "saveMapping":
+                doSaveMapping(req, res);
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
@@ -127,7 +149,24 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("curriculum", c);
         req.setAttribute("subjects", subjectDAO.getSubjectsByCurriculum(id));
         req.setAttribute("reviews", reviewDAO.getReviewsByCurriculum(id));
+        req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
+        req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
         forward(req, res, "/WEB-INF/views/curriculum/detail.jsp");
+    }
+
+    private void showPO(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        String id = req.getParameter("id");
+        Curriculum c = curriculumDAO.getCurriculumById(id);
+        if (c == null) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+        req.setAttribute("curriculum", c);
+        req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
+        req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
+        req.setAttribute("mappings", poDAO.getPoPloMappings(id));
+        forward(req, res, "/WEB-INF/views/curriculum/po.jsp");
     }
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
@@ -253,6 +292,55 @@ public class CurriculumServlet extends HttpServlet {
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=rejected");
     }
 
+    // ===== PO / PLO / Mapping handlers =====
+
+    private void doAddPo(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        if (!requireRole(req, res, "Designer", "Admin"))
+            return;
+        String curriculumId = req.getParameter("curriculumId");
+        String poCode = req.getParameter("poCode");
+        String description = req.getParameter("description");
+        poDAO.addPO(curriculumId, poCode, description);
+        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=poAdded");
+    }
+
+    private void doDeletePo(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        if (!requireRole(req, res, "Designer", "Admin"))
+            return;
+        String curriculumId = req.getParameter("curriculumId");
+        String poId = req.getParameter("poId");
+        poDAO.deletePO(poId);
+        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=poDeleted");
+    }
+
+    private void doAddPlo(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        if (!requireRole(req, res, "Designer", "Admin"))
+            return;
+        String curriculumId = req.getParameter("curriculumId");
+        String ploCode = req.getParameter("ploCode");
+        String description = req.getParameter("description");
+        ploDAO.addPLO(curriculumId, ploCode, description);
+        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=ploAdded");
+    }
+
+    private void doDeletePlo(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        if (!requireRole(req, res, "Designer", "Admin"))
+            return;
+        String curriculumId = req.getParameter("curriculumId");
+        String ploId = req.getParameter("ploId");
+        ploDAO.deletePLO(ploId);
+        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=ploDeleted");
+    }
+
+    private void doSaveMapping(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        if (!requireRole(req, res, "Designer", "Admin"))
+            return;
+        String curriculumId = req.getParameter("curriculumId");
+        String[] checkedKeys = req.getParameterValues("mapKey"); // mỗi checkbox value="POID_PLOID"
+        poDAO.saveMappings(curriculumId, checkedKeys);
+        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=mappingSaved");
+    }
+
     // ===== Helpers =====
 
     private Curriculum buildFromRequest(HttpServletRequest req) {
@@ -328,4 +416,5 @@ public class CurriculumServlet extends HttpServlet {
         curriculumDAO.assignCurriculumRoles(curriculumId, designerId, reviewerId, admin.getUserId());
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=assigned");
     }
+}
 }

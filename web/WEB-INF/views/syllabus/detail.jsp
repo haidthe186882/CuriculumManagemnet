@@ -22,7 +22,6 @@
             <div class="page-subtitle">${syllabus.subject.subjectCode} — ${syllabus.subject.subjectName}</div>
         </div>
         <div class="d-flex gap-2">
-
             <a href="${pageContext.request.contextPath}/syllabus/list" class="btn btn-secondary-custom">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
@@ -40,6 +39,86 @@
             <div class="col-12"><div class="detail-label">Description</div><div class="detail-value">${syllabus.description}</div></div>
             <div class="col-12"><div class="detail-label">Student Tasks</div><div class="detail-value">${syllabus.studentTasks}</div></div>
             <div class="col-12"><div class="detail-label">Tools</div><div class="detail-value">${syllabus.tools}</div></div>
+        </div>
+    </div>
+
+    <!-- CLO Table Card -->
+    <div class="card-dark mt-4">
+        <div class="p-3 border-bottom"><h6 class="mb-0">Course Learning Outcomes (CLOs)</h6></div>
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">#</th>
+                        <th style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">CLO Name</th>
+                        <th style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">CLO Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${empty clos}">
+                            <tr><td colspan="3" class="text-center py-4 text-muted">No CLOs defined for this syllabus yet.</td></tr>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="clo" items="${clos}" varStatus="st">
+                                <tr>
+                                    <td style="padding: 0.8rem 0.9rem;">${st.count}</td>
+                                    <td style="padding: 0.8rem 0.9rem;"><strong style="color: #111827;">${clo.cloCode}</strong></td>
+                                    <td style="padding: 0.8rem 0.9rem;">${clo.description}</td>
+                                </tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sessions Table Card -->
+    <div class="card-dark mt-4">
+        <div class="p-3 border-bottom"><h6 class="mb-0">Sessions</h6></div>
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">Session</th>
+                        <th style="width: 250px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">Topic</th>
+                        <th style="width: 180px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">Learning-Teaching Type</th>
+                        <th style="width: 120px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">LO</th>
+                        <th style="width: 150px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">ITU</th>
+                        <th style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">Student Materials</th>
+                        <th style="width: 220px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">Student's Tasks</th>
+                        <th style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">URLs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${empty sessions}">
+                            <tr><td colspan="8" class="text-center py-4 text-muted">No sessions defined for this syllabus yet.</td></tr>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="sItem" items="${sessions}">
+                                <tr>
+                                    <td style="padding: 0.8rem 0.9rem;">${sItem.sessionNo}</td>
+                                    <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.topic}</td>
+                                    <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.learningTeachingType}</td>
+                                    <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.lo}</td>
+                                    <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.itu}</td>
+                                    <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.studentMaterials}</td>
+                                    <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.studentTasks}</td>
+                                    <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
+                                        <c:if test="${not empty sItem.urls}">
+                                            <a href="${sItem.urls}" target="_blank" style="color: #0288d1; text-decoration: none; font-weight: 500;">
+                                                Link
+                                            </a>
+                                        </c:if>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
