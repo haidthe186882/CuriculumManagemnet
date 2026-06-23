@@ -242,4 +242,17 @@ public class CurriculumDAO {
         }
         return false;
     }
+    
+    public boolean checkCurriculumCodeExists(String curriculumCode) {
+        String sql = "SELECT 1 FROM Curriculums WHERE Curriculum_Code = ?";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumCode);
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // Nếu có dữ liệu trả về nghĩa là đã tồn tại
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
