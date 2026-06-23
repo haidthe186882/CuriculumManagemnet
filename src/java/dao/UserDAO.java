@@ -52,6 +52,24 @@ public class UserDAO {
         try { isDes = rs.getBoolean("Is_Designer"); } catch (SQLException ignored) {}
 
         // Gán Role chính và LOGIC TRIỆT TIÊU QUYỀN PHỤ
+//        try {
+//            int primaryRoleId = rs.getInt("Primary_Role_ID");
+//            String primaryRoleName = rs.getString("Primary_Role_Name");
+//            if (primaryRoleName != null) {
+//                u.addRole(new Role(primaryRoleId, primaryRoleName)); 
+//                u.setRoleId(primaryRoleId);
+//                
+//                // Nếu Role chính đã là Reviewer thì tắt cờ phụ Reviewer
+//                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
+//                    isRev = false;
+//                }
+//                // Nếu Role chính đã là Designer thì tắt cờ phụ Designer
+//                if ("Designer".equalsIgnoreCase(primaryRoleName)) {
+//                    isDes = false;
+//                }
+//            }
+//        } catch (SQLException ignored) {}
+        // Gán Role chính
         try {
             int primaryRoleId = rs.getInt("Primary_Role_ID");
             String primaryRoleName = rs.getString("Primary_Role_Name");
@@ -59,17 +77,12 @@ public class UserDAO {
                 u.addRole(new Role(primaryRoleId, primaryRoleName)); 
                 u.setRoleId(primaryRoleId);
                 
-                // Nếu Role chính đã là Reviewer thì tắt cờ phụ Reviewer
-                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
-                    isRev = false;
-                }
-                // Nếu Role chính đã là Designer thì tắt cờ phụ Designer
-                if ("Designer".equalsIgnoreCase(primaryRoleName)) {
-                    isDes = false;
-                }
+                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) isRev = false;
+                if ("Designer".equalsIgnoreCase(primaryRoleName)) isDes = false;
             }
         } catch (SQLException ignored) {}
-        
+        if (isRev) u.addRole(new Role(0, "Reviewer")); 
+        if (isDes) u.addRole(new Role(0, "Designer"));
         // Gán lại cờ đã được lọc cho User
         u.setReviewer(isRev);
         u.setDesigner(isDes);
