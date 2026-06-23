@@ -142,6 +142,8 @@ public class CurriculumServlet extends HttpServlet {
         }
         req.setAttribute("curriculum", c);
         req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
+        req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
+        req.setAttribute("mappings", poDAO.getPoPloMappings(id));
         forward(req, res, "/WEB-INF/views/curriculum/po.jsp");
     }
 

@@ -59,6 +59,47 @@
             </table>
         </div>
     </div>
+
+    <!-- Mapping POs to PLOs Card -->
+    <div class="card-dark mb-4">
+        <div class="p-3 border-bottom"><h6 class="mb-0">Mapping POs to PLOs</h6></div>
+        <div class="table-responsive">
+            <table class="table table-dark-custom mb-0 text-center">
+                <thead>
+                    <tr>
+                        <th style="background-color: var(--accent) !important; color: #ffffff !important; text-align: left; padding: 0.9rem; width: 120px;">PLO(s)</th>
+                        <c:forEach var="po" items="${pos}">
+                            <th style="background-color: var(--accent) !important; color: #ffffff !important; text-align: center; padding: 0.9rem;">${po.poCode}</th>
+                        </c:forEach>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${empty plos}">
+                            <tr>
+                                <td colspan="${pos.size() + 1}" class="text-center py-4 text-muted">No PLOs defined for this curriculum yet.</td>
+                            </tr>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="plo" items="${plos}">
+                                <tr>
+                                    <td style="text-align: left; padding: 0.8rem 0.9rem; font-weight: 600; color: #111827;">${plo.ploCode}</td>
+                                    <c:forEach var="po" items="${pos}">
+                                        <c:set var="mapKey" value="${po.poId}_${plo.ploId}"/>
+                                        <td style="padding: 0.8rem 0.9rem; font-size: 1.15rem; font-weight: 600; color: #111827;">
+                                            <c:if test="${mappings[mapKey]}">
+                                                ✓
+                                            </c:if>
+                                        </td>
+                                    </c:forEach>
+                                </tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
