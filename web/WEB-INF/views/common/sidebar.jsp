@@ -21,8 +21,9 @@
         </a>
     </c:if>
 
-    <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
-        <div class="nav-section">ReFview</div>
+    
+        <c:if test="${sessionScope.loggedUser.reviewer or sessionScope.loggedUser.role.roleName == 'Reviewer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+        <div class="nav-section">Review</div>
         <a class="nav-link ${activeMenu == 'review' ? 'active' : ''}" href="${pageContext.request.contextPath}/review/list">
             <i class="bi bi-clipboard-check"></i> Review List
         </a>
