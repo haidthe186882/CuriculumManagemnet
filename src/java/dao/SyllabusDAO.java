@@ -3,6 +3,7 @@ package dao;
 import dal.DBContext;
 import model.Syllabus;
 import model.Subject;
+import model.SyllabusMaterial;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -30,6 +31,9 @@ public class SyllabusDAO {
             s.setActive(active);
             s.setStatus(active ? "Approved" : "Draft");
         } catch (SQLException ignored) {}
+        try {
+            s.setMaterialUrl(rs.getString("Material_URL"));
+        } catch (SQLException ignored) {}
         // join Subject
         try {
             Subject sub = new Subject();
@@ -46,8 +50,9 @@ public class SyllabusDAO {
     public List<Syllabus> searchSyllabuses(String keyword, String status, boolean activeOnly) {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
-          + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID WHERE 1=1");
+            "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+          + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+          + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 WHERE 1=1");
         if (activeOnly) sql.append(" AND sy.Is_Active=1");
         if (keyword != null && !keyword.trim().isEmpty())
             sql.append(" AND (sy.Syllabus_Name LIKE ? OR s.Subject_Code LIKE ? OR s.Subject_Name LIKE ?)");
@@ -70,8 +75,10 @@ public class SyllabusDAO {
 
     /** Lay syllabus theo ID */
     public Syllabus getSyllabusById(String id) {
-        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
-                   + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID WHERE sy.Syllabus_ID = ?";
+        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+                   + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+                   + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 "
+                   + "WHERE sy.Syllabus_ID = ?";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, id);
@@ -83,8 +90,9 @@ public class SyllabusDAO {
 
     /** Lay syllabus theo subject */
     public Syllabus getSyllabusBySubject(String subjectId) {
-        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
+        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
                    + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+                   + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 "
                    + "WHERE sy.Subject_ID = ? AND sy.Is_Active=1";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -131,5 +139,36 @@ public class SyllabusDAO {
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;
+    }
+
+    /** Lay danh sach tai lieu cua mot syllabus */
+    public List<SyllabusMaterial> getMaterialsBySyllabusId(String syllabusId) {
+        List<SyllabusMaterial> list = new ArrayList<>();
+        String sql = "SELECT * FROM Materials WHERE Syllabus_ID = ? ORDER BY Is_Main_Material DESC";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                SyllabusMaterial m = new SyllabusMaterial();
+                m.setMaterialId(rs.getString("Material_ID"));
+                m.setSyllabusId(rs.getString("Syllabus_ID"));
+                m.setMaterialDescription(rs.getString("Material_Description"));
+                m.setAuthor(rs.getString("Author"));
+                m.setPublisher(rs.getString("Publisher"));
+                m.setPublishedDate(rs.getDate("Published_Date"));
+                m.setEdition(rs.getString("Edition"));
+                m.setIsbn(rs.getString("ISBN"));
+                m.setMainMaterial(rs.getBoolean("Is_Main_Material"));
+                m.setHardCopy(rs.getBoolean("Is_Hard_Copy"));
+                m.setOnline(rs.getBoolean("Is_Online"));
+                m.setLink(rs.getString("Link"));
+                m.setNotes(rs.getString("Notes"));
+                list.add(m);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

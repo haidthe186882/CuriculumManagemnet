@@ -369,6 +369,8 @@ CREATE TABLE Materials
 
     Is_Online BIT DEFAULT 1,
 
+    Link NVARCHAR(1000),
+
     Notes NVARCHAR(MAX),
 
     CONSTRAINT FK_Material_Syllabus
