@@ -53,25 +53,34 @@ public class LoginServlet extends HttpServlet {
         // we use the first one returned, priority: Admin > Designer > Reviewer > Teacher > Student)
         String role = user.getRole() != null ? user.getRole().getRoleName() : "";
 
-        switch (role) {
-            case "Admin":
-                res.sendRedirect(req.getContextPath() + "/admin/users");
-                break;
-            case "Designer":
-                res.sendRedirect(req.getContextPath() + "/curriculum/list");
-                break;
-            case "Reviewer":
-                res.sendRedirect(req.getContextPath() + "/review/list");
-                break;
-            case "Teacher":
-                res.sendRedirect(req.getContextPath() + "/teacher/home");
-                break;
-            case "Student":
-                res.sendRedirect(req.getContextPath() + "/curriculum/list");
-                break;
-            default:
-                res.sendRedirect(req.getContextPath() + "/curriculum/list");
-                break;
+//        switch (role) {
+//            case "Admin":
+//                res.sendRedirect(req.getContextPath() + "/admin/users");
+//                break;
+//            case "Designer":
+//                res.sendRedirect(req.getContextPath() + "/curriculum/list");
+//                break;
+//            case "Reviewer":
+//                res.sendRedirect(req.getContextPath() + "/review/list");
+//                break;
+//            case "Teacher":
+//                res.sendRedirect(req.getContextPath() + "/teacher/home");
+//                break;
+//            case "Student":
+//                res.sendRedirect(req.getContextPath() + "/curriculum/list");
+//                break;
+//            default:
+//                res.sendRedirect(req.getContextPath() + "/curriculum/list");
+//                break;
+//        }
+           if (user.hasRole("Admin")) {
+            res.sendRedirect(req.getContextPath() + "/admin/users");
+        } else if (user.hasRole("Reviewer") || user.isReviewer()) {
+            res.sendRedirect(req.getContextPath() + "/review/list");
+        } else if (user.hasRole("Designer") || user.isDesigner()) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+        } else {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
     }
 }
