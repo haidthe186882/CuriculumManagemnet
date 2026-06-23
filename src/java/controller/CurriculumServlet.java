@@ -417,4 +417,3 @@ public class CurriculumServlet extends HttpServlet {
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=assigned");
     }
 }
-}
