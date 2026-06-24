@@ -331,7 +331,7 @@ public class UserDAO {
                 u.setEmail(rs.getString("Email"));
                 list.add(u);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { e.printStackTrace(); }  
         return list;
     }
 }
