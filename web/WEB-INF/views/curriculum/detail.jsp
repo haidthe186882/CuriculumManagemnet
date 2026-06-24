@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <c:set var="activeMenu" value="curriculum"/>
-<c:set var="canDesign" value="${(sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin') and curriculum.status == 0}"/>
+<c:set var="canDesign" value="${param.fromDesign == 'true' and (sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin') and curriculum.status == 0}"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,12 +23,13 @@
             <div class="page-subtitle"><code style="color:var(--accent);">${curriculum.curriculumCode}</code> · ${curriculum.majorName}</div>
         </div>
         <div class="d-flex gap-2">
-            <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+            <%-- Chỉ hiện Edit/Submit khi vào từ /design/list (param fromDesign=true) --%>
+            <c:if test="${param.fromDesign == 'true' and (sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin')}">
                 <c:if test="${not curriculum.isActive}">
-                    <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
+                    <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}&fromDesign=true" class="btn btn-secondary-custom">
                         <i class="bi bi-pencil me-1"></i>Edit
                     </a>
-                    <form method="post" action="${pageContext.request.contextPath}/curriculum/list" class="d-inline">
+                    <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
                         <input type="hidden" name="action" value="submit">
                         <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
                         <button type="submit" class="btn btn-primary-custom" onclick="return confirm('Submit for review?')">
@@ -99,13 +100,13 @@
                     </c:choose>
                 </div>
                 <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' and not curriculum.isActive}">
-                    <form method="post" action="${pageContext.request.contextPath}/curriculum/list" class="mb-2">
+                    <form method="post" action="${pageContext.request.contextPath}/curriculum" class="mb-2">
                         <input type="hidden" name="action" value="approve">
                         <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
                         <textarea name="comment" class="form-control form-control-dark mb-2" placeholder="Approval comment (optional)"></textarea>
                         <button type="submit" class="btn btn-success-custom w-100"><i class="bi bi-check-lg me-1"></i>Approve</button>
                     </form>
-                    <form method="post" action="${pageContext.request.contextPath}/curriculum/list">
+                    <form method="post" action="${pageContext.request.contextPath}/curriculum">
                         <input type="hidden" name="action" value="reject">
                         <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
                         <textarea name="comment" class="form-control form-control-dark mb-2" placeholder="Rejection reason" required></textarea>
@@ -126,7 +127,7 @@
 
     <c:if test="${canDesign}">
         <div class="p-3 border-bottom">
-            <form method="post" action="${pageContext.request.contextPath}/curriculum/list">
+            <form method="post" action="${pageContext.request.contextPath}/curriculum">
                 <input type="hidden" name="action" value="addSubject">
                 <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
                 <div class="row g-2 align-items-end">
@@ -190,7 +191,7 @@
                                     </td>
                                     <c:if test="${canDesign}">
                                         <td>
-                                            <form method="post" action="${pageContext.request.contextPath}/curriculum/list"
+                                            <form method="post" action="${pageContext.request.contextPath}/curriculum"
                                                   onsubmit="return confirm('Remove this subject from the curriculum?');">
                                                 <input type="hidden" name="action" value="removeSubject">
                                                 <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
