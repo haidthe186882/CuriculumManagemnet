@@ -18,11 +18,14 @@ public class Syllabus {
     private Date approvedDate;
     private String status;   // Draft / Pending / Approved / Archived
     private boolean isActive;
+    private String materialUrl;
     // join
     private Subject subject;
 
     public Syllabus() {}
 
+    public String getMaterialUrl() { return materialUrl; }
+    public void setMaterialUrl(String materialUrl) { this.materialUrl = materialUrl; }
     public String getSyllabusId() { return syllabusId; }
     public void setSyllabusId(String syllabusId) { this.syllabusId = syllabusId; }
     public String getSubjectId() { return subjectId; }

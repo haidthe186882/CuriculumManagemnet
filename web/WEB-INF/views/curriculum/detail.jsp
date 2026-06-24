@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <c:set var="activeMenu" value="curriculum"/>
+<c:set var="canDesign" value="${(sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin') and curriculum.status == 0}"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,6 +37,9 @@
                     </form>
                 </c:if>
             </c:if>
+            <a href="${pageContext.request.contextPath}/curriculum/po?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
+                <i class="bi bi-eye me-1"></i>View PO
+            </a>
             <a href="${pageContext.request.contextPath}/curriculum/list" class="btn btn-secondary-custom">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
@@ -47,6 +51,22 @@
     </c:if>
     <c:if test="${param.msg == 'submitted'}">
         <div class="alert alert-success-dark mb-3"><i class="bi bi-send-check me-1"></i>Submitted for review.</div>
+    </c:if>
+    <c:if test="${param.msg == 'subjectAdded'}">
+        <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Subject added to curriculum.</div>
+    </c:if>
+    <c:if test="${param.msg == 'subjectRemoved'}">
+        <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Subject removed from curriculum.</div>
+    </c:if>
+    <c:if test="${param.msg == 'subjectAddFailed'}">
+        <div class="mb-3" style="background: rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:10px; padding: 0.8rem 1rem; color:#b91c1c;">
+            <i class="bi bi-exclamation-triangle me-1"></i>Could not add subject — it may already be in this curriculum.
+        </div>
+    </c:if>
+    <c:if test="${param.msg == 'lockedForEdit'}">
+        <div class="mb-3" style="background: rgba(255,206,102,0.12); border:1px solid rgba(255,206,102,0.3); border-radius:10px; padding: 0.8rem 1rem; color:#b45309;">
+            <i class="bi bi-lock me-1"></i>This curriculum is no longer in Draft, so its subject list is locked.
+        </div>
     </c:if>
 
     <div class="row g-3 mb-4">
@@ -97,14 +117,55 @@
     </div>
 
     <div class="card-dark mb-4">
-    <div class="p-3 border-bottom"><h6 class="mb-0">Subjects in Curriculum</h6></div>
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Subjects in Curriculum</h6>
+        <c:if test="${curriculum.status != 0}">
+            <span class="text-muted" style="font-size:0.78rem;"><i class="bi bi-lock me-1"></i>Locked (not Draft)</span>
+        </c:if>
+    </div>
+
+    <c:if test="${canDesign}">
+        <div class="p-3 border-bottom">
+            <form method="post" action="${pageContext.request.contextPath}/curriculum/list">
+                <input type="hidden" name="action" value="addSubject">
+                <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                        <label class="detail-label">Subject</label>
+                        <select name="subjectId" class="form-control form-control-dark w-100" required>
+                            <option value="">-- Select subject to add --</option>
+                            <c:forEach var="s" items="${availableSubjects}">
+                                <option value="${s.subjectId}">${s.subjectCode} — ${s.subjectName} (${s.credits} cr)</option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="detail-label">Semester</label>
+                        <input type="number" name="semesterNo" class="form-control form-control-dark w-100" min="1" max="12" value="1" required>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check mt-2">
+                            <input type="checkbox" name="isMandatory" class="form-check-input" id="isMandatoryCheck" checked>
+                            <label class="form-check-label" for="isMandatoryCheck">Mandatory</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-plus-lg me-1"></i>Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </c:if>
+
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
-                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th><th>Syllabus</th></tr></thead>
+                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th><th>Syllabus</th>
+                    <c:if test="${canDesign}"><th>Action</th></c:if>
+                </tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="7" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
+                            <tr><td colspan="${canDesign ? 8 : 7}" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
@@ -127,6 +188,49 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
+                                    <c:if test="${canDesign}">
+                                        <td>
+                                            <form method="post" action="${pageContext.request.contextPath}/curriculum/list"
+                                                  onsubmit="return confirm('Remove this subject from the curriculum?');">
+                                                <input type="hidden" name="action" value="removeSubject">
+                                                <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                <input type="hidden" name="curriculumSubjectId" value="${cs.curriculumSubjectId}">
+                                                <button type="submit" class="btn btn-action btn-danger-custom"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </td>
+                                    </c:if>
+                                </tr>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PLO Table Section -->
+    <div class="card-dark mb-4">
+        <div class="p-3 border-bottom"><h6 class="mb-0">Program Learning Outcomes (PLOs)</h6></div>
+        <div class="table-responsive">
+            <table class="table table-dark-custom table-plo mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal;">#</th>
+                        <th style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal;">PLO Name</th>
+                        <th style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal;">PLO Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <c:choose>
+                        <c:when test="${empty plos}">
+                            <tr><td colspan="3" class="text-center py-4 text-muted">No PLOs linked yet.</td></tr>
+                        </c:when>
+                        <c:otherwise>
+                            <c:forEach var="plo" items="${plos}" varStatus="st">
+                                <tr>
+                                    <td>${st.count}</td>
+                                    <td><strong style="color: #111827;">${plo.ploCode}</strong></td>
+                                    <td>${plo.description}</td>
                                 </tr>
                             </c:forEach>
                         </c:otherwise>
@@ -164,6 +268,7 @@
         </div>
     </c:if>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
