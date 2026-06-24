@@ -93,7 +93,7 @@
                                     </td>
                                     <td class="text-muted"><fmt:formatDate value="${a.assignedDate}" pattern="dd/MM/yyyy HH:mm"/></td>
                                     <td>
-                                        <a href="${pageContext.request.contextPath}/curriculum/detail?id=${a.curriculum.curriculumId}" class="btn btn-action btn-view">
+                                        <a href="${pageContext.request.contextPath}/curriculum/detail?id=${a.curriculum.curriculumId}&fromDesign=true" class="btn btn-action btn-view">
                                             <i class="bi bi-eye me-1"></i>Open
                                         </a>
                                     </td>
