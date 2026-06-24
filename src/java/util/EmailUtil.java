@@ -66,7 +66,6 @@ public class EmailUtil {
                 + "<tr><td align='center'>"
                 + "<table width='480' cellpadding='0' cellspacing='0' style='background:#ffffff;border-radius:14px;padding:32px;'>"
                 + "<tr><td align='center' style='padding-bottom:24px'>"
-                + "<div style='width:56px;height:56px;border-radius:50%;background:#0b1020;margin:0 auto;'></div>"
                 + "<h2 style='color:#0b1020;margin:14px 0 4px;font-size:20px'>Password Reset</h2>"
                 + "<p style='color:#6b7280;font-size:14px;margin:0'>Academic Management System</p>"
                 + "</td></tr>"
