@@ -32,11 +32,13 @@ import java.util.Set;
 public class CurriculumServlet extends HttpServlet {
 
     private final CurriculumDAO curriculumDAO = new CurriculumDAO();
-    private final MajorDAO      majorDAO      = new MajorDAO();
-    private final SubjectDAO    subjectDAO    = new SubjectDAO();
-    private final ReviewDAO     reviewDAO     = new ReviewDAO();
-    private final PloDAO        ploDAO        = new PloDAO();
-    private final PoDAO         poDAO         = new PoDAO();
+    private final MajorDAO majorDAO = new MajorDAO();
+    private final SubjectDAO subjectDAO = new SubjectDAO();
+    private final ReviewDAO reviewDAO = new ReviewDAO();
+    private final dao.UserDAO userDAO = new dao.UserDAO();//
+
+    private final PloDAO ploDAO = new PloDAO();
+    private final PoDAO poDAO = new PoDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
