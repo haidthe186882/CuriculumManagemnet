@@ -72,37 +72,39 @@
                                     <div class="detail-label">Tools</div>
                                     <div class="detail-value">${syllabus.tools}</div>
                                 </div>
-                                <div class="col-12 mt-2">
-                                    <c:choose>
-                                        <c:when test="${empty materials}">
-                                            <button class="btn btn-primary-custom" id="downloadMaterialBtn" disabled title="No material link available">
-                                                <i class="bi bi-download me-1"></i>Download Material (Unavailable)
-                                            </button>
-                                        </c:when>
-                                        <c:when test="${materials.size() == 1}">
-                                            <a href="${materials[0].link}"
-                                                target="_blank" class="btn btn-primary-custom" id="downloadMaterialBtn">
-                                                <i class="bi bi-download me-1"></i>Download Material
-                                            </a>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <div class="dropdown d-inline-block">
-                                                <button class="btn btn-primary-custom dropdown-toggle" type="button" id="downloadMaterialBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="bi bi-download me-1"></i>Download Material
+                                <c:if test="${sessionScope.loggedUser.role.roleName != 'Guest'}">
+                                    <div class="col-12 mt-2">
+                                        <c:choose>
+                                            <c:when test="${empty materials}">
+                                                <button class="btn btn-primary-custom" id="downloadMaterialBtn" disabled title="No material link available">
+                                                    <i class="bi bi-download me-1"></i>Download Material (Unavailable)
                                                 </button>
-                                                <ul class="dropdown-menu shadow" aria-labelledby="downloadMaterialBtn" style="border-radius: 10px; border: 1px solid var(--border); padding: 6px 0; min-width: 280px;">
-                                                    <c:forEach var="mat" items="${materials}">
-                                                        <li>
-                                                            <a class="dropdown-item py-2 px-3" href="${mat.link}" target="_blank" style="font-size: 0.9rem; color: #1f2937; white-space: normal; font-weight: 500;">
-                                                                ${mat.materialDescription}
-                                                            </a>
-                                                        </li>
-                                                    </c:forEach>
-                                                </ul>
-                                            </div>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
+                                            </c:when>
+                                            <c:when test="${materials.size() == 1}">
+                                                <a href="${materials[0].link}"
+                                                    target="_blank" class="btn btn-primary-custom" id="downloadMaterialBtn">
+                                                    <i class="bi bi-download me-1"></i>Download Material
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="dropdown d-inline-block">
+                                                    <button class="btn btn-primary-custom dropdown-toggle" type="button" id="downloadMaterialBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="bi bi-download me-1"></i>Download Material
+                                                    </button>
+                                                    <ul class="dropdown-menu shadow" aria-labelledby="downloadMaterialBtn" style="border-radius: 10px; border: 1px solid var(--border); padding: 6px 0; min-width: 280px;">
+                                                        <c:forEach var="mat" items="${materials}">
+                                                            <li>
+                                                                <a class="dropdown-item py-2 px-3" href="${mat.link}" target="_blank" style="font-size: 0.9rem; color: #1f2937; white-space: normal; font-weight: 500;">
+                                                                    ${mat.materialDescription}
+                                                                </a>
+                                                            </li>
+                                                        </c:forEach>
+                                                    </ul>
+                                                </div>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                </c:if>
                             </div>
                         </div>
 
@@ -151,6 +153,7 @@
                         </div>
 
                         <!-- Sessions Table Card -->
+                        <c:if test="${sessionScope.loggedUser.role.roleName != 'Guest'}">
                         <div class="card-dark mt-4">
                             <div class="p-3 border-bottom">
                                 <h6 class="mb-0">Sessions</h6>
@@ -225,6 +228,7 @@
                                 </table>
                             </div>
                         </div>
+                        </c:if>
                     </div>
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
             </body>

@@ -66,7 +66,7 @@ public class SyllabusServlet extends HttpServlet {
         String keyword = req.getParameter("keyword");
         String status  = req.getParameter("status");
         User user = getLoggedUser(req);
-        boolean activeOnly = user == null;
+        boolean activeOnly = (user == null || hasRole(req, "Student", "Guest"));
         List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly);
         req.setAttribute("syllabuses", list);
         req.setAttribute("keyword", keyword);
@@ -79,6 +79,11 @@ public class SyllabusServlet extends HttpServlet {
         String id = req.getParameter("id");
         Syllabus s = syllabusDAO.getSyllabusById(id);
         if (s == null) { res.sendRedirect(req.getContextPath() + "/syllabus/list"); return; }
+        User user = getLoggedUser(req);
+        if (!s.isActive() && (user == null || hasRole(req, "Student", "Guest"))) {
+            res.sendRedirect(req.getContextPath() + "/syllabus/list");
+            return;
+        }
         req.setAttribute("syllabus", s);
         req.setAttribute("clos", cloDAO.getCLOsBySyllabus(id));
         req.setAttribute("sessions", sessionDAO.getSessionsBySyllabus(id));
