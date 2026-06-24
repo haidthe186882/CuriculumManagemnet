@@ -4,6 +4,7 @@ import jakarta.mail.*;
 import jakarta.mail.internet.*;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
+
 /**
  * @author Mai Duy An
  * @MSSV HE197000
@@ -23,8 +24,8 @@ public class EmailUtil {
      * Sends a 6-digit OTP code to the specified email address.
      *
      * @param toEmail recipient email address
-     * @param otp     the 6-digit OTP string
-     * 
+     * @param otp the 6-digit OTP string
+     *
      */
     public static void sendOTP(String toEmail, String otp) throws MessagingException {
         Properties props = new Properties();
@@ -63,11 +64,9 @@ public class EmailUtil {
                 + "<body style='margin:0;padding:0;background:#f3f8ff;font-family:Inter,Arial,sans-serif'>"
                 + "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f3f8ff;padding:40px 0'>"
                 + "<tr><td align='center'>"
-                + "<table width='480' cellpadding='0' cellspacing='0' style='background:#ffffff;border-radius:14px;"
-                + "box-shadow:0 10px 30px rgba(15,23,42,0.08);padding:36px'>"
+                + "<table width='480' cellpadding='0' cellspacing='0' style='background:#ffffff;border-radius:14px;padding:32px;'>"
                 + "<tr><td align='center' style='padding-bottom:24px'>"
-                + "<div style='width:56px;height:56px;border-radius:50%;background:#0b1020;"
-                + "display:inline-flex;align-items:center;justify-content:center'>"
+                + "<div style='width:56px;height:56px;border-radius:50%;background:#0b1020;margin:0 auto;'></div>"
                 + "<h2 style='color:#0b1020;margin:14px 0 4px;font-size:20px'>Password Reset</h2>"
                 + "<p style='color:#6b7280;font-size:14px;margin:0'>Academic Management System</p>"
                 + "</td></tr>"
@@ -76,14 +75,13 @@ public class EmailUtil {
                 + "We received a request to reset your password. Use the following OTP code to proceed:</p>"
                 + "</td></tr>"
                 + "<tr><td align='center' style='padding:0 0 20px'>"
-                + "<div style='background:#f0f4ff;border:2px dashed #3b82f6;border-radius:12px;"
-                + "padding:20px 40px;display:inline-block'>"
+                + "<div style='background:#f0f4ff;border:2px dashed #3b82f6;border-radius:12px;padding:20px 40px;display:inline-block'>"
                 + "<span style='font-size:32px;font-weight:700;letter-spacing:8px;color:#0b1020'>"
                 + otp + "</span></div>"
                 + "</td></tr>"
                 + "<tr><td style='padding:0 0 20px'>"
                 + "<p style='color:#6b7280;font-size:13px;line-height:1.5;margin:0'>"
-                + "⏱ This code will expire in <strong>5 minutes</strong>.<br>"
+                + "This code will expire in <strong>5 minutes</strong>.<br>"
                 + "If you did not request a password reset, please ignore this email.</p>"
                 + "</td></tr>"
                 + "<tr><td style='border-top:1px solid #e5e7eb;padding-top:16px'>"

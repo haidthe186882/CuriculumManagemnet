@@ -85,16 +85,6 @@
                 margin-top:18px;justify-content:center;transition:color .2s
             }
             .back-link:hover{color:#0b1020}
-            .info-box{
-                background:#f0f9ff;border:1px solid #bae6fd;
-                border-radius:10px;padding:14px 16px;
-                font-size:13px;color:#0369a1;margin-bottom:20px;
-                display:flex;align-items:start;gap:10px
-            }
-            .info-box i{font-size:18px;flex-shrink:0;margin-top:1px}
-            .footer-note{
-                text-align:center;color:#9ca3af;margin-top:18px;font-size:13px
-            }
             @media(max-width:576px){
                 .page-wrap{padding:18px}
                 .card-box{padding:24px}
@@ -124,11 +114,6 @@
                     </div>
                 </c:if>
 
-                <div class="info-box">
-                    <i class="bi bi-info-circle-fill"></i>
-                    <span>Nhập email đã đăng ký. Chúng tôi sẽ gửi mã OTP 6 số đến hộp thư của bạn.</span>
-                </div>
-
                 <form method="post" action="${pageContext.request.contextPath}/forgot-password" id="forgotForm" novalidate>
                     <div class="mb-4">
                         <label class="form-label">Email Address</label>
@@ -148,8 +133,6 @@
                 <a href="${pageContext.request.contextPath}/login" class="back-link">
                     <i class="bi bi-arrow-left"></i> Back to Sign in
                 </a>
-
-                <p class="footer-note">&copy; <span id="year">2026</span> Academic Management System</p>
             </div>
         </div>
 
