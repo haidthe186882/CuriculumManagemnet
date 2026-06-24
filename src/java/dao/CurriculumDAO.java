@@ -137,8 +137,43 @@ public class CurriculumDAO {
     /**
      * Lấy danh sách chờ duyệt (Status = 2) cho Reviewer
      */
-    public List<Curriculum> getPendingCurriculums() {
-        return searchCurriculums(null, "2", false);
+    public List<Curriculum> getPendingCurriculums(String reviewerId, boolean isAdmin) {
+        List<Curriculum> list = new ArrayList<>();
+        String sql;
+        
+        if (isAdmin) {
+            // Admin thấy toàn bộ các Curriculum đang chờ duyệt (Status = 2)
+            sql = "SELECT * FROM Curriculums WHERE Status = 2"; 
+        } else {
+            // Reviewer chỉ thấy các Curriculum chờ duyệt MÀ mình được phân công
+            sql = "SELECT c.* FROM Curriculums c " +
+                  "JOIN Curriculum_Assignments ca ON c.Curriculum_ID = ca.Curriculum_ID " +
+                  "WHERE c.Status = 2 AND ca.User_ID = ? AND ca.Assignment_Type = 'Reviewer'";
+        }
+
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            if (!isAdmin) {
+                ps.setString(1, reviewerId);
+            }
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Curriculum c = new Curriculum();
+                // Map các trường cơ bản hiển thị ngoài list
+                c.setCurriculumId(rs.getString("Curriculum_ID"));
+                c.setCurriculumCode(rs.getString("Curriculum_Code"));
+                c.setCurriculumName(rs.getString("Curriculum_Name"));
+                c.setVersion(rs.getString("Version"));
+                c.setTotalCredits(rs.getInt("Total_Credits"));
+                // (Nếu hàm map cũ của bạn có thêm trường nào thì bạn bổ sung vào đây nhé)
+                list.add(c);
+            }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+        return list;
     }
 
     /**
@@ -300,5 +335,23 @@ public class CurriculumDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Kiểm tra xem User có được phân công (Assign) vào Curriculum này hay không
+     */
+    public boolean checkAssignment(String curriculumId, String userId, String assignmentType) {
+        String sql = "SELECT 1 FROM Curriculum_Assignments WHERE Curriculum_ID = ? AND User_ID = ? AND Assignment_Type = ?";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumId);
+            ps.setString(2, userId);
+            ps.setString(3, assignmentType);
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // Có dữ liệu -> True (Được phân công)
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

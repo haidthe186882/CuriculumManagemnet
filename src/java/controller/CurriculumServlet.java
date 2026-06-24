@@ -149,6 +149,7 @@ public class CurriculumServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
             return;
         }
+        req.setAttribute("canEdit", isAllowedToEdit(getLoggedUser(req), id));
         req.setAttribute("curriculum", c);
         req.setAttribute("subjects", subjectDAO.getSubjectsByCurriculum(id));
         req.setAttribute("reviews", reviewDAO.getReviewsByCurriculum(id));
@@ -165,6 +166,7 @@ public class CurriculumServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
             return;
         }
+        req.setAttribute("canEdit", isAllowedToEdit(getLoggedUser(req), id));
         req.setAttribute("curriculum", c);
         req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
         req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
@@ -188,6 +190,7 @@ public class CurriculumServlet extends HttpServlet {
             return;
         }
         String id = req.getParameter("id");
+        if (!checkEditPermission(req, res, id)) return;
         req.setAttribute("curriculum", curriculumDAO.getCurriculumById(id));
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", true);
@@ -258,6 +261,8 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin")) {
             return;
         }
+        String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
         Curriculum c = buildFromRequest(req);
         c.setCurriculumId(req.getParameter("curriculumId"));
         curriculumDAO.updateCurriculum(c);
@@ -269,7 +274,7 @@ public class CurriculumServlet extends HttpServlet {
             return;
         }
         String id = req.getParameter("curriculumId");
-
+        if (!checkEditPermission(req, res, id)) return;
         // ĐỒNG BỘ: Sử dụng hàm phê duyệt luồng tiến trình `submitForReview` (Chuyển Status thành 2)
         curriculumDAO.submitForReview(id);
         res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + id + "&msg=submitted");
@@ -309,6 +314,7 @@ public class CurriculumServlet extends HttpServlet {
             return;
         }
         String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
         String poCode = req.getParameter("poCode");
         String description = req.getParameter("description");
         poDAO.addPO(curriculumId, poCode, description);
@@ -435,5 +441,32 @@ public class CurriculumServlet extends HttpServlet {
 
         curriculumDAO.assignCurriculumRoles(curriculumId, designerId, reviewerId, admin.getUserId());
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=assigned");
+    }
+    
+    // Kiểm tra logic nội bộ xem User có quyền Edit Curriculum này không
+    private boolean isAllowedToEdit(User user, String curriculumId) {
+        if (user == null) return false;
+        String roleName = user.getRole() != null ? user.getRole().getRoleName() : "";
+        
+        // Admin thì luôn được sửa mọi thứ
+        boolean isAdmin = "Admin".equalsIgnoreCase(roleName) || user.hasRole("Admin");
+        if (isAdmin) return true;
+        
+        // Designer thì PHẢI được Assign mới được sửa
+        boolean isDesigner = "Designer".equalsIgnoreCase(roleName) || user.hasRole("Designer") || user.isDesigner();
+        if (isDesigner) {
+            return curriculumDAO.checkAssignment(curriculumId, user.getUserId(), "Designer");
+        }
+        return false;
+    }
+
+    // Hàm gọi để chặn hoặc đá văng ra ngoài nếu cố tình vi phạm
+    private boolean checkEditPermission(HttpServletRequest req, HttpServletResponse res, String curriculumId) throws IOException {
+        User user = getLoggedUser(req);
+        if (isAllowedToEdit(user, curriculumId)) {
+            return true;
+        }
+        res.sendRedirect(req.getContextPath() + "/curriculum/list");
+        return false;
     }
 }
