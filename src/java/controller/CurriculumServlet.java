@@ -302,7 +302,7 @@ public class CurriculumServlet extends HttpServlet {
         
 //        for (String r : roles) if (r.equals(userRole)) return true;
        for (String r : roles) {
-            if (r.equalsIgnoreCase(userRole)) return true; // Cấp phép nếu trùng quyền chính
+            if (r.equalsIgnoreCase(userRole)) return true; 
             if (user.hasRole(r)) return true;
             if ("Designer".equalsIgnoreCase(r) && (user.isDesigner() || user.hasRole("Designer"))) return true;
             if ("Reviewer".equalsIgnoreCase(r) && (user.isReviewer() || user.hasRole("Reviewer"))) return true;
