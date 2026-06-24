@@ -50,9 +50,9 @@ public class SyllabusDAO {
     public List<Syllabus> searchSyllabuses(String keyword, String status, boolean activeOnly) {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+            "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
           + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-          + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 WHERE 1=1");
+          + "WHERE 1=1");
         if (activeOnly) sql.append(" AND sy.Is_Active=1");
         if (keyword != null && !keyword.trim().isEmpty())
             sql.append(" AND (sy.Syllabus_Name LIKE ? OR s.Subject_Code LIKE ? OR s.Subject_Name LIKE ?)");
@@ -75,9 +75,8 @@ public class SyllabusDAO {
 
     /** Lay syllabus theo ID */
     public Syllabus getSyllabusById(String id) {
-        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
                    + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-                   + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 "
                    + "WHERE sy.Syllabus_ID = ?";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -90,9 +89,8 @@ public class SyllabusDAO {
 
     /** Lay syllabus theo subject */
     public Syllabus getSyllabusBySubject(String subjectId) {
-        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
                    + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-                   + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 "
                    + "WHERE sy.Subject_ID = ? AND sy.Is_Active=1";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
