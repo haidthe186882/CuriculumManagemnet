@@ -14,6 +14,23 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
+        String action = req.getParameter("action");
+        if ("guest".equalsIgnoreCase(action)) {
+            User guestUser = new User();
+            guestUser.setUserId("guest-id");
+            guestUser.setFullName("Guest User");
+            guestUser.setEmail("guest@ltms.com");
+            guestUser.setActive(true);
+            guestUser.addRole(new model.Role(5, "Guest"));
+            guestUser.setRoleId(5);
+            
+            HttpSession session = req.getSession(true);
+            session.setAttribute("loggedUser", guestUser);
+            session.setMaxInactiveInterval(30 * 60); // 30 min timeout
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+
         HttpSession session = req.getSession(false);
         if (session != null && session.getAttribute("loggedUser") != null) {
             res.sendRedirect(req.getContextPath() + "/dashboard");

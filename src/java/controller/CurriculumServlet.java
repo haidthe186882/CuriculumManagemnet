@@ -251,7 +251,7 @@ public class CurriculumServlet extends HttpServlet {
     private void doUpdate(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
-        }
+        
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
         Curriculum c = buildFromRequest(req);
@@ -527,4 +527,4 @@ public class CurriculumServlet extends HttpServlet {
         return false;
     }
 }
-}
+
