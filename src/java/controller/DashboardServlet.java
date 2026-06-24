@@ -28,9 +28,6 @@ public class DashboardServlet extends HttpServlet {
             case "Reviewer":
                 res.sendRedirect(req.getContextPath() + "/review/list");
                 break;
-            case "Teacher":
-                res.sendRedirect(req.getContextPath() + "/teacher/home");
-                break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
                 break;
