@@ -270,8 +270,13 @@
 
                                 <div class="mb-3">
                                     <label class="form-label text-light small">Current Primary Role</label>
-                                    <input type="text" class="form-control bg-secondary text-light border-secondary w-100" value="${u.role.roleName}" readonly>
-                                    <input type="hidden" name="roleId" value="${u.role.roleId}">
+                                   <select name="roleId" class="form-select bg-dark text-white border-secondary w-100 edit-role-select" data-userid="${u.userId}" required>
+                                        <c:forEach var="r" items="${roles}">
+                                            <option value="${r.roleId}" data-name="${r.roleName}" ${r.roleId == u.role.roleId ? 'selected' : ''}>
+                                                ${r.roleName}
+                                            </option>
+                                        </c:forEach>
+                                    </select>
                                 </div>
 
                                 <!--                        <div class="d-flex gap-4">
@@ -327,7 +332,8 @@
         const roleSelect = document.getElementById("addRoleSelect");
         const extraRolesDiv = document.getElementById("extraRolesDiv");
         const extraCheckboxes = extraRolesDiv.querySelectorAll("input[type=checkbox]");
-
+        const editRoleSelects = document.querySelectorAll(".edit-role-select");
+        
         function toggleExtraRoles() {
             const selectedOption = roleSelect.options[roleSelect.selectedIndex];
             // Nếu chọn Student thì ẩn khu vực phân quyền
@@ -338,6 +344,23 @@
             } else {
                 extraRolesDiv.style.display = 'block';
             }
+            editRoleSelects.forEach(select => {
+            select.addEventListener("change", function() {
+                const userId = this.getAttribute("data-userid");
+                const extraRolesDiv = document.getElementById("editExtraRolesDiv_" + userId);
+                const extraCheckboxes = extraRolesDiv.querySelectorAll("input[type=checkbox]");
+                
+                const selectedOption = this.options[this.selectedIndex];
+                const roleName = selectedOption.getAttribute("data-name");
+
+                // Nếu Role chính đã là Student, Reviewer, hoặc Designer thì không cần cờ phụ
+                if (roleName === 'Student' || roleName === 'Reviewer' || roleName === 'Designer') {
+                    extraRolesDiv.style.display = 'none';
+                    extraCheckboxes.forEach(cb => cb.checked = false); // Tự động bỏ tick
+                } else {
+                    extraRolesDiv.style.display = 'block';
+                }
+            });s
         }
 
         // Bắt sự kiện khi người dùng thay đổi Dropdown
