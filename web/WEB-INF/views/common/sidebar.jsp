@@ -12,7 +12,7 @@
         <i class="bi bi-file-earmark-text"></i> Syllabuses
     </a>
 
-    <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+    <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.designer}">
         <div class="nav-section">Design</div>
         <a class="nav-link ${activeMenu == 'design' ? 'active' : ''}" href="${pageContext.request.contextPath}/design/list">
             <i class="bi bi-pencil-square"></i> My Assignments

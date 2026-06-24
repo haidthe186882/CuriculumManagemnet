@@ -77,8 +77,21 @@ public class DesginServlet extends HttpServlet {
             return null;
         }
         User user = (User) session.getAttribute("loggedUser");
-        String role = user.getRole() != null ? user.getRole().getRoleName() : "";
-        if (!"Designer".equals(role) && !"Admin".equals(role)) {
+//        String role = user.getRole() != null ? user.getRole().getRoleName() : "";
+//        if (!"Designer".equals(role) && !"Admin".equals(role)) {
+//            response.sendRedirect(request.getContextPath() + "/curriculum/list");
+//            return null;
+//        }
+        String primaryRole = user.getRole() != null ? user.getRole().getRoleName() : "";
+        
+        // 1. Quét quyền Designer (Chính, List, Cờ phụ)
+        boolean isDesigner = "Designer".equalsIgnoreCase(primaryRole) || user.hasRole("Designer") || user.isDesigner();
+        
+        // 2. Quét quyền Admin
+        boolean isAdmin = "Admin".equalsIgnoreCase(primaryRole) || user.hasRole("Admin");
+
+        // Nếu KHÔNG có bất kỳ quyền nào trong 3 nhóm trên thì mới chặn
+        if (!isDesigner && !isAdmin) {
             response.sendRedirect(request.getContextPath() + "/curriculum/list");
             return null;
         }

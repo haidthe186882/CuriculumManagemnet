@@ -30,9 +30,13 @@ public class ReviewServlet extends HttpServlet {
     private void showList(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         if (!requireReviewer(req, res)) return;
+        // 1. Lấy thông tin user đang đăng nhập
+        User user = (User) req.getSession().getAttribute("loggedUser");
+        // 2. Kiểm tra xem có phải Admin không
+        boolean isAdmin = user.hasRole("Admin") || "Admin".equalsIgnoreCase(user.getRole().getRoleName());
         String keyword = req.getParameter("keyword");
         req.setAttribute("reviews", reviewDAO.getAllReviews(keyword));
-        req.setAttribute("pendingCurriculums", curriculumDAO.getPendingCurriculums());
+        req.setAttribute("pendingCurriculums", curriculumDAO.getPendingCurriculums(user.getUserId(), isAdmin));
         req.setAttribute("keyword", keyword);
         req.getRequestDispatcher("/WEB-INF/views/review/list.jsp").forward(req, res);
     }
