@@ -457,8 +457,13 @@ public class CurriculumServlet extends HttpServlet {
             userRole = user.getRole().toString();
         }
         
-        for (String r : roles) if (r.equals(userRole)) return true;
-
+//        for (String r : roles) if (r.equals(userRole)) return true;
+       for (String r : roles) {
+            if (r.equalsIgnoreCase(userRole)) return true; 
+            if (user.hasRole(r)) return true;
+            if ("Designer".equalsIgnoreCase(r) && (user.isDesigner() || user.hasRole("Designer"))) return true;
+            if ("Reviewer".equalsIgnoreCase(r) && (user.isReviewer() || user.hasRole("Reviewer"))) return true;
+        }
         res.sendRedirect(req.getContextPath() + "/curriculum/list");
         return false;
     }
