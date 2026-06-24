@@ -218,7 +218,13 @@ public class SyllabusServlet extends HttpServlet {
         User user = getLoggedUser(req);
         if (user == null) return false;
         String userRole = user.getRole() != null ? user.getRole().getRoleName() : "";
-        for (String r : roles) if (r.equals(userRole)) return true;
+//        for (String r : roles) if (r.equals(userRole)) return true;
+        for (String r : roles) {
+            if (r.equalsIgnoreCase(userRole)) return true;
+            if (user.hasRole(r)) return true;
+            if ("Designer".equalsIgnoreCase(r) && (user.isDesigner() || user.hasRole("Designer"))) return true;
+            if ("Reviewer".equalsIgnoreCase(r) && (user.isReviewer() || user.hasRole("Reviewer"))) return true;
+        }
         return false;
     }
 }

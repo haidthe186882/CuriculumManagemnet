@@ -137,8 +137,43 @@ public class CurriculumDAO {
     /**
      * Lấy danh sách chờ duyệt (Status = 2) cho Reviewer
      */
-    public List<Curriculum> getPendingCurriculums() {
-        return searchCurriculums(null, "2", false);
+    public List<Curriculum> getPendingCurriculums(String reviewerId, boolean isAdmin) {
+        List<Curriculum> list = new ArrayList<>();
+        String sql;
+        
+        if (isAdmin) {
+            // Admin thấy toàn bộ các Curriculum đang chờ duyệt (Status = 2)
+            sql = "SELECT * FROM Curriculums WHERE Status = 2"; 
+        } else {
+            // Reviewer chỉ thấy các Curriculum chờ duyệt MÀ mình được phân công
+            sql = "SELECT c.* FROM Curriculums c " +
+                  "JOIN Curriculum_Assignments ca ON c.Curriculum_ID = ca.Curriculum_ID " +
+                  "WHERE c.Status = 2 AND ca.User_ID = ? AND ca.Assignment_Type = 'Reviewer'";
+        }
+
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            if (!isAdmin) {
+                ps.setString(1, reviewerId);
+            }
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Curriculum c = new Curriculum();
+                // Map các trường cơ bản hiển thị ngoài list
+                c.setCurriculumId(rs.getString("Curriculum_ID"));
+                c.setCurriculumCode(rs.getString("Curriculum_Code"));
+                c.setCurriculumName(rs.getString("Curriculum_Name"));
+                c.setVersion(rs.getString("Version"));
+                c.setTotalCredits(rs.getInt("Total_Credits"));
+                // (Nếu hàm map cũ của bạn có thêm trường nào thì bạn bổ sung vào đây nhé)
+                list.add(c);
+            }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+        }
+        return list;
     }
 
     /**
@@ -237,6 +272,83 @@ public class CurriculumDAO {
             ps.setBoolean(1, isActive);
             ps.setString(2, curriculumId);
             return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    public boolean checkCurriculumCodeExists(String curriculumCode) {
+        String sql = "SELECT 1 FROM Curriculums WHERE Curriculum_Code = ?";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumCode);
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // Nếu có dữ liệu trả về nghĩa là đã tồn tại
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    /**
+     * Lưu thông tin phân công (Designer / Reviewer) vào bảng Curriculum_Assignments
+     */
+    public void assignCurriculumRoles(String curriculumId, String designerId, String reviewerId, String adminId) {
+        String deleteSql = "DELETE FROM Curriculum_Assignments WHERE Curriculum_ID = ?";
+        String insertSql = "INSERT INTO Curriculum_Assignments (Assignment_ID, Curriculum_ID, User_ID, Assignment_Type, Assigned_By, Assigned_Date) VALUES (NEWID(), ?, ?, ?, ?, GETDATE())";
+
+        try (Connection con = new dal.DBContext().getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                // 1. Xóa phân công cũ để tránh rác dữ liệu
+                try (PreparedStatement psDel = con.prepareStatement(deleteSql)) {
+                    psDel.setString(1, curriculumId);
+                    psDel.executeUpdate();
+                }
+                
+                // 2. Thêm Designer mới (nếu Admin có chọn)
+                if (designerId != null && !designerId.trim().isEmpty()) {
+                    try (PreparedStatement psIns = con.prepareStatement(insertSql)) {
+                        psIns.setString(1, curriculumId);
+                        psIns.setString(2, designerId);
+                        psIns.setString(3, "Designer");
+                        psIns.setString(4, adminId);
+                        psIns.executeUpdate();
+                    }
+                }
+                
+                // 3. Thêm Reviewer mới (nếu Admin có chọn)
+                if (reviewerId != null && !reviewerId.trim().isEmpty()) {
+                    try (PreparedStatement psIns = con.prepareStatement(insertSql)) {
+                        psIns.setString(1, curriculumId);
+                        psIns.setString(2, reviewerId);
+                        psIns.setString(3, "Reviewer");
+                        psIns.setString(4, adminId);
+                        psIns.executeUpdate();
+                    }
+                }
+                con.commit();
+            } catch (Exception e) {
+                con.rollback();
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Kiểm tra xem User có được phân công (Assign) vào Curriculum này hay không
+     */
+    public boolean checkAssignment(String curriculumId, String userId, String assignmentType) {
+        String sql = "SELECT 1 FROM Curriculum_Assignments WHERE Curriculum_ID = ? AND User_ID = ? AND Assignment_Type = ?";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumId);
+            ps.setString(2, userId);
+            ps.setString(3, assignmentType);
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // Có dữ liệu -> True (Được phân công)
         } catch (Exception e) {
             e.printStackTrace();
         }

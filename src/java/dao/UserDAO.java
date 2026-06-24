@@ -52,6 +52,24 @@ public class UserDAO {
         try { isDes = rs.getBoolean("Is_Designer"); } catch (SQLException ignored) {}
 
         // Gán Role chính và LOGIC TRIỆT TIÊU QUYỀN PHỤ
+//        try {
+//            int primaryRoleId = rs.getInt("Primary_Role_ID");
+//            String primaryRoleName = rs.getString("Primary_Role_Name");
+//            if (primaryRoleName != null) {
+//                u.addRole(new Role(primaryRoleId, primaryRoleName)); 
+//                u.setRoleId(primaryRoleId);
+//                
+//                // Nếu Role chính đã là Reviewer thì tắt cờ phụ Reviewer
+//                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
+//                    isRev = false;
+//                }
+//                // Nếu Role chính đã là Designer thì tắt cờ phụ Designer
+//                if ("Designer".equalsIgnoreCase(primaryRoleName)) {
+//                    isDes = false;
+//                }
+//            }
+//        } catch (SQLException ignored) {}
+        // Gán Role chính
         try {
             int primaryRoleId = rs.getInt("Primary_Role_ID");
             String primaryRoleName = rs.getString("Primary_Role_Name");
@@ -59,17 +77,12 @@ public class UserDAO {
                 u.addRole(new Role(primaryRoleId, primaryRoleName)); 
                 u.setRoleId(primaryRoleId);
                 
-                // Nếu Role chính đã là Reviewer thì tắt cờ phụ Reviewer
-                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
-                    isRev = false;
-                }
-                // Nếu Role chính đã là Designer thì tắt cờ phụ Designer
-                if ("Designer".equalsIgnoreCase(primaryRoleName)) {
-                    isDes = false;
-                }
+                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) isRev = false;
+                if ("Designer".equalsIgnoreCase(primaryRoleName)) isDes = false;
             }
         } catch (SQLException ignored) {}
-        
+        if (isRev) u.addRole(new Role(0, "Reviewer")); 
+        if (isDes) u.addRole(new Role(0, "Designer"));
         // Gán lại cờ đã được lọc cho User
         u.setReviewer(isRev);
         u.setDesigner(isDes);
@@ -297,6 +310,27 @@ public class UserDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) list.add(new Role(rs.getInt("Role_ID"), rs.getString("Role_Name")));
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+    
+    public List<User> getUsersByRole(String roleName) {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT u.User_ID, u.Full_Name, u.Email FROM Users u " +
+                     "JOIN User_Roles ur ON u.User_ID = ur.User_ID " +
+                     "JOIN Roles r ON ur.Role_ID = r.Role_ID " +
+                     "WHERE r.Role_Name = ? AND u.Is_Active = 1";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getString("User_ID"));
+                u.setFullName(rs.getString("Full_Name"));
+                u.setEmail(rs.getString("Email"));
+                list.add(u);
+            }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
