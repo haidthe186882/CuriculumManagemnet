@@ -136,7 +136,7 @@
                                 <th class="sortable" data-sort="version" style="cursor: pointer; user-select: none;">Version <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
                                 <th class="sortable" data-sort="status" style="cursor: pointer; user-select: none;">Is Active <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
                                 <th style="cursor: default;">Decision Date</th>
-                                <th style="cursor: default;">Action</th>
+                                <th style="cursor: default;">Action</th> 
                             </tr>
                         </thead>
                         <tbody>
@@ -229,7 +229,7 @@
                                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                                                     <button type="submit" class="btn btn-primary">Save Assignments</button>
                                                                 </div>
-                                                            </form>
+                                                            //</form>
                                                         </div>
                                                     </div>
                                                 </c:if>
