@@ -143,7 +143,7 @@
                             <c:choose>
                                 <c:when test="${empty curriculums}">
                                     <tr>
-                                        <td colspan="9" class="text-center py-5 text-muted">
+                                        <td colspan="8" class="text-center py-5 text-muted">
                                             <i class="bi bi-inbox display-6 d-block mb-2"></i>
                                             No curriculum found matching your search criteria.
                                         </td>
