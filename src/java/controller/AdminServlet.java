@@ -50,7 +50,8 @@ public class AdminServlet extends HttpServlet {
             throws ServletException, IOException {
         String keyword = req.getParameter("keyword");
         String status  = req.getParameter("status");
-        List<User> users = userDAO.getAllUsers(keyword, status);
+        String roleId = req.getParameter("roleId");
+        List<User> users = userDAO.getAllUsers(keyword, status,roleId);
         List<Role> allRoles = userDAO.getAllRoles();
         List<Role> filteredRoles = allRoles.stream().filter(r -> r.getRoleName().equals("Teacher") || 
                 r.getRoleName().equals("Student")).collect(Collectors.toList());
@@ -58,6 +59,8 @@ public class AdminServlet extends HttpServlet {
         req.setAttribute("roles", filteredRoles);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
+        req.setAttribute("selectedRole",roleId);
+        req.setAttribute("roles", userDAO.getAllRoles());
         req.getRequestDispatcher("/WEB-INF/views/admin/users.jsp").forward(req, res);
     }
 
