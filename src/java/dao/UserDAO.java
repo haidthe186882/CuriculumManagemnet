@@ -106,7 +106,7 @@ public class UserDAO {
         return null;
     }
 
-    public List<User> getAllUsers(String keyword, String status) {
+    public List<User> getAllUsers(String keyword, String status, String roleId) {
         List<User> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(BASE_SELECT_SQL + "WHERE 1=1");
         
@@ -114,6 +114,9 @@ public class UserDAO {
             sql.append(" AND (u.Full_Name LIKE ? OR u.Email LIKE ?)");
         if (status != null && !status.trim().isEmpty())
             sql.append(" AND u.Is_Active = ?");
+        if (roleId != null && !roleId.trim().isEmpty()) {
+            sql.append(" AND u.User_ID IN (SELECT User_ID FROM User_Roles WHERE Role_ID = ?)");
+        }
         sql.append(" ORDER BY u.Created_Date DESC");
 
         try (Connection con = new DBContext().getConnection();
@@ -124,7 +127,12 @@ public class UserDAO {
                 ps.setString(idx++, "%" + keyword + "%");
             }
             if (status != null && !status.trim().isEmpty()) {
-                ps.setInt(idx, status.equalsIgnoreCase("Active") ? 1 : 0);
+                //thứ tự index tự tăng
+                ps.setInt(idx++, status.equalsIgnoreCase("Active") ? 1 : 0);
+            }
+            //TRUYỀN THAM SỐ ROLE_ID VÀO CÂU LỆNH SQL
+            if (roleId != null && !roleId.trim().isEmpty()) {
+                ps.setInt(idx++, Integer.parseInt(roleId));
             }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) list.add(mapUser(rs));

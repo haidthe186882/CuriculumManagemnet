@@ -141,8 +141,8 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
         req.setAttribute("totalCount", list.size());
-        req.setAttribute("designer", userDAO.getUsersByRole("Designer"));
-        req.setAttribute("reviewer", userDAO.getUsersByRole("Reviewer"));
+        req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
+        req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
         forward(req, res, "/WEB-INF/views/curriculum/list.jsp");
     }
 

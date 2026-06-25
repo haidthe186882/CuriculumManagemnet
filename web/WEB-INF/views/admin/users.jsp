@@ -79,18 +79,26 @@
                     <div class="card-dark p-3 mb-3">
                         <form method="get" action="${pageContext.request.contextPath}/admin/users">
                             <div class="row g-2">
-                                <div class="col-md-7">
+                                <div class="col-12 col-lg-5">
                                     <input type="text" name="keyword" class="search-bar form-control w-100"
                                            placeholder="Search by name or email..." value="${keyword}">
                                 </div>
-                                <div class="col-md-3">
+                                           <div class="col-6 col-lg-3">
+                                               <select name="roleId" class="form-select form-select-dark w-100">
+                                                   <option value="">All Roles</option>
+                                                   <c:forEach var="r" items="${roles}">
+                                                       <option value="${r.roleId}" ${selectedRole == r.roleId.toString() ? 'selected' : ''}>${r.roleName}</option>
+                                                   </c:forEach>
+                                               </select>
+                                           </div>
+                                <div class="col-6 col-lg-2">
                                     <select name="status" class="form-select form-select-dark w-100">
                                         <option value="">All Status</option>
                                         <option value="Active" ${selectedStatus=='Active' ? 'selected' : ''}>Active</option>
                                         <option value="Inactive" ${selectedStatus=='Inactive' ? 'selected' : ''}>Inactive</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-12 col-lg-2">
                                     <button type="submit" class="btn btn-primary-custom w-100">Search</button>
                                 </div>
                             </div>
