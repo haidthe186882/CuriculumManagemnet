@@ -130,16 +130,18 @@ public class CurriculumServlet extends HttpServlet {
             throws ServletException, IOException {
         User user = getLoggedUser(req);
         String keyword = req.getParameter("keyword");
-
         String status  = req.getParameter("status"); // Đọc tham số bộ lọc Status từ giao diện (0, 2, 1)
+        String majorId = req.getParameter("majorId"); // Đọc tham số bộ lọc Program/Major
 
         boolean publicOnly = (user == null || isPublicRole(user));
 
-        // Gọi hàm tìm kiếm truyền bộ lọc status sang cho DAO
-        List<Curriculum> list = curriculumDAO.searchCurriculums(keyword, status, publicOnly);
+        // Gọi hàm tìm kiếm truyền bộ lọc status và majorId sang cho DAO
+        List<Curriculum> list = curriculumDAO.searchCurriculums(keyword, status, majorId, publicOnly);
         req.setAttribute("curriculums", list);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
+        req.setAttribute("selectedMajorId", majorId);
+        req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("totalCount", list.size());
         req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
         req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
