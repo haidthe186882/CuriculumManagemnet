@@ -95,7 +95,8 @@
             <div class="card-dark p-3 mb-3">
                 <form method="get" action="${pageContext.request.contextPath}/curriculum/list">
                     <div class="row g-2">
-                        <div class="${(sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer') ? 'col-md-7' : 'col-md-10'}">
+                        <c:set var="isStaff" value="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer'}"/>
+                        <div class="${isStaff ? 'col-md-4' : 'col-md-7'}">
                             <div class="input-group">
                                 <input type="text" name="keyword" class="search-bar form-control border-end-0"
                                        placeholder="Search by name, code..." value="${keyword}">
@@ -104,9 +105,17 @@
                                 </span>
                             </div>
                         </div>
-                        <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer'}">
+                        <div class="col-md-3">
+                            <select name="majorId" class="form-select form-select-dark w-100" onchange="this.form.submit()">
+                                <option value="">All Programs</option>
+                                <c:forEach var="m" items="${majors}">
+                                    <option value="${m.majorId}" ${selectedMajorId == m.majorId ? 'selected' : ''}>${m.majorName}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <c:if test="${isStaff}">
                             <div class="col-md-3">
-                                <select name="status" class="form-select form-select-dark w-100">
+                                <select name="status" class="form-select form-select-dark w-100" onchange="this.form.submit()">
                                     <option value="">All Status</option>
                                     <option value="Draft"    ${selectedStatus=='Draft'    ? 'selected' : ''}>Draft</option>
                                     <option value="Pending"  ${selectedStatus=='Pending'  ? 'selected' : ''}>Pending Review</option>
