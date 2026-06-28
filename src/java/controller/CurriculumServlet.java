@@ -164,6 +164,7 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("reviews", reviewDAO.getReviewsByCurriculum(id));
         req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
         req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
+        req.setAttribute("mappings", poDAO.getPoPloMappings(id));
         req.setAttribute("availableSubjects", getAvailableSubjects(subjectsInCurriculum));
         forward(req, res, "/WEB-INF/views/curriculum/detail.jsp");
     }
@@ -211,30 +212,56 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
 
+        String curriculumId = req.getParameter("curriculumId");
+        boolean editMode = curriculumId != null && !curriculumId.trim().isEmpty();
+
+        Curriculum baseCurriculum = null;
+        if (editMode) {
+            if (!checkEditPermission(req, res, curriculumId)) return;
+            baseCurriculum = curriculumDAO.getCurriculumById(curriculumId);
+            if (baseCurriculum == null) {
+                res.sendRedirect(req.getContextPath() + "/curriculum/list");
+                return;
+            }
+        }
+
         try {
             Part filePart = req.getPart("excelFile"); 
             if (filePart != null && filePart.getSize() > 0) {
                 InputStream fileContent = filePart.getInputStream();
 
                 Curriculum importedData = ExcelHelper.parseCurriculumExcel(fileContent);
-                
-                // ĐỒNG BỘ: Mặc định dữ liệu vừa bóc tách từ Excel nhận trạng thái tiến trình là 0 (Draft)
-                importedData.setStatus(0);
-                // Mở kích hoạt Is_Active hiển thị hệ thống mặc định
-                importedData.setIsActive(false);
 
-                req.setAttribute("curriculum", importedData);
+                if (editMode) {
+                    // Giu nguyen Curriculum_ID, Curriculum_Code, Major, Status, IsActive cua ban ghi
+                    // dang sua - Excel chi nap lai cac field noi dung (Name, Description, Credits...)
+                    baseCurriculum.setCurriculumName(importedData.getCurriculumName());
+                    baseCurriculum.setEnglishName(importedData.getEnglishName());
+                    baseCurriculum.setDescription(importedData.getDescription());
+                    baseCurriculum.setDecisionNo(importedData.getDecisionNo());
+                    baseCurriculum.setDecisionDate(importedData.getDecisionDate());
+                    baseCurriculum.setTotalCredits(importedData.getTotalCredits());
+                    req.setAttribute("curriculum", baseCurriculum);
+                } else {
+                    // ĐỒNG BỘ: Mặc định dữ liệu vừa bóc tách từ Excel nhận trạng thái tiến trình là 0 (Draft)
+                    importedData.setStatus(0);
+                    // Mở kích hoạt Is_Active hiển thị hệ thống mặc định
+                    importedData.setIsActive(false);
+                    req.setAttribute("curriculum", importedData);
+                }
                 req.setAttribute("successMessage",
-                        "Imported successfully from Excel! Please verify data and choose Major before saving.");
+                        "Imported successfully from Excel! Please verify data" + (editMode ? "" : " and choose Major") + " before saving.");
             } else {
                 req.setAttribute("errorMessage", "Please select a valid Excel file.");
+                if (editMode) req.setAttribute("curriculum", baseCurriculum);
             }
         } catch (Exception e) {
             e.printStackTrace();
             req.setAttribute("errorMessage", "Error parsing Excel file: " + e.getMessage());
+            if (editMode) req.setAttribute("curriculum", baseCurriculum);
         }
         req.setAttribute("majors", majorDAO.getAllMajors());
-        req.setAttribute("isEdit", false);
+        req.setAttribute("isEdit", editMode);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
@@ -309,44 +336,59 @@ public class CurriculumServlet extends HttpServlet {
         String poCode = req.getParameter("poCode");
         String description = req.getParameter("description");
         poDAO.addPO(curriculumId, poCode, description);
-        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=poAdded");
+        res.sendRedirect(returnUrl(req, curriculumId, "poAdded"));
     }
 
     private void doDeletePo(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
         String poId = req.getParameter("poId");
         poDAO.deletePO(poId);
-        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=poDeleted");
+        res.sendRedirect(returnUrl(req, curriculumId, "poDeleted"));
     }
 
     private void doAddPlo(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
         String ploCode = req.getParameter("ploCode");
         String description = req.getParameter("description");
         ploDAO.addPLO(curriculumId, ploCode, description);
-        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=ploAdded");
+        res.sendRedirect(returnUrl(req, curriculumId, "ploAdded"));
     }
 
     private void doDeletePlo(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
         String ploId = req.getParameter("ploId");
         ploDAO.deletePLO(ploId);
-        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=ploDeleted");
+        res.sendRedirect(returnUrl(req, curriculumId, "ploDeleted"));
     }
 
     private void doSaveMapping(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
         String[] checkedKeys = req.getParameterValues("mapKey"); // mỗi checkbox value="POID_PLOID"
         poDAO.saveMappings(curriculumId, checkedKeys);
-        res.sendRedirect(req.getContextPath() + "/curriculum/po?id=" + curriculumId + "&msg=mappingSaved");
+        res.sendRedirect(returnUrl(req, curriculumId, "mappingSaved"));
+    }
+
+    /**
+     * Cac form PO/PLO/Mapping co the duoc submit tu trang /curriculum/po
+     * hoac tu trang /curriculum/detail (embed san bang PO/PLO/Mapping).
+     * Dung hidden field "returnTo" de biet quay lai trang nao sau khi luu.
+     */
+    private String returnUrl(HttpServletRequest req, String curriculumId, String msg) {
+        String returnTo = req.getParameter("returnTo");
+        String path = "detail".equals(returnTo) ? "/curriculum/detail" : "/curriculum/po";
+        return req.getContextPath() + path + "?id=" + curriculumId + "&msg=" + msg;
     }
 
     /**
@@ -357,6 +399,7 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
 
         Curriculum c = curriculumDAO.getCurriculumById(curriculumId);
         if (c == null) {
@@ -389,6 +432,7 @@ public class CurriculumServlet extends HttpServlet {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
 
         Curriculum c = curriculumDAO.getCurriculumById(curriculumId);
         if (c == null) {
@@ -529,4 +573,3 @@ public class CurriculumServlet extends HttpServlet {
         return false;
     }
 }
-
