@@ -13,7 +13,7 @@ import java.security.MessageDigest;
  * @author Mai Duy An
  * @MSSV HE197000
  * @date 24/6/2026
- * 
+ *
  */
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
@@ -30,7 +30,7 @@ public class LoginServlet extends HttpServlet {
             guestUser.setIsActive("Active");
             guestUser.addRole(new model.Role(5, "Guest"));
             guestUser.setRoleId(5);
-            
+
             HttpSession session = req.getSession(true);
             session.setAttribute("loggedUser", guestUser);
             session.setMaxInactiveInterval(30 * 60);
@@ -96,7 +96,9 @@ public class LoginServlet extends HttpServlet {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] bytes = md.digest(input.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
-            for (byte b : bytes) sb.append(String.format("%02x", b));
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
             return sb.toString();
         } catch (Exception e) {
             return input;
