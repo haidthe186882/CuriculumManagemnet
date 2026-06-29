@@ -14,7 +14,7 @@ import java.util.Random;
  * @author Mai Duy An
  * @MSSV HE197000
  * @date 24/6/2026
- * 
+ *
  */
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = {"/forgot-password"})
 public class ForgotPasswordServlet extends HttpServlet {
@@ -45,7 +45,12 @@ public class ForgotPasswordServlet extends HttpServlet {
 
         // 3.3 — If email NOT found → show generic success (security: don't reveal email existence)
         if (user == null) {
-            req.setAttribute("success", "Nếu email tồn tại trong hệ thống, mã OTP đã được gửi đến hộp thư của bạn.");
+            req.setAttribute("error", "Tài khoản không tồn tại");
+            req.getRequestDispatcher("/WEB-INF/views/auth/forgot-password.jsp").forward(req, res);
+            return;
+        }
+        if (user.getEmail().equals(email)) {
+            req.setAttribute("success", "Kiểm tra OTP đã được gửi đến hộp thư của bạn.");
             req.getRequestDispatcher("/WEB-INF/views/auth/forgot-password.jsp").forward(req, res);
             return;
         }
@@ -81,7 +86,9 @@ public class ForgotPasswordServlet extends HttpServlet {
      */
     private String maskEmail(String email) {
         int atIdx = email.indexOf('@');
-        if (atIdx <= 2) return "***" + email.substring(atIdx);
+        if (atIdx <= 2) {
+            return "***" + email.substring(atIdx);
+        }
         return email.substring(0, 2) + "***" + email.substring(atIdx);
     }
 }
