@@ -71,8 +71,6 @@ public class AdminServlet extends HttpServlet {
         u.setPhoneNumber(req.getParameter("phoneNumber"));
         u.setDepartment(req.getParameter("department"));
         try { u.setRoleId(Integer.parseInt(req.getParameter("roleId"))); } catch (Exception ignored) {}
-//        u.setReviewer(req.getParameter("isReviewer") != null && req.getParameter("isReviewer").equals("on"));
-//        u.setDesigner(req.getParameter("isDesigner") != null && req.getParameter("isDesigner").equals("on"));
         u.setReviewer(req.getParameter("isReviewer") != null);
         u.setDesigner(req.getParameter("isDesigner") != null);
         String pwd = req.getParameter("password");
@@ -90,8 +88,6 @@ public class AdminServlet extends HttpServlet {
         u.setDepartment(req.getParameter("department"));
         u.setStatus(req.getParameter("status"));
         try { u.setRoleId(Integer.parseInt(req.getParameter("roleId"))); } catch (Exception ignored) {}
-//        u.setReviewer(req.getParameter("isReviewer") != null && req.getParameter("isReviewer").equals("on"));
-//        u.setDesigner(req.getParameter("isDesigner") != null && req.getParameter("isDesigner").equals("on"));
         u.setReviewer(req.getParameter("isReviewer") != null);
         u.setDesigner(req.getParameter("isDesigner") != null);
         userDAO.updateUser(u);

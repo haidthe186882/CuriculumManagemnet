@@ -7,7 +7,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.security.MessageDigest;
 
+/**
+ * @author Mai Duy An
+ * @MSSV HE197000
+ * @date 24/6/2026
+ * 
+ */
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
 
@@ -52,8 +59,9 @@ public class LoginServlet extends HttpServlet {
         }
 
         UserDAO dao = new UserDAO();
-        // DB stores password hash; the form value is compared as-is (plain hash_placeholder).
-        User user = dao.login(email.trim(), password.trim());
+        // Hash mật khẩu bằng MD5 trước khi so sánh với DB
+        String hashedPassword = hashMD5(password.trim());
+        User user = dao.login(email.trim(), hashedPassword);
 
         if (user == null) {
             req.setAttribute("error", "Email hoặc mật khẩu không đúng.");
@@ -76,6 +84,22 @@ public class LoginServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
         } else {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
+        }
+    }
+
+    /**
+     * Mã hóa chuỗi đầu vào bằng thuật toán MD5.
+     * @param input Chuỗi cần mã hóa
+     */
+    private String hashMD5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] bytes = md.digest(input.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            return input;
         }
     }
 }
