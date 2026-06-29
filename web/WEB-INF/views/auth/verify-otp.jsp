@@ -239,21 +239,6 @@
                     <div class="brand-sub">Enter the 6-digit code sent to your email</div>
                 </div>
 
-                <!-- Masked email display -->
-                <c:if test="${not empty maskedEmail}">
-                    <div class="email-badge">
-                        <i class="bi bi-envelope me-1"></i>
-                        Code sent to <strong>${maskedEmail}</strong>
-                    </div>
-                </c:if>
-
-                <!-- Success message (resend) -->
-                <c:if test="${not empty success}">
-                    <div class="alert alert-success d-flex align-items-center" style="border-radius:10px;font-size:14px">
-                        <i class="bi bi-check-circle-fill me-2"></i>${success}
-                    </div>
-                </c:if>
-
                 <!-- Error message -->
                 <c:if test="${not empty error}">
                     <div class="alert alert-danger d-flex align-items-center" style="border-radius:10px;font-size:14px">
