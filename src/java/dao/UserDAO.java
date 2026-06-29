@@ -204,6 +204,19 @@ public class UserDAO {
         return false;
     }
 
+    public boolean updateProfileName(String userId, String fullName) {
+        String sql = "UPDATE Users SET Full_Name = ? WHERE User_ID = ?";
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            ps.setString(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
     public boolean addUser(User u) {
         String newUserId = java.util.UUID.randomUUID().toString();
         String insertUserSql = "INSERT INTO Users (User_ID, Full_Name, Email, Password_Hash, Is_Active) VALUES (?, ?, ?, ?, 1)";
