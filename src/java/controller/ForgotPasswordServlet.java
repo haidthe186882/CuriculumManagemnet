@@ -51,7 +51,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
         if (user.getEmail().equals(email)) {
             req.setAttribute("success", "Kiểm tra OTP đã được gửi đến hộp thư của bạn.");
-            req.getRequestDispatcher("/WEB-INF/views/auth/forgot-password.jsp").forward(req, res);
+            req.getRequestDispatcher("/WEB-INF/views/auth/verify-otp.jsp").forward(req, res);
             return;
         }
 
