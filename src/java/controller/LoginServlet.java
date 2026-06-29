@@ -20,7 +20,7 @@ public class LoginServlet extends HttpServlet {
             guestUser.setUserId("guest-id");
             guestUser.setFullName("Guest User");
             guestUser.setEmail("guest@ltms.com");
-            guestUser.setActive(true);
+            guestUser.setIsActive("Active");
             guestUser.addRole(new model.Role(5, "Guest"));
             guestUser.setRoleId(5);
             
