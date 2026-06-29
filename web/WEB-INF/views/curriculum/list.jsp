@@ -26,7 +26,7 @@
                     <div class="page-subtitle">Browse and manage training programs</div>
                 </div>
 
-                <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.designer}">
+                <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
                     <a href="${pageContext.request.contextPath}/curriculum/create" class="btn btn-primary-custom">
                         <i class="bi bi-plus-lg me-1"></i> New Curriculum
                     </a>            
