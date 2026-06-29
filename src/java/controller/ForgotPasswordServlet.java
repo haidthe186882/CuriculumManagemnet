@@ -49,11 +49,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             req.getRequestDispatcher("/WEB-INF/views/auth/forgot-password.jsp").forward(req, res);
             return;
         }
-        if (user.getEmail().equals(email)) {
-            req.setAttribute("success", "Kiểm tra OTP đã được gửi đến hộp thư của bạn.");
-            req.getRequestDispatcher("/WEB-INF/views/auth/verify-otp.jsp").forward(req, res);
-            return;
-        }
+
 
         // 3.4 — Generate 6-digit OTP
         String otp = String.format("%06d", new Random().nextInt(999999));
@@ -77,6 +73,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
 
         // 3.7 — Forward to OTP verification page
+        req.setAttribute("success", "Mã OTP đã được gửi đến email của bạn.");
         req.setAttribute("maskedEmail", maskEmail(email));
         req.getRequestDispatcher("/WEB-INF/views/auth/verify-otp.jsp").forward(req, res);
     }
