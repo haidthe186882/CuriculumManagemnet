@@ -26,7 +26,7 @@ public class LoginServlet extends HttpServlet {
             
             HttpSession session = req.getSession(true);
             session.setAttribute("loggedUser", guestUser);
-            session.setMaxInactiveInterval(30 * 60); // 30 min timeout
+            session.setMaxInactiveInterval(30 * 60);
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
             return;
         }
