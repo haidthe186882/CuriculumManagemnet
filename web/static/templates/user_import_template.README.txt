@@ -1,0 +1,24 @@
+HƯỚNG DẪN MẪU EXCEL IMPORT USER
+
+File mẫu: user_import_template.xlsx
+Sheet: Users (hoặc sheet đầu tiên)
+
+Header row (dòng 1):
+- Full_Name
+- Email
+- Role
+- Is_Reviewer (tuỳ chọn)
+- Is_Designer (tuỳ chọn)
+
+Quy tắc:
+- Cột Role: giá trị theo Role_Name trong bảng Roles (ví dụ: Student, Reviewer, Designer, Teacher)
+- Nếu Role = Student: Is_Reviewer/Is_Designer sẽ bị ignore (tự set false)
+- Nếu Role = Reviewer: Is_Reviewer sẽ true (bất kể giá trị cột), Is_Designer = false
+- Nếu Role = Designer: Is_Designer sẽ true (bất kể giá trị cột), Is_Reviewer = false
+
+Ví dụ dòng dữ liệu:
+Nguyen Van A | a@gmail.com | Teacher | true | false
+Tran Thi B    | b@gmail.com | Student | false| false
+
+Password mặc định cho user tạo từ Excel: 123456
+
