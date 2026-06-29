@@ -10,91 +10,223 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
-            :root{--card-radius:14px;--accent:#0b1020}
-            *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
-            body{
-                min-height:100vh;display:flex;align-items:center;justify-content:center;
-                margin:0;background:linear-gradient(180deg,#eef6ff 0%,#f3f8ff 100%)
+            :root{
+                --card-radius:14px;
+                --accent:#0b1020
             }
-            .page-wrap{width:100%;max-width:520px;padding:40px}
+            *{
+                box-sizing:border-box;
+                font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial
+            }
+            body{
+                min-height:100vh;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                margin:0;
+                background:linear-gradient(180deg,#eef6ff 0%,#f3f8ff 100%)
+            }
+            .page-wrap{
+                width:100%;
+                max-width:520px;
+                padding:40px
+            }
             .card-box{
-                background:#fff;border-radius:var(--card-radius);
+                background:#fff;
+                border-radius:var(--card-radius);
                 padding:36px 36px 28px;
                 box-shadow:0 10px 30px rgba(15,23,42,.08);
                 animation:fadeUp .5s ease-out
             }
             @keyframes fadeUp{
-                from{opacity:0;transform:translateY(18px)}
-                to{opacity:1;transform:translateY(0)}
+                from{
+                    opacity:0;
+                    transform:translateY(18px)
+                }
+                to{
+                    opacity:1;
+                    transform:translateY(0)
+                }
             }
             .logo-circle{
-                width:72px;height:72px;border-radius:50%;
-                background:#0b1020;display:flex;align-items:center;
-                justify-content:center;margin:0 auto;color:#fff;font-size:28px
+                width:72px;
+                height:72px;
+                border-radius:50%;
+                background:#0b1020;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                margin:0 auto;
+                color:#fff;
+                font-size:28px
             }
-            .brand-title{font-size:22px;font-weight:600;text-align:center;margin-top:14px;color:#0b1020}
-            .brand-sub{font-size:14px;color:#6b7280;text-align:center;margin-bottom:24px}
+            .brand-title{
+                font-size:22px;
+                font-weight:600;
+                text-align:center;
+                margin-top:14px;
+                color:#0b1020
+            }
+            .brand-sub{
+                font-size:14px;
+                color:#6b7280;
+                text-align:center;
+                margin-bottom:24px
+            }
 
             /* OTP input grid */
-            .otp-container{display:flex;gap:10px;justify-content:center;margin-bottom:24px}
-            .otp-input{
-                width:52px;height:60px;text-align:center;font-size:24px;font-weight:700;
-                border:2px solid #e6eef8;border-radius:12px;background:#fbfdff;
-                color:#0b1020;outline:none;transition:all .2s;caret-color:#3b82f6
+            .otp-container{
+                display:flex;
+                gap:10px;
+                justify-content:center;
+                margin-bottom:24px
             }
-            .otp-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-            .otp-input.filled{border-color:#10b981;background:#f0fdf4}
-            .otp-input.error-border{border-color:#ef4444;animation:shake .4s}
+            .otp-input{
+                width:52px;
+                height:60px;
+                text-align:center;
+                font-size:24px;
+                font-weight:700;
+                border:2px solid #e6eef8;
+                border-radius:12px;
+                background:#fbfdff;
+                color:#0b1020;
+                outline:none;
+                transition:all .2s;
+                caret-color:#3b82f6
+            }
+            .otp-input:focus{
+                border-color:#3b82f6;
+                box-shadow:0 0 0 3px rgba(59,130,246,.15)
+            }
+            .otp-input.filled{
+                border-color:#10b981;
+                background:#f0fdf4
+            }
+            .otp-input.error-border{
+                border-color:#ef4444;
+                animation:shake .4s
+            }
             @keyframes shake{
-                0%,100%{transform:translateX(0)}
-                20%,60%{transform:translateX(-4px)}
-                40%,80%{transform:translateX(4px)}
+                0%,100%{
+                    transform:translateX(0)
+                }
+                20%,60%{
+                    transform:translateX(-4px)
+                }
+                40%,80%{
+                    transform:translateX(4px)
+                }
             }
 
             /* Timer */
             .timer-wrap{
-                display:flex;align-items:center;justify-content:center;gap:8px;
-                margin-bottom:20px;font-size:14px;color:#6b7280
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                gap:8px;
+                margin-bottom:20px;
+                font-size:14px;
+                color:#6b7280
             }
             .timer-badge{
-                background:#fef3c7;color:#92400e;padding:4px 12px;
-                border-radius:20px;font-weight:600;font-size:13px;
-                display:inline-flex;align-items:center;gap:4px
+                background:#fef3c7;
+                color:#92400e;
+                padding:4px 12px;
+                border-radius:20px;
+                font-weight:600;
+                font-size:13px;
+                display:inline-flex;
+                align-items:center;
+                gap:4px
             }
-            .timer-badge.expired{background:#fee2e2;color:#991b1b}
+            .timer-badge.expired{
+                background:#fee2e2;
+                color:#991b1b
+            }
 
             /* Buttons */
             .btn-primary-custom{
-                background:#0b1020;color:#fff;border-radius:10px;
-                padding:12px 16px;border:none;width:100%;font-weight:600;
-                font-size:15px;cursor:pointer;transition:opacity .2s
+                background:#0b1020;
+                color:#fff;
+                border-radius:10px;
+                padding:12px 16px;
+                border:none;
+                width:100%;
+                font-weight:600;
+                font-size:15px;
+                cursor:pointer;
+                transition:opacity .2s
             }
-            .btn-primary-custom:hover{opacity:.92}
-            .btn-primary-custom:disabled{opacity:.5;cursor:not-allowed}
+            .btn-primary-custom:hover{
+                opacity:.92
+            }
+            .btn-primary-custom:disabled{
+                opacity:.5;
+                cursor:not-allowed
+            }
 
             .resend-link{
-                display:block;text-align:center;margin-top:14px;
-                font-size:14px;color:#6b7280;text-decoration:none;transition:color .2s
+                display:block;
+                text-align:center;
+                margin-top:14px;
+                font-size:14px;
+                color:#6b7280;
+                text-decoration:none;
+                transition:color .2s
             }
-            .resend-link:hover{color:#0b1020}
-            .resend-link.disabled{pointer-events:none;opacity:.4}
+            .resend-link:hover{
+                color:#0b1020
+            }
+            .resend-link.disabled{
+                pointer-events:none;
+                opacity:.4
+            }
 
             .back-link{
-                display:flex;align-items:center;gap:6px;
-                color:#6b7280;text-decoration:none;font-size:14px;
-                margin-top:18px;justify-content:center;transition:color .2s
+                display:flex;
+                align-items:center;
+                gap:6px;
+                color:#6b7280;
+                text-decoration:none;
+                font-size:14px;
+                margin-top:18px;
+                justify-content:center;
+                transition:color .2s
             }
-            .back-link:hover{color:#0b1020}
-            .footer-note{text-align:center;color:#9ca3af;margin-top:18px;font-size:13px}
+            .back-link:hover{
+                color:#0b1020
+            }
+            .footer-note{
+                text-align:center;
+                color:#9ca3af;
+                margin-top:18px;
+                font-size:13px
+            }
             .email-badge{
-                background:#f0f4ff;border-radius:8px;padding:8px 14px;
-                text-align:center;font-size:13px;color:#1e40af;margin-bottom:20px
+                background:#f0f4ff;
+                border-radius:8px;
+                padding:8px 14px;
+                text-align:center;
+                font-size:13px;
+                color:#1e40af;
+                margin-bottom:20px
             }
             @media(max-width:576px){
-                .page-wrap{padding:18px}
-                .card-box{padding:24px}
-                .otp-input{width:44px;height:52px;font-size:20px}
-                .otp-container{gap:6px}
+                .page-wrap{
+                    padding:18px
+                }
+                .card-box{
+                    padding:24px
+                }
+                .otp-input{
+                    width:44px;
+                    height:52px;
+                    font-size:20px
+                }
+                .otp-container{
+                    gap:6px
+                }
             }
         </style>
     </head>
@@ -183,8 +315,8 @@
             var otpHidden = document.getElementById('otpHidden');
             var verifyBtn = document.getElementById('verifyBtn');
 
-            inputs.forEach(function(input, idx) {
-                input.addEventListener('input', function(e) {
+            inputs.forEach(function (input, idx) {
+                input.addEventListener('input', function (e) {
                     var val = this.value.replace(/[^0-9]/g, '');
                     this.value = val;
 
@@ -195,7 +327,7 @@
                     updateOTP();
                 });
 
-                input.addEventListener('keydown', function(e) {
+                input.addEventListener('keydown', function (e) {
                     if (e.key === 'Backspace' && !this.value && idx > 0) {
                         inputs[idx - 1].focus();
                         inputs[idx - 1].value = '';
@@ -205,7 +337,7 @@
                 });
 
                 // Handle paste
-                input.addEventListener('paste', function(e) {
+                input.addEventListener('paste', function (e) {
                     e.preventDefault();
                     var paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
                     if (paste.length >= 6) {
@@ -224,7 +356,9 @@
 
             function updateOTP() {
                 var otp = '';
-                inputs.forEach(function(i) { otp += i.value; });
+                inputs.forEach(function (i) {
+                    otp += i.value;
+                });
                 otpHidden.value = otp;
                 verifyBtn.disabled = otp.length < 6;
             }
@@ -236,14 +370,16 @@
             var timerDisplay = document.getElementById('timerDisplay');
             var timerBadge = document.getElementById('timerBadge');
 
-            var countdown = setInterval(function() {
+            var countdown = setInterval(function () {
                 totalSeconds--;
                 if (totalSeconds <= 0) {
                     clearInterval(countdown);
                     timerDisplay.textContent = '00:00';
                     timerBadge.classList.add('expired');
                     verifyBtn.disabled = true;
-                    inputs.forEach(function(i) { i.disabled = true; });
+                    inputs.forEach(function (i) {
+                        i.disabled = true;
+                    });
                     return;
                 }
                 var m = Math.floor(totalSeconds / 60);
@@ -258,7 +394,7 @@
             }, 1000);
 
             // Submit loading state
-            document.getElementById('otpForm').addEventListener('submit', function() {
+            document.getElementById('otpForm').addEventListener('submit', function () {
                 verifyBtn.disabled = true;
                 verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
             });
