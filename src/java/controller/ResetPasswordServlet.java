@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.Random;
 
 /**
@@ -118,9 +119,10 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        // 7.4 — Update password in DB
+        // 7.4 — Hash MD5 mật khẩu mới rồi lưu vào DB
         UserDAO dao = new UserDAO();
-        boolean updated = dao.updatePassword(userId, newPassword);
+        String hashedPassword = hashMD5(newPassword);
+        boolean updated = dao.updatePassword(userId, hashedPassword);
 
         if (!updated) {
             req.setAttribute("error", "Không thể cập nhật mật khẩu. Vui lòng thử lại.");
@@ -189,5 +191,22 @@ public class ResetPasswordServlet extends HttpServlet {
         int atIdx = email.indexOf('@');
         if (atIdx <= 2) return "***" + email.substring(atIdx);
         return email.substring(0, 2) + "***" + email.substring(atIdx);
+    }
+
+    /**
+     * Mã hóa chuỗi đầu vào bằng thuật toán MD5.
+     * @param input Chuỗi cần mã hóa
+     * @return Chuỗi hex MD5 (32 ký tự), hoặc chuỗi gốc nếu có lỗi
+     */
+    private String hashMD5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] bytes = md.digest(input.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            return input;
+        }
     }
 }
