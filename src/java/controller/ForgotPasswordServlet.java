@@ -74,18 +74,6 @@ public class ForgotPasswordServlet extends HttpServlet {
 
         // 3.7 — Forward to OTP verification page
         req.setAttribute("success", "Mã OTP đã được gửi đến email của bạn.");
-        req.setAttribute("maskedEmail", maskEmail(email));
         req.getRequestDispatcher("/WEB-INF/views/auth/verify-otp.jsp").forward(req, res);
-    }
-
-    /**
-     * Masks an email for display: "john.doe@gmail.com" → "jo***@gmail.com"
-     */
-    private String maskEmail(String email) {
-        int atIdx = email.indexOf('@');
-        if (atIdx <= 2) {
-            return "***" + email.substring(atIdx);
-        }
-        return email.substring(0, 2) + "***" + email.substring(atIdx);
     }
 }
