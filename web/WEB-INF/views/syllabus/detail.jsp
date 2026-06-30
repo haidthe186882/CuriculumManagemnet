@@ -163,28 +163,28 @@
                                     <thead>
                                         <tr>
                                             <th
-                                                style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 70px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 Session</th>
                                             <th
-                                                style="width: 250px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 220px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 Topic</th>
                                             <th
-                                                style="width: 180px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 140px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 Learning-Teaching Type</th>
                                             <th
-                                                style="width: 120px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 250px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 LO</th>
                                             <th
                                                 style="width: 150px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 ITU</th>
                                             <th
-                                                style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 180px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 Student Materials</th>
                                             <th
                                                 style="width: 220px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 Student's Tasks</th>
                                             <th
-                                                style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
                                                 URLs</th>
                                         </tr>
                                     </thead>
