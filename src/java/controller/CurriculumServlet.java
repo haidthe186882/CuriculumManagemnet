@@ -11,6 +11,9 @@ import model.CurriculumSubject;
 import model.Subject;
 import model.User;
 import util.ExcelHelper;
+import util.ExcelHelper.ImportResult;
+import util.ExcelHelper.PloRow;
+import util.ExcelHelper.SubjectRow;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -207,7 +210,7 @@ public class CurriculumServlet extends HttpServlet {
 
     // ===== POST handlers =====
 
-    private void doImportExcel(HttpServletRequest req, HttpServletResponse res) 
+    private void doImportExcel(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
@@ -226,31 +229,60 @@ public class CurriculumServlet extends HttpServlet {
         }
 
         try {
-            Part filePart = req.getPart("excelFile"); 
+            Part filePart = req.getPart("excelFile");
             if (filePart != null && filePart.getSize() > 0) {
                 InputStream fileContent = filePart.getInputStream();
 
-                Curriculum importedData = ExcelHelper.parseCurriculumExcel(fileContent);
+                // Parse all 3 sheets at once
+                ImportResult result = ExcelHelper.parseFullExcel(fileContent);
+                Curriculum importedData = result.curriculum;
 
                 if (editMode) {
-                    // Giu nguyen Curriculum_ID, Curriculum_Code, Major, Status, IsActive cua ban ghi
-                    // dang sua - Excel chi nap lai cac field noi dung (Name, Description, Credits...)
+                    // Edit mode: keep Code, Major, Status, IsActive — refresh content fields only
                     baseCurriculum.setCurriculumName(importedData.getCurriculumName());
                     baseCurriculum.setEnglishName(importedData.getEnglishName());
                     baseCurriculum.setDescription(importedData.getDescription());
                     baseCurriculum.setDecisionNo(importedData.getDecisionNo());
                     baseCurriculum.setDecisionDate(importedData.getDecisionDate());
                     baseCurriculum.setTotalCredits(importedData.getTotalCredits());
+
+                    // Re-import PLOs if any found in the file
+                    if (!result.plos.isEmpty()) {
+                        ploDAO.deletePLOsByCurriculum(curriculumId);
+                        for (PloRow pr : result.plos) {
+                            ploDAO.addPLO(curriculumId, pr.ploCode, pr.description);
+                        }
+                    }
+
+                    // Re-import subjects if any found in the file
+                    if (!result.subjects.isEmpty()) {
+                        subjectDAO.removeAllSubjectsFromCurriculum(curriculumId);
+                        for (SubjectRow sr : result.subjects) {
+                            String sid = subjectDAO.findSubjectIdByCode(sr.subjectCode);
+                            if (sid != null) {
+                                subjectDAO.addSubjectToCurriculum(curriculumId, sid, sr.semesterNo, true);
+                            }
+                        }
+                    }
+
                     req.setAttribute("curriculum", baseCurriculum);
+                    int ploCount = result.plos.size();
+                    int subjCount = result.subjects.isEmpty() ? 0 :
+                            (int) result.subjects.stream().filter(s -> subjectDAO.findSubjectIdByCode(s.subjectCode) != null).count();
+                    req.setAttribute("successMessage",
+                            "Re-imported from Excel: " + ploCount + " PLO(s) and " + subjCount + " subject(s) refreshed. Verify then save.");
                 } else {
-                    // ĐỒNG BỘ: Mặc định dữ liệu vừa bóc tách từ Excel nhận trạng thái tiến trình là 0 (Draft)
+                    // Create mode: new curriculum from Excel
                     importedData.setStatus(0);
-                    // Mở kích hoạt Is_Active hiển thị hệ thống mặc định
                     importedData.setIsActive(false);
+                    // Stash PLO & subject rows in session so they can be saved after Create
+                    req.getSession().setAttribute("pendingImportPlos", result.plos);
+                    req.getSession().setAttribute("pendingImportSubjects", result.subjects);
                     req.setAttribute("curriculum", importedData);
+                    req.setAttribute("successMessage",
+                            "Imported from Excel: " + result.plos.size() + " PLO(s) and "
+                            + result.subjects.size() + " subject(s) detected. Choose Major and click Create to save.");
                 }
-                req.setAttribute("successMessage",
-                        "Imported successfully from Excel! Please verify data" + (editMode ? "" : " and choose Major") + " before saving.");
             } else {
                 req.setAttribute("errorMessage", "Please select a valid Excel file.");
                 if (editMode) req.setAttribute("curriculum", baseCurriculum);
@@ -260,20 +292,48 @@ public class CurriculumServlet extends HttpServlet {
             req.setAttribute("errorMessage", "Error parsing Excel file: " + e.getMessage());
             if (editMode) req.setAttribute("curriculum", baseCurriculum);
         }
+
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", editMode);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
+    @SuppressWarnings("unchecked")
     private void doCreate(HttpServletRequest req, HttpServletResponse res) throws IOException {
         if (!requireRole(req, res, "Designer", "Admin"))
             return;
         User user = getLoggedUser(req);
         Curriculum c = buildFromRequest(req);
         c.setCreatedBy(user.getUserId());
-        
-        // Gọi hàm addCurriculum, DB tự gán Status = 0 (Nhờ Default Constraint) và Is_Active = 1
-        curriculumDAO.addCurriculum(c);
+
+        String newId = curriculumDAO.addCurriculumAndReturnId(c);
+
+        if (newId != null) {
+            HttpSession session = req.getSession(false);
+            if (session != null) {
+                List<PloRow> pendingPlos = (List<PloRow>) session.getAttribute("pendingImportPlos");
+                List<SubjectRow> pendingSubjects = (List<SubjectRow>) session.getAttribute("pendingImportSubjects");
+                if (pendingPlos != null) {
+                    for (PloRow pr : pendingPlos) {
+                        ploDAO.addPLO(newId, pr.ploCode, pr.description);
+                    }
+                    session.removeAttribute("pendingImportPlos");
+                }
+                if (pendingSubjects != null) {
+                    for (SubjectRow sr : pendingSubjects) {
+                        String sid = subjectDAO.findSubjectIdByCode(sr.subjectCode);
+                        if (sid != null) {
+                            subjectDAO.addSubjectToCurriculum(newId, sid, sr.semesterNo, true);
+                        }
+                    }
+                    session.removeAttribute("pendingImportSubjects");
+                }
+            }
+        } else {
+            // fallback for DAOs that don't return ID
+            curriculumDAO.addCurriculum(c);
+        }
+
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=created");
     }
 
