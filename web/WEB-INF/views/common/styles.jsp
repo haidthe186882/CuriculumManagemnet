@@ -151,12 +151,13 @@
     .table-dark-custom thead th {
         background: #fbfbfb;
         color: var(--muted);
-        font-size: 0.75rem;
+        font-size: 0.88rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border-color: var(--border);
         padding: 0.9rem;
+        vertical-align: top;
     }
     .table-dark-custom tbody tr {
         border-color: var(--border);
@@ -167,7 +168,7 @@
     }
     .table-dark-custom td {
         padding: 0.8rem 0.9rem;
-        vertical-align: middle;
+        vertical-align: top;
         border-color: var(--border);
     }
 

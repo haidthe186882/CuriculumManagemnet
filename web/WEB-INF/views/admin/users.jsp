@@ -69,10 +69,28 @@
                     </a>
                 </div>
             </div>
+                    <c:if test="${not empty param.msg}">
 
-            <c:if test="${not empty param.msg}">
+                        <%-- 1. Nếu là lỗi trùng email: Hiện khung ĐỎ --%>
+                        <c:if test="${param.msg == 'duplicateEmail'}">
+                            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                                <strong>Error!</strong> Email <strong>${param.email}</strong> already exists, please try with other email.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        </c:if>
+
+                        <%-- 2. Nếu thành công VÀ KHÔNG PHẢI lỗi trùng mail: Hiện khung XANH --%>
+                        <c:if test="${(param.msg == 'created' || param.msg == 'importSuccess' || param.msg == 'updated') && param.msg != 'duplicateEmail'}">
+                            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                                <i class="bi bi-check-circle me-1"></i> Addition successful.
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        </c:if>
+
+                    </c:if>       
+<!--            //<c:if test="${not empty param.msg}">
                 <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Operation successful.</div>
-            </c:if>
+            </c:if>//-->
 
             <div class="row g-3">
                 <div class="col-lg-8">
@@ -104,12 +122,28 @@
                             </div>
                         </form>
                     </div>
-
+                      <div class="mb-3 d-flex justify-content-end align-items-center gap-2">
+                        
+                        <button type="button" id="btnBulkAction" class="btn btn-warning text-dark fw-bold" disabled data-bs-toggle="modal" data-bs-target="#bulkRoleModal">
+                            <i class="bi bi-people-fill me-1"></i> Change Role for Selected (<span class="selected-count">0</span>)
+                        </button>
+                        
+                        <form id="bulkDeactivateForm" method="post" action="${pageContext.request.contextPath}/admin/users" class="m-0"
+                              onsubmit="return confirm('Are you sure you want to DEACTIVATE all selected users?');">
+                            <input type="hidden" name="action" value="bulkDeactivate">
+                            <div id="hiddenDeactivateIdsContainer"></div> 
+                            <button type="submit" id="btnBulkDeactivate" class="btn btn-danger-custom fw-bold" disabled>
+                                <i class="bi bi-lock-fill me-1"></i> Deactivate Selected (<span class="selected-count">0</span>)
+                            </button>
+                        </form>
+                        
+                    </div>                 
                     <div class="card-dark">
                         <div class="table-responsive">
                             <table class="table table-dark-custom mb-0 align-middle">
                                 <thead>
                                     <tr>
+                                        <th style="width: 40px;"><input class="form-check-input border-secondary" type="checkbox" id="selectAllUsers"></th>
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Role</th>
@@ -120,6 +154,7 @@
                                 <tbody>
                                     <c:forEach var="u" items="${users}">
                                         <tr>
+                                            <td><input class="form-check-input border-secondary user-checkbox" type="checkbox" value="${u.userId}"></td>
                                             <td class="detail-value">${u.fullName}</td>
                                             <td class="text-muted">${u.email}</td>
                                             <td>
@@ -166,6 +201,17 @@
 
                 <div class="col-lg-4">
                     <div class="card-dark p-4">
+                        <h6 class="mb-3">Import Users (Excel)</h6>
+                        <form method="post" action="${pageContext.request.contextPath}/admin/users" enctype="multipart/form-data" class="mb-4">
+                            <input type="hidden" name="action" value="importUsersExcel" />
+                            <div class="mb-2">
+                                <input type="file" name="file" class="form-control form-control-dark w-100" accept=".xlsx,.xls,.csv" required>
+                            </div>
+                            <div class="text-muted small mb-3">
+                                Template: <a href="${pageContext.request.contextPath}/static/templates/user_import_template.README.txt" target="_blank">user_import_template.xlsx (see README)</a>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-upload me-1"></i>Import Excel</button>
+                        </form>         
                         <h6 class="mb-3">Add New User</h6>
                         <form method="post" action="${pageContext.request.contextPath}/admin/users">
                             <input type="hidden" name="action" value="add">
@@ -332,51 +378,166 @@
                 </div>
             </div>
         </c:forEach>
-
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+         <div class="modal fade" id="bulkRoleModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form id="bulkRoleForm" method="post" action="${pageContext.request.contextPath}/admin/users" class="modal-content bg-dark text-white" style="border: 1px solid #495057;">
+                    <input type="hidden" name="action" value="bulkUpdateRole">
+                    <div id="hiddenUserIdsContainer"></div> <div class="modal-header border-secondary">
+                        <h5 class="modal-title"><i class="bi bi-diagram-3-fill me-2"></i>Apply Roles to Group</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="alert alert-info p-2 small border-info bg-transparent text-info">
+                            <i class="bi bi-info-circle"></i> This action will overwrite current roles of selected users.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light small">New Primary Role *</label>
+                            <select name="bulkRoleId" id="bulkRoleSelect" class="form-select bg-dark text-white border-secondary w-100" required>
+                                <option value="" disabled selected>-- Select a Role --</option>
+                                <c:forEach var="r" items="${roles}">
+                                    <option value="${r.roleId}" data-name="${r.roleName}">${r.roleName}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div id="bulkExtraRolesDiv" style="display: none;">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input border-secondary" type="checkbox" id="bulkReviewer" name="bulkReviewer">
+                                <label class="form-check-label text-light" for="bulkReviewer">Grant Reviewer</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input border-secondary" type="checkbox" id="bulkDesigner" name="bulkDesigner">
+                                <label class="form-check-label text-light" for="bulkDesigner">Grant Designer</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold">Apply Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>                   
+       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-    // JS tự động ẩn/hiện quyền phụ khi tạo User mới dựa trên Role được chọn
-    document.addEventListener("DOMContentLoaded", function() {
-        const roleSelect = document.getElementById("addRoleSelect");
-        const extraRolesDiv = document.getElementById("extraRolesDiv");
-        const extraCheckboxes = extraRolesDiv.querySelectorAll("input[type=checkbox]");
-        const editRoleSelects = document.querySelectorAll(".edit-role-select");
-        
-        function toggleExtraRoles() {
-            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
-            // Nếu chọn Student thì ẩn khu vực phân quyền
-            if (selectedOption.getAttribute("data-name") === 'Student') {
-                extraRolesDiv.style.display = 'none';
-                // Bỏ tick tất cả nếu đang tick
-                extraCheckboxes.forEach(cb => cb.checked = false); 
-            } else {
-                extraRolesDiv.style.display = 'block';
-            }
-            editRoleSelects.forEach(select => {
-            select.addEventListener("change", function() {
-                const userId = this.getAttribute("data-userid");
-                const extraRolesDiv = document.getElementById("editExtraRolesDiv_" + userId);
-                const extraCheckboxes = extraRolesDiv.querySelectorAll("input[type=checkbox]");
+            document.addEventListener("DOMContentLoaded", function() {
                 
-                const selectedOption = this.options[this.selectedIndex];
-                const roleName = selectedOption.getAttribute("data-name");
-
-                // Nếu Role chính đã là Student, Reviewer, hoặc Designer thì không cần cờ phụ
-                if (roleName === 'Student' || roleName === 'Reviewer' || roleName === 'Designer') {
-                    extraRolesDiv.style.display = 'none';
-                    extraCheckboxes.forEach(cb => cb.checked = false); // Tự động bỏ tick
-                } else {
-                    extraRolesDiv.style.display = 'block';
+                // ==========================================
+                // 1. LOGIC ẨN/HIỆN QUYỀN CHO FORM "ADD USER"
+                // ==========================================
+                const roleSelect = document.getElementById("addRoleSelect");
+                const extraRolesDiv = document.getElementById("extraRolesDiv");
+                
+                function toggleExtraRoles() {
+                    if(!roleSelect || !extraRolesDiv) return;
+                    const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+                    if (selectedOption.getAttribute("data-name") === 'Student') {
+                        extraRolesDiv.style.display = 'none';
+                        extraRolesDiv.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+                    } else {
+                        extraRolesDiv.style.display = 'block';
+                    }
                 }
-            });s
-        }
+                
+                if (roleSelect) {
+                    roleSelect.addEventListener("change", toggleExtraRoles);
+                    toggleExtraRoles();
+                }
 
-        // Bắt sự kiện khi người dùng thay đổi Dropdown
-        if (roleSelect) {
-            roleSelect.addEventListener("change", toggleExtraRoles);
-            toggleExtraRoles(); // Gọi hàm lần đầu khi mới load trang
-        }
-    });
-</script>
+                // ==========================================
+                // 2. LOGIC ẨN/HIỆN QUYỀN CHO FORM "EDIT USER"
+                // ==========================================
+                const editRoleSelects = document.querySelectorAll(".edit-role-select");
+                editRoleSelects.forEach(select => {
+                    select.addEventListener("change", function() {
+                        const userId = this.getAttribute("data-userid");
+                        const editExtraRolesDiv = document.getElementById("editExtraRolesDiv_" + userId);
+                        if (!editExtraRolesDiv) return;
+                        
+                        const roleName = this.options[this.selectedIndex].getAttribute("data-name");
+                        if (roleName === 'Student' || roleName === 'Reviewer' || roleName === 'Designer') {
+                            editExtraRolesDiv.style.display = 'none';
+                            editExtraRolesDiv.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+                        } else {
+                            editExtraRolesDiv.style.display = 'block';
+                        }
+                    });
+                    select.dispatchEvent(new Event("change"));
+                });
+
+                // ==========================================
+                // 3. LOGIC CHO BULK ACTIONS (CHỌN CHECKBOX ĐỒNG BỘ)
+                // ==========================================
+                const selectAllCb = document.getElementById("selectAllUsers");
+                const userCbs = document.querySelectorAll(".user-checkbox");
+                const btnBulkAction = document.getElementById("btnBulkAction");
+                const btnBulkDeactivate = document.getElementById("btnBulkDeactivate");
+                const selectedCountTexts = document.querySelectorAll(".selected-count");
+                const hiddenContainer = document.getElementById("hiddenUserIdsContainer");
+                const hiddenDeactivateContainer = document.getElementById("hiddenDeactivateIdsContainer");
+
+                function updateSelectedCount() {
+                    const checkedBoxes = document.querySelectorAll(".user-checkbox:checked");
+                    const count = checkedBoxes.length;
+                    
+                    selectedCountTexts.forEach(el => el.textContent = count);
+                    
+                    if(btnBulkAction) btnBulkAction.disabled = (count === 0);
+                    if(btnBulkDeactivate) btnBulkDeactivate.disabled = (count === 0);
+                    
+                    if(hiddenContainer) hiddenContainer.innerHTML = '';
+                    if(hiddenDeactivateContainer) hiddenDeactivateContainer.innerHTML = '';
+                    
+                    checkedBoxes.forEach(cb => {
+                        if(hiddenContainer) {
+                            const input = document.createElement("input");
+                            input.type = "hidden";
+                            input.name = "userIds";
+                            input.value = cb.value;
+                            hiddenContainer.appendChild(input);
+                        }
+                        if(hiddenDeactivateContainer) {
+                            const input = document.createElement("input");
+                            input.type = "hidden";
+                            input.name = "userIds";
+                            input.value = cb.value;
+                            hiddenDeactivateContainer.appendChild(input);
+                        }
+                    });
+                }
+
+                if(selectAllCb) {
+                    selectAllCb.addEventListener("change", function() {
+                        userCbs.forEach(cb => cb.checked = selectAllCb.checked);
+                        updateSelectedCount();
+                    });
+                }
+
+                userCbs.forEach(cb => {
+                    cb.addEventListener("change", function() {
+                        if (!this.checked && selectAllCb) selectAllCb.checked = false;
+                        updateSelectedCount();
+                    });
+                });
+
+                // ==========================================
+                // 4. ẨN/HIỆN QUYỀN TRONG MODAL BULK UPDATE
+                // ==========================================
+                const bulkRoleSelect = document.getElementById("bulkRoleSelect");
+                const bulkExtraRolesDiv = document.getElementById("bulkExtraRolesDiv");
+                if (bulkRoleSelect && bulkExtraRolesDiv) {
+                    bulkRoleSelect.addEventListener("change", function() {
+                        const roleName = this.options[this.selectedIndex].getAttribute("data-name");
+                        if (roleName === 'Student' || roleName === 'Reviewer' || roleName === 'Designer') {
+                            bulkExtraRolesDiv.style.display = 'none';
+                            bulkExtraRolesDiv.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+                        } else {
+                            bulkExtraRolesDiv.style.display = 'block';
+                        }
+                    });
+                }
+
+            }); 
+        </script>
     </body>
 </html>
