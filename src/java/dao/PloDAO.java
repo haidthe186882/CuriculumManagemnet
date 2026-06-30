@@ -80,4 +80,18 @@ public class PloDAO {
         }
         return false;
     }
+
+    /**
+     * Deletes all PLOs for a curriculum (used during Excel re-import).
+     */
+    public void deletePLOsByCurriculum(String curriculumId) {
+        String sql = "DELETE FROM Program_Learning_Outcomes WHERE Curriculum_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
