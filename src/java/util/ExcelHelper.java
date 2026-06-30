@@ -1,89 +1,189 @@
 package util;
 
 import model.Curriculum;
+import model.ProgramLearningOutcome;
+import model.Subject;
 import org.apache.poi.ss.usermodel.*;
+
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+/**
+ * Parses the standard Curriculum Excel template (3 sheets).
+ *
+ * Sheet1 — Curriculum info  (rows 0-5: code, name, englishName, description, decisionNo dated MM/dd/yyyy, totalCredits)
+ * Sheet2 — PLOs             (rows 1+: col0=index, col1=ploCode, col2=description)
+ * Sheet3 — Subjects         (rows 2+: col0=subjectCode, col1=subjectName, col2=semester, col3=noCredit, col4=preRequisite)
+ */
 public class ExcelHelper {
 
-    // Đảm bảo tên hàm CHÍNH XÁC là parseCurriculumExcel và nhận tham số đầu vào là InputStream
+    // ── Result container ──────────────────────────────────────────────────────
+
+    public static class ImportResult {
+        public Curriculum curriculum;
+        public List<PloRow> plos = new ArrayList<>();
+        public List<SubjectRow> subjects = new ArrayList<>();
+    }
+
+    public static class PloRow {
+        public String ploCode;
+        public String description;
+    }
+
+    public static class SubjectRow {
+        public String subjectCode;
+        public String subjectName;
+        public int semesterNo;
+        public int credits;
+        public String preRequisite;
+    }
+
+    // ── Main parse entry (full 3-sheet import) ────────────────────────────────
+
+    public static ImportResult parseFullExcel(InputStream is) throws Exception {
+        ImportResult result = new ImportResult();
+        try (Workbook wb = WorkbookFactory.create(is)) {
+            result.curriculum = parseSheet1(wb.getSheetAt(0));
+            if (wb.getNumberOfSheets() > 1) result.plos    = parseSheet2(wb.getSheetAt(1));
+            if (wb.getNumberOfSheets() > 2) result.subjects = parseSheet3(wb.getSheetAt(2));
+        }
+        return result;
+    }
+
+    // ── Legacy entry used by existing import-only-info flow ───────────────────
+
     public static Curriculum parseCurriculumExcel(InputStream is) {
-        Curriculum c = new Curriculum();
-        try (Workbook workbook = WorkbookFactory.create(is)) {
-            Sheet sheet = workbook.getSheetAt(0);
-
-            // 1. Dòng 1 (Hàng 0): CurriculumCode
-            Row row0 = sheet.getRow(0);
-            if (row0 != null && row0.getCell(0) != null) {
-                c.setCurriculumCode(getCellValueAsString(row0.getCell(0)).trim());
-            }
-
-            // 2. Dòng 2 (Hàng 1): Name
-            Row row1 = sheet.getRow(1);
-            if (row1 != null && row1.getCell(0) != null) {
-                c.setCurriculumName(getCellValueAsString(row1.getCell(0)).trim());
-            }
-
-            // 3. Dòng 3 (Hàng 2): English Name
-            Row row2 = sheet.getRow(2);
-            if (row2 != null && row2.getCell(0) != null) {
-                c.setEnglishName(getCellValueAsString(row2.getCell(0)).trim());
-            }
-
-            // 4. Dòng 4 (Hàng 3): Description
-            Row row3 = sheet.getRow(3);
-            if (row3 != null && row3.getCell(0) != null) {
-                c.setDescription(getCellValueAsString(row3.getCell(0)).trim());
-            }
-
-            // 5. Dòng 5 (Hàng 4): DecisionNo MM/dd/yyyy
-            Row row4 = sheet.getRow(4);
-            if (row4 != null && row4.getCell(0) != null) {
-                String rawDecision = getCellValueAsString(row4.getCell(0)).trim();
-                if (rawDecision.contains("dated")) {
-                    String[] parts = rawDecision.split("dated");
-                    c.setDecisionNo(parts[0].trim()); 
-                    try {
-                        String dateStr = parts[1].trim();
-                        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-                        Date parsedDate = sdf.parse(dateStr);
-                        c.setDecisionDate(new java.sql.Date(parsedDate.getTime()));
-                    } catch (Exception ignored) {}
-                } else {
-                    c.setDecisionNo(rawDecision);
-                }
-            }
-
-            // 6. Dòng 6 (Hàng 5): Total Credit
-            Row row5 = sheet.getRow(5);
-            if (row5 != null && row5.getCell(0) != null) {
-                try {
-                    Cell cell = row5.getCell(0);
-                    if (cell.getCellType() == CellType.NUMERIC) {
-                        c.setTotalCredits((int) cell.getNumericCellValue());
-                    } else {
-                        c.setTotalCredits(Integer.parseInt(getCellValueAsString(cell).trim()));
-                    }
-                } catch (Exception ex) {
-                    c.setTotalCredits(0);
-                }
-            }
-
+        try (Workbook wb = WorkbookFactory.create(is)) {
+            return parseSheet1(wb.getSheetAt(0));
         } catch (Exception e) {
             e.printStackTrace();
+            return new Curriculum();
         }
+    }
+
+    // ── Sheet parsers ─────────────────────────────────────────────────────────
+
+    private static Curriculum parseSheet1(Sheet sheet) {
+        Curriculum c = new Curriculum();
+        if (sheet == null) return c;
+
+        // Row 0: CurriculumCode
+        c.setCurriculumCode(strCell(sheet, 0, 0));
+
+        // Row 1: Name
+        c.setCurriculumName(strCell(sheet, 1, 0));
+
+        // Row 2: English Name
+        c.setEnglishName(strCell(sheet, 2, 0));
+
+        // Row 3: Description
+        c.setDescription(strCell(sheet, 3, 0));
+
+        // Row 4: DecisionNo dated MM/dd/yyyy
+        String rawDecision = strCell(sheet, 4, 0);
+        if (rawDecision.contains("dated")) {
+            String[] parts = rawDecision.split("dated");
+            c.setDecisionNo(parts[0].trim());
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+                Date d = sdf.parse(parts[1].trim());
+                c.setDecisionDate(new java.sql.Date(d.getTime()));
+            } catch (Exception ignored) {}
+        } else {
+            c.setDecisionNo(rawDecision);
+        }
+
+        // Row 5: Total Credits
+        Row row5 = sheet.getRow(5);
+        if (row5 != null && row5.getCell(0) != null) {
+            Cell cell = row5.getCell(0);
+            try {
+                if (cell.getCellType() == CellType.NUMERIC) {
+                    c.setTotalCredits((int) cell.getNumericCellValue());
+                } else {
+                    c.setTotalCredits(Integer.parseInt(getCellStr(cell).trim()));
+                }
+            } catch (Exception ex) {
+                c.setTotalCredits(0);
+            }
+        }
+
         return c;
     }
 
-    private static String getCellValueAsString(Cell cell) {
+    private static List<PloRow> parseSheet2(Sheet sheet) {
+        List<PloRow> list = new ArrayList<>();
+        if (sheet == null) return list;
+        // Row 0 is header; data starts at row 1
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+            String code = strCell(row, 1);  // col1 = PLO Name
+            String desc = strCell(row, 2);  // col2 = PLO Description
+            if (code.isEmpty() && desc.isEmpty()) continue;
+            PloRow pr = new PloRow();
+            pr.ploCode = code;
+            pr.description = desc;
+            list.add(pr);
+        }
+        return list;
+    }
+
+    private static List<SubjectRow> parseSheet3(Sheet sheet) {
+        List<SubjectRow> list = new ArrayList<>();
+        if (sheet == null) return list;
+        // Row 0: "48 subjects, 145 credits" header
+        // Row 1: column headers
+        // Data starts at row 2
+        for (int i = 2; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+            String code = strCell(row, 0);
+            if (code.isEmpty()) continue;
+            SubjectRow sr = new SubjectRow();
+            sr.subjectCode = code;
+            sr.subjectName = strCell(row, 1);
+            sr.semesterNo  = intCell(row, 2);
+            sr.credits     = intCell(row, 3);
+            sr.preRequisite = strCell(row, 4);
+            list.add(sr);
+        }
+        return list;
+    }
+
+    // ── Cell helpers ──────────────────────────────────────────────────────────
+
+    private static String strCell(Sheet sheet, int rowIdx, int colIdx) {
+        Row row = sheet.getRow(rowIdx);
+        if (row == null) return "";
+        return getCellStr(row.getCell(colIdx));
+    }
+
+    private static String strCell(Row row, int colIdx) {
+        if (row == null) return "";
+        return getCellStr(row.getCell(colIdx));
+    }
+
+    private static int intCell(Row row, int colIdx) {
+        if (row == null) return 0;
+        Cell cell = row.getCell(colIdx);
+        if (cell == null) return 0;
+        try {
+            if (cell.getCellType() == CellType.NUMERIC) return (int) cell.getNumericCellValue();
+            return Integer.parseInt(getCellStr(cell).trim());
+        } catch (Exception e) { return 0; }
+    }
+
+    private static String getCellStr(Cell cell) {
         if (cell == null) return "";
         switch (cell.getCellType()) {
-            case STRING: return cell.getStringCellValue();
-            case NUMERIC: return String.valueOf((int)cell.getNumericCellValue());
+            case STRING:  return cell.getStringCellValue().trim();
+            case NUMERIC: return String.valueOf((int) cell.getNumericCellValue());
             case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
-            default: return "";
+            default:      return "";
         }
     }
 }

@@ -49,7 +49,7 @@
         <div style="position:absolute; bottom:1.5rem; left:0; right:0; padding: 0 1.5rem;">
             <c:choose>
                 <c:when test="${not empty sessionScope.loggedUser}">
-                    <a href="${pageContext.request.contextPath}/profile"
+                    <div
                         style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;text-decoration:none;">
                         <div
                             style="width:36px;height:36px;background:linear-gradient(135deg,#4fc3f7,#0288d1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:0.9rem;">
@@ -61,7 +61,7 @@
                             <div class="text-muted" style="font-size:0.75rem;">${sessionScope.loggedUser.role.roleName}
                             </div>
                         </div>
-                    </a>
+                    </div>
                     <a href="${pageContext.request.contextPath}/profile"
                         class="nav-link ${activeMenu == 'profile' ? 'active' : ''}"
                         style="border-radius:8px;margin-bottom:0.25rem;">
