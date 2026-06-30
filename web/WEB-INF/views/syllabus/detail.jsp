@@ -118,13 +118,13 @@
                                     <thead>
                                         <tr>
                                             <th
-                                                style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 #</th>
                                             <th
-                                                style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 CLO Name</th>
                                             <th
-                                                style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 CLO Description</th>
                                         </tr>
                                     </thead>
@@ -163,28 +163,28 @@
                                     <thead>
                                         <tr>
                                             <th
-                                                style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 70px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 Session</th>
                                             <th
-                                                style="width: 250px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 220px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 Topic</th>
                                             <th
-                                                style="width: 180px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 140px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 Learning-Teaching Type</th>
                                             <th
-                                                style="width: 120px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 250px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 LO</th>
                                             <th
-                                                style="width: 150px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 150px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 ITU</th>
                                             <th
-                                                style="width: 200px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 180px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 Student Materials</th>
                                             <th
-                                                style="width: 220px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 220px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 Student's Tasks</th>
                                             <th
-                                                style="background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem;">
+                                                style="width: 80px; background-color: var(--accent) !important; color: #ffffff !important; text-transform: none; letter-spacing: normal; padding: 0.9rem; font-size: 0.95rem;">
                                                 URLs</th>
                                         </tr>
                                     </thead>
@@ -200,19 +200,13 @@
                                                 <c:forEach var="sItem" items="${sessions}">
                                                     <tr>
                                                         <td style="padding: 0.8rem 0.9rem;">${sItem.sessionNo}</td>
-                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
-                                                            ${sItem.topic}</td>
-                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
-                                                            ${sItem.learningTeachingType}</td>
-                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
-                                                            ${sItem.lo}</td>
-                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
-                                                            ${sItem.itu}</td>
-                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
-                                                            ${sItem.studentMaterials}</td>
-                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
-                                                            ${sItem.studentTasks}</td>
-                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">
+                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.topic}</td>
+                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.learningTeachingType}</td>
+                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.lo}</td>
+                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.itu}</td>
+                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.studentMaterials}</td>
+                                                        <td style="padding: 0.8rem 0.9rem; white-space: pre-line;">${sItem.studentTasks}</td>
+                                                        <td style="padding: 0.8rem 0.9rem;">
                                                             <c:if test="${not empty sItem.urls}">
                                                                 <a href="${sItem.urls}" target="_blank"
                                                                     style="color: #0288d1; text-decoration: none; font-weight: 500;">
