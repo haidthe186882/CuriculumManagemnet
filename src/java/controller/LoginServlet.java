@@ -67,9 +67,7 @@ public class LoginServlet extends HttpServlet {
         if (user == null) {
             user = dao.login(email.trim(), password.trim());
         }
-        // Hash mật khẩu bằng MD5 trước khi so sánh với DB
-        String hashedPassword = hashMD5(password.trim());
-        User user = dao.login(email.trim(), hashedPassword);
+
 
         if (user == null) {
             req.setAttribute("error", "Email hoặc mật khẩu không đúng.");
