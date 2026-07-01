@@ -38,7 +38,7 @@ public class LoginServlet extends HttpServlet {
 //        // DB stores password hash; the form value is compared as-is (plain hash_placeholder).
 //        User user = dao.login(email.trim(), password.trim());
         UserDAO dao = new UserDAO();
-        String hashedPassword = hashMD5(password.trim()); 
+        String hashedPassword = hashMD5(password.trim()); //
         User user = dao.login(email.trim(), hashedPassword);
         if (user == null) {
             user = dao.login(email.trim(), password.trim());
@@ -96,6 +96,6 @@ public class LoginServlet extends HttpServlet {
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) { return input; }
+        } catch (Exception e) { return input; }//
     }
 }
