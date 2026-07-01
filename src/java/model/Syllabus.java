@@ -58,4 +58,7 @@ public class Syllabus {
     public void setActive(boolean isActive) { this.isActive = isActive; }
     public Subject getSubject() { return subject; }
     public void setSubject(Subject subject) { this.subject = subject; }
+    private java.util.List<Subject> subjectsLearnAfter = new java.util.ArrayList<>();
+    public java.util.List<Subject> getSubjectsLearnAfter() { return subjectsLearnAfter; }
+    public void setSubjectsLearnAfter(java.util.List<Subject> subjectsLearnAfter) { this.subjectsLearnAfter = subjectsLearnAfter; }
 }

@@ -27,6 +27,7 @@ public class SubjectServlet extends HttpServlet {
             case "/list":   showList(req, res);   break;
             case "/detail": showDetail(req, res); break;
             case "/create": showCreate(req, res); break;
+            case "/prerequisites": showPrerequisites(req, res); break;
             default: res.sendRedirect(req.getContextPath() + "/subject/list");
         }
     }
@@ -37,6 +38,8 @@ public class SubjectServlet extends HttpServlet {
         String action = req.getParameter("action");
         if ("create".equals(action))      doCreate(req, res);
         else if ("update".equals(action)) doUpdate(req, res);
+        else if ("addPrereq".equals(action)) doAddPrereq(req, res);
+        else if ("removePrereq".equals(action)) doRemovePrereq(req, res);
         else res.sendRedirect(req.getContextPath() + "/subject/list");
     }
 
@@ -60,6 +63,7 @@ public class SubjectServlet extends HttpServlet {
         String id = req.getParameter("id");
         req.setAttribute("subject", subjectDAO.getSubjectById(id));
         req.setAttribute("syllabus", syllabusDAO.getSyllabusBySubject(id));
+        req.setAttribute("prerequisites", subjectDAO.getPrerequisitesForSubject(id));
         req.getRequestDispatcher("/WEB-INF/views/subject/detail.jsp").forward(req, res);
     }
 
@@ -109,6 +113,33 @@ public class SubjectServlet extends HttpServlet {
         s.setDepartment(req.getParameter("department"));
         subjectDAO.updateSubject(s);
         res.sendRedirect(req.getContextPath() + "/subject/list?msg=updated");
+    }
+
+    private void showPrerequisites(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        String keyword = req.getParameter("keyword");
+        req.setAttribute("syllabuses", syllabusDAO.getSyllabusesWithSubjectsLearnAfter(keyword));
+        req.setAttribute("allSubjects", subjectDAO.searchSubjects(null, null, null));
+        req.setAttribute("keyword", keyword);
+        req.getRequestDispatcher("/WEB-INF/views/subject/prerequisites.jsp").forward(req, res);
+    }
+
+    private void doAddPrereq(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+        String subjectId = req.getParameter("subjectId");
+        String requiredSubjectId = req.getParameter("requiredSubjectId");
+        subjectDAO.addPrerequisite(subjectId, requiredSubjectId);
+        res.sendRedirect(req.getContextPath() + "/subject/prerequisites");
+    }
+
+    private void doRemovePrereq(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+        String subjectId = req.getParameter("subjectId");
+        String requiredSubjectId = req.getParameter("requiredSubjectId");
+        subjectDAO.removePrerequisite(subjectId, requiredSubjectId);
+        res.sendRedirect(req.getContextPath() + "/subject/prerequisites");
     }
 
     // ===== Helpers =====

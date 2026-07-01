@@ -36,6 +36,23 @@
                 <div class="col-md-3"><div class="detail-label">Department</div><div class="detail-value">${subject.department}</div></div>
                 <div class="col-md-3"><div class="detail-label">Status</div><div class="detail-value">${subject.status}</div></div>
                 <div class="col-12"><div class="detail-label">Description</div><div class="detail-value">${subject.description}</div></div>
+                <div class="col-12 mt-2">
+                    <div class="detail-label">Prerequisites</div>
+                    <div class="detail-value">
+                        <c:choose>
+                            <c:when test="${empty prerequisites}">
+                                <span class="text-muted" style="font-style:italic;">None</span>
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach var="req" items="${prerequisites}">
+                                    <span class="badge bg-secondary me-2 p-2" style="font-size:0.85rem; font-weight:500;">
+                                        <code style="color:#fff;">${req.subjectCode}</code> — ${req.subjectName}
+                                    </span>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
             </div>
             <c:choose>
                 <c:when test="${not empty syllabus}">

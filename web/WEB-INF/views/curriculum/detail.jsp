@@ -173,13 +173,13 @@
 
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
-                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th><th>Syllabus</th>
+                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th><th>Prerequisites</th><th>Syllabus</th>
                     <c:if test="${canDesign}"><th>Action</th></c:if>
                 </tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="${canDesign ? 8 : 7}" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
+                            <tr><td colspan="${canDesign ? 9 : 8}" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
@@ -190,6 +190,20 @@
                                     <td>${cs.semesterNo}</td>
                                     <td>${cs.subject.credits}</td>
                                     <td><c:if test="${cs.mandatory}"><i class="bi bi-check-circle text-success"></i></c:if></td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${empty cs.subject.prerequisites}">
+                                                <span class="text-muted" style="font-size:0.8rem; font-style:italic;">None</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:forEach var="req" items="${cs.subject.prerequisites}">
+                                                    <span class="badge bg-secondary me-1" style="font-size: 0.75rem;" title="${req.subjectName}">
+                                                        ${req.subjectCode}
+                                                    </span>
+                                                </c:forEach>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${not empty cs.subject.syllabusId}">

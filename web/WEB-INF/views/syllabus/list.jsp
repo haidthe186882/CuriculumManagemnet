@@ -55,11 +55,11 @@
             <table class="table table-dark-custom mb-0">
                 <thead>
                     <tr>
-                        <th style="cursor: pointer; user-select: none;">#</th>
-                        <th class="sortable" data-sort="subject" style="cursor: pointer; user-select: none;">Subject <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
-                        <th class="sortable" data-sort="name" style="cursor: pointer; user-select: none;">Syllabus Name <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
-                        <th class="sortable" data-sort="version" style="cursor: pointer; user-select: none;">Version <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
-                        <th class="sortable" data-sort="status" style="cursor: pointer; user-select: none;">Status <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
+                        <th style="cursor: default; user-select: none;">Syllabus ID</th>
+                        <th style="cursor: default; user-select: none;">Subject Code</th>
+                        <th style="cursor: default; user-select: none;">Subject Name</th>
+                        <th style="cursor: default; user-select: none;">Syllabus Name</th>
+                        <th style="cursor: default; user-select: none;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,10 +70,10 @@
                         <c:otherwise>
                             <c:forEach var="sy" items="${syllabuses}" varStatus="st">
                                 <tr class="syllabus-row" data-detail-url="${pageContext.request.contextPath}/syllabus/detail?id=${sy.syllabusId}" style="cursor: pointer;">
-                                    <td>${st.count}</td>
-                                    <td><code style="color:var(--accent);">${sy.subject.subjectCode}</code> — ${sy.subject.subjectName}</td>
+                                    <td><span class="text-muted" style="font-size:0.8rem;">${sy.syllabusId}</span></td>
+                                    <td><code style="color:var(--accent);">${sy.subject.subjectCode}</code></td>
+                                    <td>${sy.subject.subjectName}</td>
                                     <td>${sy.syllabusName}</td>
-                                    <td>${sy.version}</td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${sy.status == 'Approved'}"><span class="badge-status badge-approved">${sy.status}</span></c:when>
@@ -106,69 +106,6 @@
             });
             row.addEventListener('mouseleave', function() {
                 this.style.backgroundColor = '';
-            });
-        });
-        
-
-
-        
-        // Table sorting functionality
-        const sortableHeaders = document.querySelectorAll('th.sortable');
-        let currentSort = { column: null, direction: 'asc' };
-        
-        sortableHeaders.forEach(header => {
-            header.addEventListener('click', function() {
-                const sortColumn = this.getAttribute('data-sort');
-                const tbody = document.querySelector('tbody');
-                const rows = Array.from(tbody.querySelectorAll('tr.syllabus-row'));
-                
-                if (currentSort.column === sortColumn) {
-                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-                } else {
-                    currentSort.column = sortColumn;
-                    currentSort.direction = 'asc';
-                }
-                
-                sortableHeaders.forEach(h => {
-                    const icon = h.querySelector('i');
-                    if (icon) icon.className = 'bi bi-arrow-down-up';
-                    h.style.opacity = '1';
-                });
-                const activeIcon = this.querySelector('i');
-                if (activeIcon) {
-                    activeIcon.className = currentSort.direction === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
-                }
-                
-                rows.sort((a, b) => {
-                    let aVal, bVal;
-                    
-                    switch(sortColumn) {
-                        case 'subject':
-                            aVal = a.cells[1].textContent.trim().toLowerCase();
-                            bVal = b.cells[1].textContent.trim().toLowerCase();
-                            break;
-                        case 'name':
-                            aVal = a.cells[2].textContent.trim().toLowerCase();
-                            bVal = b.cells[2].textContent.trim().toLowerCase();
-                            break;
-                        case 'version':
-                            aVal = a.cells[3].textContent.trim().toLowerCase();
-                            bVal = b.cells[3].textContent.trim().toLowerCase();
-                            break;
-                        case 'status':
-                            aVal = a.cells[4].textContent.trim().toLowerCase();
-                            bVal = b.cells[4].textContent.trim().toLowerCase();
-                            break;
-                    }
-                    
-                    if (currentSort.direction === 'asc') {
-                        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-                    } else {
-                        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
-                    }
-                });
-                
-                rows.forEach(row => tbody.appendChild(row));
             });
         });
     });

@@ -31,4 +31,7 @@ public class Subject {
     private String syllabusId;
     public String getSyllabusId() { return syllabusId; }
     public void setSyllabusId(String syllabusId) { this.syllabusId = syllabusId; }
+    private java.util.List<Subject> prerequisites = new java.util.ArrayList<>();
+    public java.util.List<Subject> getPrerequisites() { return prerequisites; }
+    public void setPrerequisites(java.util.List<Subject> prerequisites) { this.prerequisites = prerequisites; }
 }
