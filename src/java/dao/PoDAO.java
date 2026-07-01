@@ -15,7 +15,8 @@ public class PoDAO {
 
     public List<ProgramObjective> getPOsByCurriculum(String curriculumId) {
         List<ProgramObjective> list = new ArrayList<>();
-        String sql = "SELECT PO_ID, Curriculum_ID, PO_Code, Description FROM POs WHERE Curriculum_ID = ? ORDER BY PO_Code";
+        String sql = "SELECT PO_ID, Curriculum_ID, PO_Code, Description FROM POs WHERE Curriculum_ID = ? "
+                   + "ORDER BY LEN(PO_Code), PO_Code";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, curriculumId);
@@ -137,5 +138,72 @@ public class PoDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * Xoa toan bo PO (va mapping lien quan) cua 1 curriculum - dung khi re-import Excel.
+     */
+    public void deletePOsByCurriculum(String curriculumId) {
+        String delMap = "DELETE FROM PO_PLO_Mappings WHERE PO_ID IN (SELECT PO_ID FROM POs WHERE Curriculum_ID = ?)";
+        String delPo  = "DELETE FROM POs WHERE Curriculum_ID = ?";
+        try (Connection con = new DBContext().getConnection()) {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps1 = con.prepareStatement(delMap)) {
+                ps1.setString(1, curriculumId);
+                ps1.executeUpdate();
+            }
+            try (PreparedStatement ps2 = con.prepareStatement(delPo)) {
+                ps2.setString(1, curriculumId);
+                ps2.executeUpdate();
+            }
+            con.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Tu danh sach cap [PO_Code, PLO_Code] (lay tu sheet "Mapping" trong Excel),
+     * tra cuu PO_ID/PLO_ID theo ma roi insert vao PO_PLO_Mappings.
+     * Dung sau khi da import xong ca PO va PLO cho curriculum nay.
+     */
+    public void addMappingsByCode(String curriculumId, java.util.List<String[]> codePairs) {
+        if (codePairs == null || codePairs.isEmpty()) return;
+
+        java.util.Map<String, String> poCodeToId = new HashMap<>();
+        java.util.Map<String, String> ploCodeToId = new HashMap<>();
+
+        String poSql = "SELECT PO_ID, PO_Code FROM POs WHERE Curriculum_ID = ?";
+        String ploSql = "SELECT PLO_ID, PLO_Code FROM PLOs WHERE Curriculum_ID = ?";
+        String insSql = "INSERT INTO PO_PLO_Mappings (Mapping_ID, PO_ID, PLO_ID) VALUES (NEWID(), ?, ?)";
+
+        try (Connection con = new DBContext().getConnection()) {
+            try (PreparedStatement ps = con.prepareStatement(poSql)) {
+                ps.setString(1, curriculumId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) poCodeToId.put(rs.getString("PO_Code"), rs.getString("PO_ID"));
+                }
+            }
+            try (PreparedStatement ps = con.prepareStatement(ploSql)) {
+                ps.setString(1, curriculumId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) ploCodeToId.put(rs.getString("PLO_Code"), rs.getString("PLO_ID"));
+                }
+            }
+
+            try (PreparedStatement ins = con.prepareStatement(insSql)) {
+                for (String[] pair : codePairs) {
+                    String poId = poCodeToId.get(pair[0]);
+                    String ploId = ploCodeToId.get(pair[1]);
+                    if (poId == null || ploId == null) continue;
+                    ins.setString(1, poId);
+                    ins.setString(2, ploId);
+                    ins.addBatch();
+                }
+                ins.executeBatch();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
