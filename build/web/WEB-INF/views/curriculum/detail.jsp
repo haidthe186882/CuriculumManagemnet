@@ -95,7 +95,9 @@
                     <div class="col-md-6"><div class="detail-label">Decision Date</div>
                         <div class="detail-value"><c:if test="${not empty curriculum.decisionDate}"><fmt:formatDate value="${curriculum.decisionDate}" pattern="dd/MM/yyyy"/></c:if></div>
                     </div>
-                    <div class="col-12"><div class="detail-label">Description</div><div class="detail-value" style="white-space:pre-wrap;">${curriculum.description}</div></div>
+                    <div class="col-12"><div class="detail-label">Description</div>
+                        <div class="detail-value" style="white-space:pre-wrap;">${curriculum.description}</div>
+                    </div>
                 </div>
             </div>
         </div>
