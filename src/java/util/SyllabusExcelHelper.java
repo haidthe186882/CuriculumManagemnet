@@ -101,7 +101,7 @@ public class SyllabusExcelHelper {
             if (label.contains("version") || label.contains("phien ban")) {
                 s.setVersion(getValueFromRow(row, labelCol));
             }
-            if (label.contains("description") || label.contains("mo ta")) {
+            if ((label.contains("description") || label.contains("mo ta")) && !label.contains("material")) {
                 s.setDescription(getValueFromRow(row, labelCol));
             }
             if (label.contains("time allocation") || label.contains("phan bo thoi gian")) {
@@ -110,7 +110,7 @@ public class SyllabusExcelHelper {
             if (label.contains("student task") || label.contains("student's task") || (label.contains("student") && label.contains("task")) || label.contains("nhiem vu sinh vien")) {
                 s.setStudentTasks(getValueFromRow(row, labelCol));
             }
-            if ((label.contains("tool") || label.contains("material")) && !label.contains("scoring")) {
+            if ((label.contains("tool") || label.contains("material")) && !label.contains("scoring") && !label.contains("description")) {
                 s.setTools(getValueFromRow(row, labelCol));
             }
             if (label.contains("scoring") || label.contains("thang diem") || label.contains("assessment")) {
