@@ -11,7 +11,7 @@ import dao.SyllabusDAO;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "TeacherServlet", urlPatterns = { "/teacher/*" })
+@WebServlet(name = "TeacherServlet", urlPatterns = {"/teacher/*"})
 public class TeacherServlet extends HttpServlet {
 
     private final TeacherMaterialDAO materialDAO = new TeacherMaterialDAO();
@@ -20,14 +20,12 @@ public class TeacherServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         User u = requireTeacher(req, resp);
-        if (u == null)
-            return;
-
-        String path = req.getPathInfo();
-        if (path == null || "/home".equals(path)) {
-            resp.sendRedirect(req.getContextPath() + "/teacher/upload");
+        if (u == null) {
             return;
         }
+
+        String path = req.getPathInfo();
+        
         switch (path) {
             case "/upload":
                 showUploadList(req, resp, u);
@@ -36,7 +34,7 @@ public class TeacherServlet extends HttpServlet {
                 showEditForm(req, resp, u);
                 break;
             default:
-                resp.sendRedirect(req.getContextPath() + "/teacher/upload");
+                resp.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
     }
 
@@ -44,12 +42,14 @@ public class TeacherServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
         User u = requireTeacher(req, resp);
-        if (u == null)
+        if (u == null) {
             return;
+        }
 
         String action = req.getParameter("action");
-        if (action == null)
+        if (action == null) {
             action = "";
+        }
 
         switch (action) {
             case "create":
@@ -67,7 +67,6 @@ public class TeacherServlet extends HttpServlet {
     }
 
     // ===== GET handlers =====
-
     private void showUploadList(HttpServletRequest req, HttpServletResponse resp, User u)
             throws ServletException, IOException {
         System.out.println("[TeacherServlet] showUploadList - userId: " + u.getUserId() + ", name: " + u.getFullName());
@@ -94,7 +93,6 @@ public class TeacherServlet extends HttpServlet {
     }
 
     // ===== POST handlers =====
-
     private void doCreate(HttpServletRequest req, HttpServletResponse resp, User u) throws IOException {
         TeacherMaterial tm = new TeacherMaterial();
         tm.setUserId(u.getUserId());
@@ -136,7 +134,6 @@ public class TeacherServlet extends HttpServlet {
     }
 
     // ===== Helper =====
-
     private User requireTeacher(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("loggedUser") == null) {

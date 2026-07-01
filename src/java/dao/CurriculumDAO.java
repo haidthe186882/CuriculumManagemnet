@@ -60,9 +60,9 @@ public class CurriculumDAO {
     }
 
     /**
-     * Tìm kiếm curriculum lọc theo Status (tiến trình) và Is_Active (kích hoạt)
+     * Tìm kiếm curriculum lọc theo Status (tiến trình), Major_ID và Is_Active (kích hoạt)
      */
-    public List<Curriculum> searchCurriculums(String keyword, String status, boolean publicOnly) {
+    public List<Curriculum> searchCurriculums(String keyword, String status, String majorId, boolean publicOnly) {
         List<Curriculum> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
@@ -73,6 +73,10 @@ public class CurriculumDAO {
             sql.append(" AND c.Status = 1 AND c.Is_Active = 1");
         } else if (status != null && !status.trim().isEmpty()) {
             sql.append(" AND c.Status = ?");
+        }
+
+        if (majorId != null && !majorId.trim().isEmpty()) {
+            sql.append(" AND c.Major_ID = ?");
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -93,9 +97,13 @@ public class CurriculumDAO {
                 } catch (NumberFormatException e) {
                     if ("Pending".equalsIgnoreCase(status)) ps.setInt(idx++, 2);
                     else if ("Draft".equalsIgnoreCase(status)) ps.setInt(idx++, 0);
-                    else if ("Active".equalsIgnoreCase(status)) ps.setInt(idx++, 1);
+                    else if ("Active".equalsIgnoreCase(status) || "Approved".equalsIgnoreCase(status)) ps.setInt(idx++, 1);
                     else idx++;
                 }
+            }
+
+            if (majorId != null && !majorId.trim().isEmpty()) {
+                ps.setString(idx++, majorId);
             }
 
             if (keyword != null && !keyword.trim().isEmpty()) {
@@ -131,7 +139,7 @@ public class CurriculumDAO {
     }
 
     public List<Curriculum> getAllCurriculums(String keyword, String status) {
-        return searchCurriculums(keyword, status, false);
+        return searchCurriculums(keyword, status, null, false);
     }
 
     /**
@@ -353,5 +361,42 @@ public class CurriculumDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * Inserts a new curriculum and returns the generated Curriculum_ID (UUID string).
+     * Used by the Excel import flow to save PLOs and subjects right after creation.
+     */
+    public String addCurriculumAndReturnId(Curriculum c) {
+        String newId = java.util.UUID.randomUUID().toString();
+        String sql = """
+                     INSERT INTO Curriculums (
+                        Curriculum_ID, Major_ID, Created_By, Curriculum_Code,
+                        Curriculum_Name, English_Name, Description, Total_Credits,
+                        Version, Decision_No, Decision_Date, Is_Active, Created_Date
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, GETDATE())
+                     """;
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, newId);
+            ps.setString(2, c.getMajorId());
+            ps.setString(3, c.getCreatedBy());
+            ps.setString(4, c.getCurriculumCode());
+            ps.setString(5, c.getCurriculumName());
+            ps.setString(6, c.getEnglishName());
+            ps.setString(7, c.getDescription());
+            ps.setInt(8, c.getTotalCredits());
+            ps.setString(9, c.getVersion());
+            ps.setString(10, c.getDecisionNo());
+            if (c.getDecisionDate() != null) {
+                ps.setDate(11, new java.sql.Date(c.getDecisionDate().getTime()));
+            } else {
+                ps.setNull(11, Types.DATE);
+            }
+            if (ps.executeUpdate() > 0) return newId;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
