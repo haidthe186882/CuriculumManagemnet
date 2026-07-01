@@ -13,7 +13,8 @@ public class PloDAO {
 
     public List<ProgramLearningOutcome> getPLOsByCurriculum(String curriculumId) {
         List<ProgramLearningOutcome> list = new ArrayList<>();
-        String sql = "SELECT PLO_ID, Curriculum_ID, PLO_Code, Description FROM PLOs WHERE Curriculum_ID = ? ORDER BY PLO_Code";
+        String sql = "SELECT PLO_ID, Curriculum_ID, PLO_Code, Description FROM PLOs WHERE Curriculum_ID = ? "
+                   + "ORDER BY LEN(PLO_Code), PLO_Code";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, curriculumId);
@@ -85,11 +86,24 @@ public class PloDAO {
      * Deletes all PLOs for a curriculum (used during Excel re-import).
      */
     public void deletePLOsByCurriculum(String curriculumId) {
-        String sql = "DELETE FROM Program_Learning_Outcomes WHERE Curriculum_ID = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, curriculumId);
-            ps.executeUpdate();
+        String delMap = "DELETE FROM PO_PLO_Mappings WHERE PLO_ID IN (SELECT PLO_ID FROM PLOs WHERE Curriculum_ID = ?)";
+        String delClo = "DELETE FROM PLO_CLO_Mappings WHERE PLO_ID IN (SELECT PLO_ID FROM PLOs WHERE Curriculum_ID = ?)";
+        String sql = "DELETE FROM PLOs WHERE Curriculum_ID = ?";
+        try (Connection con = new DBContext().getConnection()) {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps1 = con.prepareStatement(delMap)) {
+                ps1.setString(1, curriculumId);
+                ps1.executeUpdate();
+            }
+            try (PreparedStatement ps2 = con.prepareStatement(delClo)) {
+                ps2.setString(1, curriculumId);
+                ps2.executeUpdate();
+            }
+            try (PreparedStatement ps3 = con.prepareStatement(sql)) {
+                ps3.setString(1, curriculumId);
+                ps3.executeUpdate();
+            }
+            con.commit();
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <%-- Success / error from Excel import --%>
 <c:if test="${not empty successMessage}">
@@ -13,6 +14,75 @@
     </div>
 </c:if>
 
+<%-- ── Import preview (PLOs / POs / Subjects detected from Excel, pending Create) ── --%>
+<c:if test="${not empty sessionScope.pendingImportPlos or not empty sessionScope.pendingImportPos or not empty sessionScope.pendingImportSubjects}">
+<div class="card-dark mb-4 p-3" style="border-left:3px solid #16a34a;">
+    <div style="font-size:.85rem;font-weight:600;color:#111827;margin-bottom:.75rem;">
+        <i class="bi bi-eye me-1" style="color:#16a34a;"></i>Preview — data from Excel (will be saved on Create)
+        <c:if test="${not empty sessionScope.pendingImportMappings}">
+            &nbsp;·&nbsp;<span style="font-weight:400;font-size:.78rem;color:#6b7280;">${sessionScope.pendingImportMappings.size()} PO-PLO mapping pair(s) detected</span>
+        </c:if>
+    </div>
+
+    <%-- PLOs preview --%>
+    <c:if test="${not empty sessionScope.pendingImportPlos}">
+    <div style="font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.35rem;">
+        PLOs (${sessionScope.pendingImportPlos.size()})
+    </div>
+    <div class="table-responsive mb-3">
+        <table class="table table-dark-custom mb-0" style="font-size:.8rem;">
+            <thead><tr><th style="width:120px;">Code</th><th>Description</th></tr></thead>
+            <tbody>
+                <c:forEach var="pr" items="${sessionScope.pendingImportPlos}">
+                    <tr><td><strong>${pr.ploCode}</strong></td><td>${pr.description}</td></tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </div>
+    </c:if>
+
+    <%-- POs preview --%>
+    <c:if test="${not empty sessionScope.pendingImportPos}">
+    <div style="font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.35rem;">
+        POs (${sessionScope.pendingImportPos.size()})
+    </div>
+    <div class="table-responsive mb-3">
+        <table class="table table-dark-custom mb-0" style="font-size:.8rem;">
+            <thead><tr><th style="width:120px;">Code</th><th>Description</th></tr></thead>
+            <tbody>
+                <c:forEach var="pr" items="${sessionScope.pendingImportPos}">
+                    <tr><td><strong>${pr.poCode}</strong></td><td>${pr.description}</td></tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </div>
+    </c:if>
+
+    <%-- Subjects preview --%>
+    <c:if test="${not empty sessionScope.pendingImportSubjects}">
+    <div style="font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.35rem;">
+        Subjects (${sessionScope.pendingImportSubjects.size()})
+    </div>
+    <div class="table-responsive">
+        <table class="table table-dark-custom mb-0" style="font-size:.8rem;">
+            <thead><tr><th>Code</th><th>Name</th><th style="width:80px;">Semester</th><th style="width:80px;">Credits</th><th>Pre-requisite</th></tr></thead>
+            <tbody>
+                <c:forEach var="sr" items="${sessionScope.pendingImportSubjects}">
+                    <tr>
+                        <td><code style="color:var(--accent);">${sr.subjectCode}</code></td>
+                        <td>${sr.subjectName}</td>
+                        <td>${sr.semesterNo}</td>
+                        <td>${sr.credits}</td>
+                        <td>${sr.preRequisite}</td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </div>
+    </c:if>
+</div>
+</c:if>
+
 <%-- ── Quick Import bar (shown only for new curriculum or edit) ── --%>
 <div class="card-dark mb-4 p-3 d-flex align-items-center justify-content-between flex-wrap gap-3"
      style="border-left:3px solid #16a34a;">
@@ -23,8 +93,8 @@
         </div>
         <div style="font-size:.78rem;color:#6b7280;margin-top:2px;">
             <c:choose>
-                <c:when test="${isEdit}">Refreshes Name, English Name, Description, Credits, Decision No/Date. Code & Major stay unchanged.</c:when>
-                <c:otherwise>Load all curriculum info, PLOs, and subjects from a single <code>.xlsx</code> file in one step.</c:otherwise>
+                <c:when test="${isEdit}">Refreshes Name, English Name, Description, Credits, Decision No/Date, Version, PLOs, POs and PO-PLO mapping.</c:when>
+                <c:otherwise>Load all curriculum info, PLOs, POs, mapping, and subjects from a single <code>.xlsx</code> file in one step.</c:otherwise>
             </c:choose>
         </div>
     </div>
@@ -96,7 +166,7 @@
         <div class="col-md-6 mb-3">
             <label class="detail-label">Decision Date</label>
             <input type="date" name="decisionDate" class="form-control form-control-dark w-100"
-                   value="${curriculum.decisionDateStr}">
+                   value="<c:if test="${not empty curriculum.decisionDate}"><fmt:formatDate value="${curriculum.decisionDate}" pattern="yyyy-MM-dd"/></c:if>">
         </div>
     </div>
 

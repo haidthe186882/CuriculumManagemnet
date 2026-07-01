@@ -13,7 +13,7 @@
                         <i class="bi bi-file-earmark-excel me-2" style="color:#16a34a;"></i>Import curriculum from Excel
                     </h5>
                     <p class="mb-0 mt-1" style="font-size:0.8rem;color:#6b7280;">
-                        Upload an <code>.xlsx</code> file — Sheet1 (info), Sheet2 (PLOs), Sheet3 (subjects)
+                        Upload an <code>.xlsx</code> file — Intro (info), PLO, PO, Mapping, Subject
                     </p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -23,10 +23,12 @@
             <div class="modal-body" style="background:#fff;padding:1.25rem 1.5rem;">
 
                 <!-- Sheet map pills -->
-                <div class="d-flex gap-2 mb-3">
+                <div class="d-flex gap-2 mb-3 flex-wrap">
                     <span class="import-sheet-pill"><i class="bi bi-1-circle me-1"></i>Curriculum info</span>
                     <span class="import-sheet-pill"><i class="bi bi-2-circle me-1"></i>PLOs</span>
-                    <span class="import-sheet-pill"><i class="bi bi-3-circle me-1"></i>Subjects</span>
+                    <span class="import-sheet-pill"><i class="bi bi-3-circle me-1"></i>POs</span>
+                    <span class="import-sheet-pill"><i class="bi bi-4-circle me-1"></i>Mapping</span>
+                    <span class="import-sheet-pill"><i class="bi bi-5-circle me-1"></i>Subjects</span>
                 </div>
 
                 <!-- Drop zone -->

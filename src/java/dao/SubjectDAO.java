@@ -223,10 +223,29 @@ public class SubjectDAO {
     }
 
     /**
-     * Finds a Subject_ID by its code (case-insensitive). Returns null if not found.
+     * Finds a Subject_ID by its code (case-insensitive, active subjects only).
+     * Returns null if not found.
      */
     public String findSubjectIdByCode(String subjectCode) {
         String sql = "SELECT Subject_ID FROM Subjects WHERE UPPER(Subject_Code) = UPPER(?) AND Is_Active = 1";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectCode.trim());
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getString("Subject_ID");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Finds a Subject_ID by its code regardless of Is_Active status.
+     * Used during Excel import so subjects that exist but are inactive
+     * can still be linked to a curriculum.
+     */
+    public String findSubjectIdByCodeAny(String subjectCode) {
+        String sql = "SELECT Subject_ID FROM Subjects WHERE UPPER(Subject_Code) = UPPER(?)";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, subjectCode.trim());
