@@ -7,7 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
-
+import java.security.MessageDigest;
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
 
@@ -34,10 +34,15 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
+//        UserDAO dao = new UserDAO();
+//        // DB stores password hash; the form value is compared as-is (plain hash_placeholder).
+//        User user = dao.login(email.trim(), password.trim());
         UserDAO dao = new UserDAO();
-        // DB stores password hash; the form value is compared as-is (plain hash_placeholder).
-        User user = dao.login(email.trim(), password.trim());
-
+        String hashedPassword = hashMD5(password.trim()); 
+        User user = dao.login(email.trim(), hashedPassword);
+        if (user == null) {
+            user = dao.login(email.trim(), password.trim());
+        }
         if (user == null) {
             req.setAttribute("error", "Email hoặc mật khẩu không đúng.");
             req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, res);
@@ -82,5 +87,15 @@ public class LoginServlet extends HttpServlet {
         } else {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
+    }
+    
+    private String hashMD5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] bytes = md.digest(input.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) { return input; }
     }
 }

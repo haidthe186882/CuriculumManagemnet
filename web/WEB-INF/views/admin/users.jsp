@@ -212,53 +212,60 @@
                             </div>
                             <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-upload me-1"></i>Import Excel</button>
                         </form>         
-                        <h6 class="mb-3">Add New User</h6>
-                        <form method="post" action="${pageContext.request.contextPath}/admin/users">
-                            <input type="hidden" name="action" value="add">
-                            <div class="mb-2">
-                                <input type="text" name="fullName" class="form-control form-control-dark w-100" placeholder="Full Name *" required>
-                            </div>
-                            <div class="mb-2">
-                                <input type="email" name="email" class="form-control form-control-dark w-100" placeholder="Email *" required>
-                            </div>
-                            <div class="mb-2">
-                                <input type="password" name="password" class="form-control form-control-dark w-100" placeholder="Password (default: 123456)">
-                            </div>
-                            <!--                            <div class="mb-3">
-                                                            <select name="roleId" class="form-select form-select-dark w-100" required>
-                            <c:forEach var="r" items="${roles}">
-                                <option value="${r.roleId}">${r.roleName}</option>
-                            </c:forEach>
-                        </select>
-                    </div>-->
-                            <div class="mb-3">
-                                <select name="roleId" id="addRoleSelect" class="form-select bg-dark text-white border-secondary w-100" required>
-                                    <c:forEach var="r" items="${roles}">
-                                        <option value="${r.roleId}" data-name="${r.roleName}">${r.roleName}</option>
-                                    </c:forEach>
-                                </select>
-                            </div>
-                            <!--                            <div class="mb-2 form-check">
-                                                            <input class="form-check-input" type="checkbox" id="isReviewer" name="isReviewer">
-                                                            <label class="form-check-label" for="isReviewer">Grant Reviewer</label>
-                                                        </div>
-                                                        <div class="mb-3 form-check">
-                                                            <input class="form-check-input" type="checkbox" id="isDesigner" name="isDesigner">
-                                                            <label class="form-check-label" for="isDesigner">Grant Designer</label>
-                                                        </div>-->
-                            <div id="extraRolesDiv">
-                                <div class="mb-2 form-check">
-                                    <input class="form-check-input " type="checkbox" id="isReviewer" name="isReviewer">
-                                    <label class="form-check-label " for="isReviewer">Grant Reviewer</label>
-                                </div>
-                                <div class="mb-3 form-check">
-                                    <input class="form-check-input " type="checkbox" id="isDesigner" name="isDesigner">
-                                    <label class="form-check-label " for="isDesigner">Grant Designer</label>
-                                </div>
-                            </div>
+                                <h6 class="mb-3">Add New User</h6>
+                                <%-- Gắn trực tiếp onsubmit để chặn gửi form nếu 2 mật khẩu không khớp nhau --%>
+                                <form method="post" action="${pageContext.request.contextPath}/admin/users" onsubmit="return validateAddUserForm()">
+                                    <input type="hidden" name="action" value="add">
 
-                            <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-person-plus me-1"></i>Add User</button>
-                        </form>
+                                    <div class="mb-2">
+                                        <input type="text" name="fullName" class="form-control form-control-dark w-100" placeholder="Full Name *" required>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <input type="email" name="email" class="form-control form-control-dark w-100" placeholder="Email *" required>
+                                    </div>
+
+                                    <%-- Ô NHẬP MẬT KHẨU (Con mắt nằm trong, gọi hàm xử lý trực tiếp) --%>
+                                    <div class="mb-2 position-relative">
+                                        <input type="password" name="password" id="addPassword" class="form-control form-control-dark border-secondary pe-5" placeholder="Password">
+                                        <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3 text-secondary" 
+                                           style="cursor: pointer; z-index: 100; font-size: 1.2rem;" 
+                                           onclick="toggleSinglePassword('addPassword', this)"></i>
+                                    </div>
+
+                                    <%-- Ô XÁC NHẬN MẬT KHẨU (Con mắt nằm trong, gọi hàm xử lý trực tiếp) --%>
+                                    <div class="mb-2 position-relative">
+                                        <input type="password" name="confirmPassword" id="addConfirmPassword" class="form-control form-control-dark border-secondary pe-5" placeholder="Confirm Password">
+                                        <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3 text-secondary" 
+                                           style="cursor: pointer; z-index: 100; font-size: 1.2rem;" 
+                                           onclick="toggleSinglePassword('addConfirmPassword', this)"></i>
+
+                                        <div id="passwordMatchError" class="text-danger small mt-1" style="display: none;">
+                                            <i class="bi bi-exclamation-triangle"></i> Passwords do not match!
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <select name="roleId" id="addRoleSelect" class="form-select bg-dark text-white border-secondary w-100" required>
+                                            <c:forEach var="r" items="${roles}">
+                                                <option value="${r.roleId}" data-name="${r.roleName}">${r.roleName}</option>
+                                            </c:forEach>
+                                        </select>
+                                    </div>
+
+                                    <div id="extraRolesDiv">
+                                        <div class="mb-2 form-check">
+                                            <input class="form-check-input" type="checkbox" id="isReviewer" name="isReviewer">
+                                            <label class="form-check-label" for="isReviewer">Grant Reviewer</label>
+                                        </div>
+                                        <div class="mb-3 form-check">
+                                            <input class="form-check-input" type="checkbox" id="isDesigner" name="isDesigner">
+                                            <label class="form-check-label" for="isDesigner">Grant Designer</label>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-person-plus me-1"></i>Add User</button>
+                                </form>
                     </div>
                 </div>
             </div>
@@ -538,6 +545,37 @@
                 }
 
             }); 
+            // Hàm xử lý ẩn/hiện mật khẩu trực tiếp, không lo lỗi cướp quyền click của ô input
+function toggleSinglePassword(inputId, iconElement) {
+    var inputField = document.getElementById(inputId);
+    if (!inputField) return;
+    
+    if (inputField.type === "password") {
+        inputField.type = "text";
+        iconElement.classList.remove("bi-eye");
+        iconElement.classList.add("bi-eye-slash");
+    } else {
+        inputField.type = "password";
+        iconElement.classList.remove("bi-eye-slash");
+        iconElement.classList.add("bi-eye");
+    }
+}
+
+// Hàm kiểm tra tính trùng khớp mật khẩu khi Admin ấn nút submit
+function validateAddUserForm() {
+    var pwd = document.getElementById('addPassword').value;
+    var confirmPwd = document.getElementById('addConfirmPassword').value;
+    var errorMsg = document.getElementById('passwordMatchError');
+    
+    // Nếu mật khẩu gõ vào không khớp với mật khẩu xác nhận
+    if (pwd !== confirmPwd) {
+        errorMsg.style.display = 'block'; // Hiển thị thông báo chữ đỏ
+        return false; // Ngăn chặn form gửi dữ liệu lên Server
+    }
+    
+    errorMsg.style.display = 'none';
+    return true; // Cho phép gửi form thành công
+}
         </script>
     </body>
 </html>
