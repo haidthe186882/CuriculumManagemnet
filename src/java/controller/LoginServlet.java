@@ -58,7 +58,15 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
+//        UserDAO dao = new UserDAO();
+//        // DB stores password hash; the form value is compared as-is (plain hash_placeholder).
+//        User user = dao.login(email.trim(), password.trim());
         UserDAO dao = new UserDAO();
+        String hashedPassword = hashMD5(password.trim()); 
+        User user = dao.login(email.trim(), hashedPassword);
+        if (user == null) {
+            user = dao.login(email.trim(), password.trim());
+        }
         // Hash mật khẩu bằng MD5 trước khi so sánh với DB
         String hashedPassword = hashMD5(password.trim());
         User user = dao.login(email.trim(), hashedPassword);
@@ -86,6 +94,7 @@ public class LoginServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
     }
+    
 
     /**
      * Mã hóa chuỗi đầu vào bằng thuật toán MD5.
@@ -96,6 +105,9 @@ public class LoginServlet extends HttpServlet {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] bytes = md.digest(input.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) { return input; }
             for (byte b : bytes) {
                 sb.append(String.format("%02x", b));
             }
