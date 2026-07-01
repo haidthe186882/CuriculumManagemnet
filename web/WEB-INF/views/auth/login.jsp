@@ -152,12 +152,6 @@
                     <div class="alert alert-danger">${error}</div>
                 </c:if>
 
-                <c:if test="${not empty successMessage}">
-                    <div class="alert alert-success d-flex align-items-center" style="border-radius:10px;font-size:14px">
-                        <i class="bi bi-check-circle-fill me-2"></i>${successMessage}
-                    </div>
-                </c:if>
-
                 <form method="post" action="${pageContext.request.contextPath}/login" novalidate>
                     <div class="mb-3">
                         <label class="form-label">Email or Username</label>
@@ -177,10 +171,6 @@
                     </div>
 
                     <div class="controls">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                            <label class="form-check-label" for="remember">Remember me</label>
-                        </div>
                         <a href="${pageContext.request.contextPath}/forgot-password" style="color:#374151;text-decoration:none">Forgot password?</a>
                     </div>
 

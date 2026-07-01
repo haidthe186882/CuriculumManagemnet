@@ -32,4 +32,27 @@ public class CloDAO {
         }
         return list;
     }
+
+    /** Insert a single CLO */
+    public boolean addCLO(CourseLearningOutcome clo) {
+        String sql = "INSERT INTO CLOs (CLO_ID, Syllabus_ID, CLO_Code, Description) VALUES (NEWID(), ?, ?, ?)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, clo.getSyllabusId());
+            ps.setString(2, clo.getCloCode());
+            ps.setString(3, clo.getDescription());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    /** Bulk insert CLOs for a syllabus */
+    public int addCLOs(String syllabusId, List<CourseLearningOutcome> clos) {
+        int count = 0;
+        for (CourseLearningOutcome clo : clos) {
+            clo.setSyllabusId(syllabusId);
+            if (addCLO(clo)) count++;
+        }
+        return count;
+    }
 }

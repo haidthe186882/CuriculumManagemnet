@@ -39,4 +39,34 @@ public class SessionDAO {
         }
         return list;
     }
+
+    /** Insert a single session */
+    public boolean addSession(Session session) {
+        String sql = "INSERT INTO Sessions (Session_ID, Syllabus_ID, Session_No, Topic, Learning_Teaching_Type, LO, ITU, Student_Materials, Student_Tasks, URLs) "
+                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, session.getSyllabusId());
+            ps.setInt(2, session.getSessionNo());
+            ps.setString(3, session.getTopic());
+            ps.setString(4, session.getLearningTeachingType());
+            ps.setString(5, session.getLo());
+            ps.setString(6, session.getItu());
+            ps.setString(7, session.getStudentMaterials());
+            ps.setString(8, session.getStudentTasks());
+            ps.setString(9, session.getUrls());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    /** Bulk insert sessions for a syllabus */
+    public int addSessions(String syllabusId, List<Session> sessions) {
+        int count = 0;
+        for (Session session : sessions) {
+            session.setSyllabusId(syllabusId);
+            if (addSession(session)) count++;
+        }
+        return count;
+    }
 }
