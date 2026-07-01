@@ -50,9 +50,9 @@ public class SyllabusDAO {
     public List<Syllabus> searchSyllabuses(String keyword, String status, boolean activeOnly) {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+            "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
           + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-          + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 WHERE 1=1");
+          + "WHERE 1=1");
         if (activeOnly) sql.append(" AND sy.Is_Active=1");
         if (keyword != null && !keyword.trim().isEmpty())
             sql.append(" AND (sy.Syllabus_Name LIKE ? OR s.Subject_Code LIKE ? OR s.Subject_Name LIKE ?)");
@@ -75,9 +75,8 @@ public class SyllabusDAO {
 
     /** Lay syllabus theo ID */
     public Syllabus getSyllabusById(String id) {
-        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
                    + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-                   + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 "
                    + "WHERE sy.Syllabus_ID = ?";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -90,9 +89,8 @@ public class SyllabusDAO {
 
     /** Lay syllabus theo subject */
     public Syllabus getSyllabusBySubject(String subjectId) {
-        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits, m.Link AS Material_URL FROM Syllabuses sy "
+        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
                    + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-                   + "LEFT JOIN Materials m ON sy.Syllabus_ID = m.Syllabus_ID AND m.Is_Main_Material = 1 "
                    + "WHERE sy.Subject_ID = ? AND sy.Is_Active=1";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -170,5 +168,68 @@ public class SyllabusDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /** Insert syllabus and return the generated Syllabus_ID */
+    public String addSyllabusAndGetId(Syllabus s) {
+        String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, "
+                   + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
+                   + "Decision_No, Approved_Date, Is_Active) "
+                   + "OUTPUT INSERTED.Syllabus_ID "
+                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, s.getSubjectId());
+            ps.setString(2, s.getSyllabusName());
+            ps.setString(3, s.getEnglishName());
+            ps.setString(4, s.getVersion());
+            ps.setString(5, s.getDescription());
+            ps.setString(6, s.getTimeAllocation());
+            ps.setString(7, s.getStudentTasks());
+            ps.setString(8, s.getTools());
+            ps.setString(9, s.getScoringScale());
+            ps.setDouble(10, s.getMinAvgMarkToPass());
+            ps.setString(11, s.getDecisionNo());
+            ps.setDate(12, s.getApprovedDate() != null ? new java.sql.Date(s.getApprovedDate().getTime()) : null);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString(1);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return null;
+    }
+
+    /** Insert a material for a syllabus */
+    public boolean addMaterial(SyllabusMaterial m) {
+        String sql = "INSERT INTO Materials (Material_ID, Syllabus_ID, Material_Description, Author, Publisher, "
+                   + "Published_Date, Edition, ISBN, Is_Main_Material, Is_Hard_Copy, Is_Online, Link, Notes) "
+                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, m.getSyllabusId());
+            ps.setString(2, m.getMaterialDescription());
+            ps.setString(3, m.getAuthor());
+            ps.setString(4, m.getPublisher());
+            ps.setDate(5, m.getPublishedDate() != null ? new java.sql.Date(m.getPublishedDate().getTime()) : null);
+            ps.setString(6, m.getEdition());
+            ps.setString(7, m.getIsbn());
+            ps.setBoolean(8, m.isMainMaterial());
+            ps.setBoolean(9, m.isHardCopy());
+            ps.setBoolean(10, m.isOnline());
+            ps.setString(11, m.getLink());
+            ps.setString(12, m.getNotes());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    /** Bulk insert materials for a syllabus */
+    public int addMaterials(String syllabusId, List<SyllabusMaterial> materials) {
+        int count = 0;
+        for (SyllabusMaterial m : materials) {
+            m.setSyllabusId(syllabusId);
+            if (addMaterial(m)) count++;
+        }
+        return count;
     }
 }

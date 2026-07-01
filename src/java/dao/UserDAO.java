@@ -12,18 +12,18 @@ import java.util.List;
  * @author Mai Duy An
  * @MSSV HE197000
  * @date 20/6/2026
- * @desc 
+ * @desc
  */
 public class UserDAO {
-    
+
     // Câu lệnh nền tảng
-    private static final String BASE_SELECT_SQL = 
-        "SELECT u.User_ID, u.Full_Name, u.Email, u.Password_Hash, u.Is_Active, u.Created_Date, " +
-        "(SELECT TOP 1 r.Role_ID FROM User_Roles ur JOIN Roles r ON ur.Role_ID = r.Role_ID WHERE ur.User_ID = u.User_ID ORDER BY ur.Assigned_Date ASC) AS Primary_Role_ID, " +
-        "(SELECT TOP 1 r.Role_Name FROM User_Roles ur JOIN Roles r ON ur.Role_ID = r.Role_ID WHERE ur.User_ID = u.User_ID ORDER BY ur.Assigned_Date ASC) AS Primary_Role_Name, " +
-        "CAST((CASE WHEN EXISTS (SELECT 1 FROM User_Roles ur2 JOIN Roles r2 ON ur2.Role_ID = r2.Role_ID WHERE ur2.User_ID = u.User_ID AND r2.Role_Name = 'Reviewer') THEN 1 ELSE 0 END) AS BIT) AS Is_Reviewer, " +
-        "CAST((CASE WHEN EXISTS (SELECT 1 FROM User_Roles ur2 JOIN Roles r2 ON ur2.Role_ID = r2.Role_ID WHERE ur2.User_ID = u.User_ID AND r2.Role_Name = 'Designer') THEN 1 ELSE 0 END) AS BIT) AS Is_Designer " +
-        "FROM Users u ";
+    private static final String BASE_SELECT_SQL
+            = "SELECT u.User_ID, u.Full_Name, u.Email, u.Password_Hash, u.Is_Active, u.Created_Date, "
+            + "(SELECT TOP 1 r.Role_ID FROM User_Roles ur JOIN Roles r ON ur.Role_ID = r.Role_ID WHERE ur.User_ID = u.User_ID ORDER BY ur.Assigned_Date ASC) AS Primary_Role_ID, "
+            + "(SELECT TOP 1 r.Role_Name FROM User_Roles ur JOIN Roles r ON ur.Role_ID = r.Role_ID WHERE ur.User_ID = u.User_ID ORDER BY ur.Assigned_Date ASC) AS Primary_Role_Name, "
+            + "CAST((CASE WHEN EXISTS (SELECT 1 FROM User_Roles ur2 JOIN Roles r2 ON ur2.Role_ID = r2.Role_ID WHERE ur2.User_ID = u.User_ID AND r2.Role_Name = 'Reviewer') THEN 1 ELSE 0 END) AS BIT) AS Is_Reviewer, "
+            + "CAST((CASE WHEN EXISTS (SELECT 1 FROM User_Roles ur2 JOIN Roles r2 ON ur2.Role_ID = r2.Role_ID WHERE ur2.User_ID = u.User_ID AND r2.Role_Name = 'Designer') THEN 1 ELSE 0 END) AS BIT) AS Is_Designer "
+            + "FROM Users u ";
 
     // Map dữ liệu
     private User mapUser(ResultSet rs) throws SQLException {
@@ -34,93 +34,98 @@ public class UserDAO {
         u.setPasswordHash(rs.getString("Password_Hash"));
 
         // Set Status
-        try { u.setStatus(rs.getBoolean("Is_Active") ? "Active" : "Inactive"); } 
-        catch (SQLException ignored) { u.setStatus("Active"); }
+        try {
+            u.setStatus(rs.getBoolean("Is_Active") ? "Active" : "Inactive");
+        } catch (SQLException ignored) {
+            u.setStatus("Active");
+        }
 
         // Set Created Date
-        try { 
+        try {
             Timestamp ts = rs.getTimestamp("Created_Date");
             if (ts != null) {
                 u.setCreatedDate(new java.util.Date(ts.getTime()));
             }
-        } catch (SQLException ignored) {}
-        
+        } catch (SQLException ignored) {
+        }
+
         // Bắt cờ quyền phụ từ SQL
         boolean isRev = false;
         boolean isDes = false;
-        try { isRev = rs.getBoolean("Is_Reviewer"); } catch (SQLException ignored) {}
-        try { isDes = rs.getBoolean("Is_Designer"); } catch (SQLException ignored) {}
-
-        // Gán Role chính và LOGIC TRIỆT TIÊU QUYỀN PHỤ
-//        try {
-//            int primaryRoleId = rs.getInt("Primary_Role_ID");
-//            String primaryRoleName = rs.getString("Primary_Role_Name");
-//            if (primaryRoleName != null) {
-//                u.addRole(new Role(primaryRoleId, primaryRoleName)); 
-//                u.setRoleId(primaryRoleId);
-//                
-//                // Nếu Role chính đã là Reviewer thì tắt cờ phụ Reviewer
-//                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
-//                    isRev = false;
-//                }
-//                // Nếu Role chính đã là Designer thì tắt cờ phụ Designer
-//                if ("Designer".equalsIgnoreCase(primaryRoleName)) {
-//                    isDes = false;
-//                }
-//            }
-//        } catch (SQLException ignored) {}
-        // Gán Role chính
+        try {
+            isRev = rs.getBoolean("Is_Reviewer");
+        } catch (SQLException ignored) {
+        }
+        try {
+            isDes = rs.getBoolean("Is_Designer");
+        } catch (SQLException ignored) {
+        }
         try {
             int primaryRoleId = rs.getInt("Primary_Role_ID");
             String primaryRoleName = rs.getString("Primary_Role_Name");
             if (primaryRoleName != null) {
-                u.addRole(new Role(primaryRoleId, primaryRoleName)); 
+                u.addRole(new Role(primaryRoleId, primaryRoleName));
                 u.setRoleId(primaryRoleId);
-                
-                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) isRev = false;
-                if ("Designer".equalsIgnoreCase(primaryRoleName)) isDes = false;
+
+                if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
+                    isRev = false;
+                }
+                if ("Designer".equalsIgnoreCase(primaryRoleName)) {
+                    isDes = false;
+                }
             }
-        } catch (SQLException ignored) {}
-        if (isRev) u.addRole(new Role(0, "Reviewer")); 
-        if (isDes) u.addRole(new Role(0, "Designer"));
+        } catch (SQLException ignored) {
+        }
+        if (isRev) {
+            u.addRole(new Role(0, "Reviewer"));
+        }
+        if (isDes) {
+            u.addRole(new Role(0, "Designer"));
+        }
         // Gán lại cờ đã được lọc cho User
         u.setReviewer(isRev);
         u.setDesigner(isDes);
-        
+
         return u;
     }
-
-    // ---------------------------------------------------------------
-    //  LOGIN & QUERIES
-    // ---------------------------------------------------------------
-
+    
+    /**
+     * @author Mai Duy An
+     * @MSSV HE197000
+     * @param email Email của người dùng
+     * @param passwordHash Mật khẩu đã mã hóa
+     * @return Trả về thông tin người dùng
+     */
     public User login(String email, String passwordHash) {
         String sql = BASE_SELECT_SQL + "WHERE u.Email = ? AND u.Password_Hash = ? AND u.Is_Active = 1";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, passwordHash);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return mapUser(rs);
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next()) {
+                return mapUser(rs);
+            }
+        } catch (Exception e) {
+        }
         return null;
     }
 
     public List<User> getAllUsers(String keyword, String status, String roleId) {
         List<User> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(BASE_SELECT_SQL + "WHERE 1=1");
-        
-        if (keyword != null && !keyword.trim().isEmpty())
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (u.Full_Name LIKE ? OR u.Email LIKE ?)");
-        if (status != null && !status.trim().isEmpty())
+        }
+        if (status != null && !status.trim().isEmpty()) {
             sql.append(" AND u.Is_Active = ?");
+        }
         if (roleId != null && !roleId.trim().isEmpty()) {
             sql.append(" AND u.User_ID IN (SELECT User_ID FROM User_Roles WHERE Role_ID = ?)");
         }
         sql.append(" ORDER BY u.Created_Date DESC");
 
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql.toString())) {
             int idx = 1;
             if (keyword != null && !keyword.trim().isEmpty()) {
                 ps.setString(idx++, "%" + keyword + "%");
@@ -135,66 +140,90 @@ public class UserDAO {
                 ps.setInt(idx++, Integer.parseInt(roleId));
             }
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapUser(rs));
-        } catch (Exception e) { e.printStackTrace(); }
+            while (rs.next()) {
+                list.add(mapUser(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
     public User getUserById(String userId) {
         String sql = BASE_SELECT_SQL + "WHERE u.User_ID = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, userId);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return mapUser(rs);
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next()) {
+                return mapUser(rs);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     public User getUserByEmail(String email) {
         String sql = BASE_SELECT_SQL + "WHERE u.Email = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return mapUser(rs);
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next()) {
+                return mapUser(rs);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     // ---------------------------------------------------------------
     //  MUTATIONS (UPDATE / ADD)
     // ---------------------------------------------------------------
-
     public boolean updatePassword(String userId, String passwordHash) {
         String sql = "UPDATE Users SET Password_Hash = ? WHERE User_ID = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, passwordHash);
             ps.setString(2, userId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     public boolean updateStatus(String userId, String status) {
         String sql = "UPDATE Users SET Is_Active = ? WHERE User_ID = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, (status != null && status.equalsIgnoreCase("Active")) ? 1 : 0);
             ps.setString(2, userId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
+
+    public boolean updateProfileName(String userId, String fullName) {
+        String sql = "UPDATE Users SET Full_Name = ? WHERE User_ID = ?";
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            ps.setString(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public boolean addUser(User u) {
         String newUserId = java.util.UUID.randomUUID().toString();
         String insertUserSql = "INSERT INTO Users (User_ID, Full_Name, Email, Password_Hash, Is_Active) VALUES (?, ?, ?, ?, 1)";
         String insertPrimaryRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) VALUES (NEWID(), ?, ?, GETDATE())";
-        String insertExtraRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) " +
-                                    "SELECT NEWID(), ?, Role_ID, DATEADD(second, 1, GETDATE()) FROM Roles " +
-                                    "WHERE Role_Name = ? AND NOT EXISTS (SELECT 1 FROM User_Roles ur WHERE ur.User_ID = ? AND ur.Role_ID = Roles.Role_ID)";
+        String insertExtraRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) "
+                + "SELECT NEWID(), ?, Role_ID, DATEADD(second, 1, GETDATE()) FROM Roles "
+                + "WHERE Role_Name = ? AND NOT EXISTS (SELECT 1 FROM User_Roles ur WHERE ur.User_ID = ? AND ur.Role_ID = Roles.Role_ID)";
 
         try (Connection con = new DBContext().getConnection()) {
             con.setAutoCommit(false);
@@ -237,7 +266,9 @@ public class UserDAO {
                 con.rollback();
                 ex.printStackTrace();
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
@@ -245,9 +276,9 @@ public class UserDAO {
         String updateUserSql = "UPDATE Users SET Full_Name=?, Is_Active=? WHERE User_ID=?";
         String deleteOldRolesSql = "DELETE FROM User_Roles WHERE User_ID=?";
         String insertPrimaryRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) VALUES (NEWID(), ?, ?, GETDATE())";
-        String insertExtraRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) " +
-                                    "SELECT NEWID(), ?, Role_ID, DATEADD(second, 1, GETDATE()) FROM Roles " +
-                                    "WHERE Role_Name = ? AND NOT EXISTS (SELECT 1 FROM User_Roles ur WHERE ur.User_ID = ? AND ur.Role_ID = Roles.Role_ID)";
+        String insertExtraRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) "
+                + "SELECT NEWID(), ?, Role_ID, DATEADD(second, 1, GETDATE()) FROM Roles "
+                + "WHERE Role_Name = ? AND NOT EXISTS (SELECT 1 FROM User_Roles ur WHERE ur.User_ID = ? AND ur.Role_ID = Roles.Role_ID)";
 
         try (Connection con = new DBContext().getConnection()) {
             con.setAutoCommit(false);
@@ -296,40 +327,45 @@ public class UserDAO {
                 con.rollback();
                 ex.printStackTrace();
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     public boolean emailExists(String email) {
         String sql = "SELECT 1 FROM Users WHERE Email = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
             return rs.next();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     public List<Role> getAllRoles() {
         List<Role> list = new ArrayList<>();
         String sql = "SELECT * FROM Roles ORDER BY Role_ID";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(new Role(rs.getInt("Role_ID"), rs.getString("Role_Name")));
-        } catch (Exception e) { e.printStackTrace(); }
+            while (rs.next()) {
+                list.add(new Role(rs.getInt("Role_ID"), rs.getString("Role_Name")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
-    
+
     public List<User> getUsersByRole(String roleName) {
         List<User> list = new ArrayList<>();
-        String sql = "SELECT DISTINCT u.User_ID, u.Full_Name, u.Email FROM Users u " +
-                     "JOIN User_Roles ur ON u.User_ID = ur.User_ID " +
-                     "JOIN Roles r ON ur.Role_ID = r.Role_ID " +
-                     "WHERE r.Role_Name = ? AND u.Is_Active = 1";
-        try (Connection con = new dal.DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql = "SELECT DISTINCT u.User_ID, u.Full_Name, u.Email FROM Users u "
+                + "JOIN User_Roles ur ON u.User_ID = ur.User_ID "
+                + "JOIN Roles r ON ur.Role_ID = r.Role_ID "
+                + "WHERE r.Role_Name = ? AND u.Is_Active = 1";
+        try (Connection con = new dal.DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, roleName);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -339,7 +375,9 @@ public class UserDAO {
                 u.setEmail(rs.getString("Email"));
                 list.add(u);
             }
-        } catch (Exception e) { e.printStackTrace(); }  
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
     

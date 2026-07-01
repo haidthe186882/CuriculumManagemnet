@@ -7,13 +7,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.Random;
 
 /**
  * @author Mai Duy An
  * @MSSV HE197000
  * @date 24/6/2026
- * 
+ *
  */
 @WebServlet(name = "ResetPasswordServlet", urlPatterns = {"/reset-password"})
 public class ResetPasswordServlet extends HttpServlet {
@@ -58,9 +59,9 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        String storedOTP     = (String) session.getAttribute("resetOTP");
-        Long   otpCreatedTime = (Long) session.getAttribute("otpCreatedTime");
-        String email         = (String) session.getAttribute("resetEmail");
+        String storedOTP = (String) session.getAttribute("resetOTP");
+        Long otpCreatedTime = (Long) session.getAttribute("otpCreatedTime");
+        String email = (String) session.getAttribute("resetEmail");
 
         // 5.2 — Check OTP not expired (5 minutes)
         if (otpCreatedTime == null || (System.currentTimeMillis() - otpCreatedTime) > OTP_EXPIRY_MS) {
@@ -100,8 +101,8 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        String userId      = (String) session.getAttribute("resetUserId");
-        String newPassword  = req.getParameter("newPassword");
+        String userId = (String) session.getAttribute("resetUserId");
+        String newPassword = req.getParameter("newPassword");
         String confirmPassword = req.getParameter("confirmPassword");
 
         // 7.2 — Validate password length ≥ 6
@@ -118,9 +119,10 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        // 7.4 — Update password in DB
+        // 7.4 — Hash MD5 mật khẩu mới rồi lưu vào DB
         UserDAO dao = new UserDAO();
-        boolean updated = dao.updatePassword(userId, newPassword);
+        String hashedPassword = hashMD5(newPassword);
+        boolean updated = dao.updatePassword(userId, hashedPassword);
 
         if (!updated) {
             req.setAttribute("error", "Không thể cập nhật mật khẩu. Vui lòng thử lại.");
@@ -185,9 +187,33 @@ public class ResetPasswordServlet extends HttpServlet {
     }
 
     private String maskEmail(String email) {
-        if (email == null) return "";
+        if (email == null) {
+            return "";
+        }
         int atIdx = email.indexOf('@');
-        if (atIdx <= 2) return "***" + email.substring(atIdx);
+        if (atIdx <= 2) {
+            return "***" + email.substring(atIdx);
+        }
         return email.substring(0, 2) + "***" + email.substring(atIdx);
+    }
+
+    /**
+     * Mã hóa chuỗi đầu vào bằng thuật toán MD5.
+     *
+     * @param input Chuỗi cần mã hóa
+     * @return Chuỗi hex MD5 (32 ký tự), hoặc chuỗi gốc nếu có lỗi
+     */
+    private String hashMD5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] bytes = md.digest(input.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return input;
+        }
     }
 }

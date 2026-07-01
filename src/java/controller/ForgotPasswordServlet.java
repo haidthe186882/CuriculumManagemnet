@@ -14,7 +14,7 @@ import java.util.Random;
  * @author Mai Duy An
  * @MSSV HE197000
  * @date 24/6/2026
- * 
+ *
  */
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = {"/forgot-password"})
 public class ForgotPasswordServlet extends HttpServlet {
@@ -45,10 +45,11 @@ public class ForgotPasswordServlet extends HttpServlet {
 
         // 3.3 — If email NOT found → show generic success (security: don't reveal email existence)
         if (user == null) {
-            req.setAttribute("success", "Nếu email tồn tại trong hệ thống, mã OTP đã được gửi đến hộp thư của bạn.");
+            req.setAttribute("error", "Tài khoản không tồn tại");
             req.getRequestDispatcher("/WEB-INF/views/auth/forgot-password.jsp").forward(req, res);
             return;
         }
+
 
         // 3.4 — Generate 6-digit OTP
         String otp = String.format("%06d", new Random().nextInt(999999));
@@ -72,16 +73,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
 
         // 3.7 — Forward to OTP verification page
-        req.setAttribute("maskedEmail", maskEmail(email));
+        req.setAttribute("success", "Mã OTP đã được gửi đến email của bạn.");
         req.getRequestDispatcher("/WEB-INF/views/auth/verify-otp.jsp").forward(req, res);
-    }
-
-    /**
-     * Masks an email for display: "john.doe@gmail.com" → "jo***@gmail.com"
-     */
-    private String maskEmail(String email) {
-        int atIdx = email.indexOf('@');
-        if (atIdx <= 2) return "***" + email.substring(atIdx);
-        return email.substring(0, 2) + "***" + email.substring(atIdx);
     }
 }
