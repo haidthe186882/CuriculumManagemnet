@@ -58,14 +58,11 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-//        UserDAO dao = new UserDAO();
-//        // DB stores password hash; the form value is compared as-is (plain hash_placeholder).
-//        User user = dao.login(email.trim(), password.trim());
         UserDAO dao = new UserDAO();
-        String hashedPassword = hashMD5(password.trim()); //
+        String hashedPassword = hashMD5(password); //
         User user = dao.login(email.trim(), hashedPassword);
         if (user == null) {
-            user = dao.login(email.trim(), password.trim());
+            user = dao.login(email.trim(), password);
         }
 
 
@@ -84,10 +81,10 @@ public class LoginServlet extends HttpServlet {
         // we use the first one returned, priority: Admin > Designer > Reviewer > Teacher > Student)
         if (user.hasRole("Admin")) {
             res.sendRedirect(req.getContextPath() + "/admin/users");
-        } else if (user.hasRole("Reviewer") || user.isReviewer()) {
-            res.sendRedirect(req.getContextPath() + "/review/list");
         } else if (user.hasRole("Designer") || user.isDesigner()) {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
+        } else if (user.hasRole("Reviewer") || user.isReviewer()) {
+            res.sendRedirect(req.getContextPath() + "/review/list");
         } else {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
@@ -105,6 +102,8 @@ public class LoginServlet extends HttpServlet {
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) { return input; }//
+        } catch (Exception e) { 
+            throw new RuntimeException("MD5 hashing failed", e); 
+        }
     }
 }

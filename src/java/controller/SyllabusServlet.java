@@ -16,11 +16,17 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.UUID;
 
 @WebServlet(name = "SyllabusServlet", urlPatterns = {"/syllabus/*"})
 @MultipartConfig(
@@ -63,6 +69,12 @@ public class SyllabusServlet extends HttpServlet {
             return;
         }
 
+        // Handle file upload (AJAX)
+        if ("/uploadFile".equals(pathInfo)) {
+            handleUploadFile(req, res);
+            return;
+        }
+
         // Handle create action
         String action = req.getParameter("action");
         if (!"create".equals(action)) {
@@ -76,7 +88,23 @@ public class SyllabusServlet extends HttpServlet {
 
         // Build Syllabus object
         Syllabus s = new Syllabus();
-        s.setSubjectId(req.getParameter("subjectId"));
+        
+        String subjectCode = req.getParameter("subjectCode");
+        if (subjectCode == null || subjectCode.trim().isEmpty()) {
+            req.setAttribute("error", "Syllabus Code is required. Please enter a valid code (e.g. SWT301).");
+            req.setAttribute("subjects", subjectDAO.searchSubjects(null, null, null));
+            req.getRequestDispatcher("/WEB-INF/views/syllabus/form.jsp").forward(req, res);
+            return;
+        }
+        subjectCode = subjectCode.trim();
+        String subjectId = subjectDAO.findSubjectIdByCodeAny(subjectCode);
+        if (subjectId == null) {
+            req.setAttribute("error", "Subject code '" + safeStr(subjectCode) + "' does not exist in the system. Please create the subject first or check the code.");
+            req.setAttribute("subjects", subjectDAO.searchSubjects(null, null, null));
+            req.getRequestDispatcher("/WEB-INF/views/syllabus/form.jsp").forward(req, res);
+            return;
+        }
+        s.setSubjectId(subjectId);
         s.setSyllabusName(req.getParameter("syllabusName"));
         s.setEnglishName(req.getParameter("englishName"));
         s.setVersion(req.getParameter("version"));
@@ -173,9 +201,116 @@ public class SyllabusServlet extends HttpServlet {
                     syllabusDAO.addMaterial(m);
                 }
             }
+
+            // Insert Documents (uploaded files from Documents tab)
+            String[] docFilePaths = req.getParameterValues("docFilePath[]");
+            String[] docOrigNames = req.getParameterValues("docOrigName[]");
+            String[] docDescriptions = req.getParameterValues("docDescription[]");
+
+            if (docFilePaths != null) {
+                for (int i = 0; i < docFilePaths.length; i++) {
+                    String fp = safeStr(docFilePaths[i]);
+                    if (fp.isEmpty()) continue;
+
+                    SyllabusMaterial m = new SyllabusMaterial();
+                    m.setSyllabusId(syllabusId);
+                    m.setFilePath(fp);
+                    String origName = (docOrigNames != null && i < docOrigNames.length) ? safeStr(docOrigNames[i]) : "";
+                    m.setOriginalFileName(origName);
+                    m.setMaterialDescription(origName.isEmpty() ? "Uploaded Document" : origName);
+                    if (docDescriptions != null && i < docDescriptions.length) {
+                        String desc = safeStr(docDescriptions[i]);
+                        if (!desc.isEmpty()) m.setMaterialDescription(desc);
+                    }
+                    m.setOnline(true);
+                    syllabusDAO.addMaterial(m);
+                }
+            }
         }
 
         res.sendRedirect(req.getContextPath() + "/syllabus/list?msg=created");
+    }
+    /* ====== Upload File – AJAX endpoint returning JSON ====== */
+    private void handleUploadFile(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        res.setContentType("application/json");
+        res.setCharacterEncoding("UTF-8");
+        res.setHeader("Cache-Control", "no-cache");
+        PrintWriter out = res.getWriter();
+
+        try {
+            if (!hasRole(req, "Designer", "Admin", "Lecturer")) {
+                out.print("{\"error\":\"Access denied\"}");
+                out.flush();
+                return;
+            }
+
+            Part filePart = req.getPart("file");
+            if (filePart == null || filePart.getSize() == 0) {
+                out.print("{\"error\":\"No file uploaded\"}");
+                out.flush();
+                return;
+            }
+
+            // Get original file name
+            String originalName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+
+            // Validate file extension
+            String lowerName = originalName.toLowerCase();
+            String[] allowedExts = {".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt", ".zip", ".rar"};
+            boolean validExt = false;
+            for (String ext : allowedExts) {
+                if (lowerName.endsWith(ext)) { validExt = true; break; }
+            }
+            if (!validExt) {
+                out.print("{\"error\":\"File type not supported. Allowed: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR\"}");
+                out.flush();
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            if (filePart.getSize() > 10 * 1024 * 1024) {
+                out.print("{\"error\":\"File too large. Maximum size is 10MB.\"}");
+                out.flush();
+                return;
+            }
+
+            // Create upload directory
+            String uploadDir = getServletContext().getRealPath("/uploads/documents");
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // Generate unique filename: timestamp_uuid_originalname
+            String safeFileName = System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8)
+                    + "_" + originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+            Path targetPath = Paths.get(uploadDir, safeFileName);
+
+            // Save file
+            try (InputStream is = filePart.getInputStream()) {
+                Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Return JSON response
+            String filePath = "/uploads/documents/" + safeFileName;
+            long fileSize = filePart.getSize();
+            String sizeDisplay;
+            if (fileSize < 1024) sizeDisplay = fileSize + " B";
+            else if (fileSize < 1024 * 1024) sizeDisplay = String.format("%.1f KB", fileSize / 1024.0);
+            else sizeDisplay = String.format("%.1f MB", fileSize / (1024.0 * 1024));
+
+            out.print("{\"success\":true,\"filePath\":\"" + escapeJson(filePath)
+                    + "\",\"originalName\":\"" + escapeJson(originalName)
+                    + "\",\"fileSize\":" + fileSize
+                    + ",\"fileSizeDisplay\":\"" + escapeJson(sizeDisplay) + "\"}");
+            out.flush();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+            out.print("{\"error\":\"" + escapeJson(msg) + "\"}");
+            out.flush();
+        }
     }
 
     /* ====== Import Excel – AJAX endpoint returning JSON ====== */
@@ -219,6 +354,7 @@ public class SyllabusServlet extends HttpServlet {
         StringBuilder sb = new StringBuilder("{");
         Syllabus s = data.getSyllabus();
 
+        sb.append("\"subjectCode\":").append(jsonStr(data.getSubjectCode())).append(",");
         sb.append("\"syllabusName\":").append(jsonStr(s.getSyllabusName())).append(",");
         sb.append("\"englishName\":").append(jsonStr(s.getEnglishName())).append(",");
         sb.append("\"version\":").append(jsonStr(s.getVersion())).append(",");

@@ -163,18 +163,18 @@ VALUES
 
 /* ============ MATERIALS (da gop, dung chung Download_Link) ============ */
 INSERT INTO Materials
-(Material_ID, Syllabus_ID, Material_Type, Material_Name, Author, Publisher, Published_Date,
- Edition, ISBN, Is_Main_Material, Is_Hard_Copy, Is_Online, Download_Link, Description, Notes,
+(Material_ID, Syllabus_ID, Material_Type, Material_Description, Author, Publisher, Published_Date,
+ Edition, ISBN, Is_Main_Material, Is_Hard_Copy, Is_Online, Link, Download_Link, Notes,
  Uploaded_By, Is_Active)
 VALUES
 -- Tai lieu chinh thuc: Uploaded_By = NULL
 (@Material1_ID, @Syllabus_PRO192, 'Textbook', N'C# Programming Yellow Book', N'Rob Miles',
  N'University of Hull', '2018-01-01', N'2018', '978-0000000000', 1, 0, 1,
- 'https://example.com/materials/csharp-yellow-book.pdf', N'Giáo trình chính của môn học', NULL, NULL, 1),
+ 'https://example.com/materials/csharp-yellow-book.pdf', NULL, NULL, NULL, 1),
 -- Tai lieu giao vien tu upload: Uploaded_By = @Teacher_ID
 (@Material2_ID, @Syllabus_PRO192, 'Slide', N'Slide bài giảng tuần 1 - Giáo viên bổ sung', NULL, NULL,
- NULL, NULL, NULL, 0, 0, 1, 'https://example.com/uploads/teacher/pro192-week1.pptx',
- N'Slide bổ sung do giáo viên tự biên soạn', N'Tài liệu tham khảo thêm', @Teacher_ID, 1);
+ NULL, NULL, NULL, 0, 0, 1, NULL, '/uploads/teacher/pro192-week1.pptx',
+ N'Tài liệu tham khảo thêm', @Teacher_ID, 1);
 
 /* ============ SYLLABUS ASSIGNMENTS (Admin gan Designer/Reviewer) ============ */
 INSERT INTO Syllabus_Assignments (Assignment_ID, Syllabus_ID, User_ID, Assignment_Type, Assigned_By)

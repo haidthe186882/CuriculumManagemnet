@@ -414,7 +414,7 @@ CREATE TABLE Materials
     Material_Type NVARCHAR(50) NOT NULL DEFAULT 'Textbook',
     -- Textbook | Reference | Slide | Video | Document | Other
 
-    Material_Name NVARCHAR(255) NOT NULL,
+    Material_Description NVARCHAR(MAX) NOT NULL,
 
     Author NVARCHAR(255),
     Publisher NVARCHAR(255),
@@ -426,10 +426,12 @@ CREATE TABLE Materials
     Is_Hard_Copy BIT DEFAULT 0,
     Is_Online BIT DEFAULT 1,
 
+    Link NVARCHAR(1000),
+    -- Link URL cho tai lieu truc tuyen
+    
     Download_Link NVARCHAR(1000),
-    -- Duong dan tai/xem tai lieu (thay the Link va Material_URL cu)
+    -- Duong dan file upload tren server
 
-    Description NVARCHAR(MAX),
     Notes NVARCHAR(MAX),
 
     Uploaded_By UNIQUEIDENTIFIER NULL,
