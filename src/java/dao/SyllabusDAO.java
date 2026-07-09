@@ -162,6 +162,7 @@ public class SyllabusDAO {
                 m.setOnline(rs.getBoolean("Is_Online"));
                 m.setLink(rs.getString("Link"));
                 m.setNotes(rs.getString("Notes"));
+                try { m.setFilePath(rs.getString("Download_Link")); } catch (SQLException ignored) {}
                 list.add(m);
             }
         } catch (Exception e) {
@@ -202,8 +203,8 @@ public class SyllabusDAO {
     /** Insert a material for a syllabus */
     public boolean addMaterial(SyllabusMaterial m) {
         String sql = "INSERT INTO Materials (Material_ID, Syllabus_ID, Material_Description, Author, Publisher, "
-                   + "Published_Date, Edition, ISBN, Is_Main_Material, Is_Hard_Copy, Is_Online, Link, Notes) "
-                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   + "Published_Date, Edition, ISBN, Is_Main_Material, Is_Hard_Copy, Is_Online, Link, Notes, Download_Link) "
+                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, m.getSyllabusId());
@@ -218,6 +219,7 @@ public class SyllabusDAO {
             ps.setBoolean(10, m.isOnline());
             ps.setString(11, m.getLink());
             ps.setString(12, m.getNotes());
+            ps.setString(13, m.getFilePath());
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;
