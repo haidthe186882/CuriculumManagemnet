@@ -19,7 +19,7 @@
     <div class="topbar">
         <div>
             <div class="page-title">My Design Assignments</div>
-            <div class="page-subtitle">Curriculums assigned to you for design</div>
+            <div class="page-subtitle">Syllabuses assigned to you for design</div>
         </div>
     </div>
 
@@ -28,7 +28,7 @@
             <div class="row g-2">
                 <div class="col-md-10">
                     <input type="text" name="keyword" class="search-bar form-control w-100"
-                           placeholder="Search by curriculum name, code..." value="${keyword}">
+                           placeholder="Search by name or subject code..." value="${keyword}">
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary-custom w-100">Search</button>
@@ -39,62 +39,37 @@
 
     <div class="card-dark">
         <div class="p-3 border-bottom">
-            <h6 class="mb-0"><i class="bi bi-pencil-square me-2" style="color:#4fc3f7;"></i>Assigned Curriculums (${assignments.size()})</h6>
+            <h6 class="mb-0"><i class="bi bi-pencil-square me-2" style="color:#4fc3f7;"></i>Assigned Syllabus (${assignedSubjects != null ? assignedSubjects.size() : 0})</h6>
         </div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Code</th>
-                        <th>Curriculum Name</th>
-                        <th>Major</th>
-                        <th>Version</th>
-                        <th>Credits</th>
-                        <th>Status</th>
-                        <th>Assigned Date</th>
+                        <th>Subject Code</th>
+                        <th>Syllabus Name</th>
+                        <th>BELONGS TO CURRICULUM</th>
+                        <th>SEMESTER</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <c:choose>
-                        <c:when test="${empty assignments}">
-                            <tr>
-                                <td colspan="9" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox display-6 d-block mb-2"></i>
-                                    You have not been assigned to any curriculum yet.
-                                </td>
-                            </tr>
+                        <c:when test="${empty assignedSubjects}">
+                            <tr><td colspan="6" class="text-center">No syllabus assignments yet.</td></tr>
                         </c:when>
                         <c:otherwise>
-                            <c:forEach var="a" items="${assignments}" varStatus="st">
+                            <c:forEach var="cs" items="${assignedSubjects}" varStatus="st">
                                 <tr>
-                                    <td class="text-muted">${st.count}</td>
-                                    <td><code style="color:#4fc3f7;">${a.curriculum.curriculumCode}</code></td>
+                                    <td>${st.count}</td>
+                                    <td><code class="text-primary">${cs.subject.subjectCode}</code></td>
+                                    <td>${cs.subject.subjectName}</td>
+                                    <td><span class="badge bg-secondary">${cs.curriculum.curriculumCode}</span></td>
+                                    <td>${cs.semesterNo}</td>
                                     <td>
-                                        <div class="detail-value">${a.curriculum.curriculumName}</div>
-                                        <div class="text-muted" style="font-size:0.78rem;">${a.curriculum.englishName}</div>
-                                    </td>
-                                    <td class="text-muted">${a.curriculum.majorName}</td>
-                                    <td class="text-muted">${a.curriculum.version}</td>
-                                    <td>${a.curriculum.totalCredits}</td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${a.curriculum.status == 1}">
-                                                <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Approved</span>
-                                            </c:when>
-                                            <c:when test="${a.curriculum.status == 2}">
-                                                <span class="badge-status badge-rejected"><i class="bi bi-hourglass me-1"></i>Pending</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Draft</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td class="text-muted"><fmt:formatDate value="${a.assignedDate}" pattern="dd/MM/yyyy HH:mm"/></td>
-                                    <td>
-                                        <a href="${pageContext.request.contextPath}/curriculum/detail?id=${a.curriculum.curriculumId}" class="btn btn-action btn-view">
-                                            <i class="bi bi-eye me-1"></i>Open
+                                        <%-- Sửa link nút Open trỏ về trang soạn thảo Syllabus của môn học đó --%>
+                                        <a href="${pageContext.request.contextPath}/syllabus/edit?subjectId=${cs.subject.subjectId}&curriculumId=${cs.curriculumId}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Open
                                         </a>
                                     </td>
                                 </tr>

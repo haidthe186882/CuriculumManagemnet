@@ -6,6 +6,7 @@ import dao.SubjectDAO;
 import dao.ReviewDAO;
 import dao.PloDAO;
 import dao.PoDAO;
+import dao.SyllabusDAO;
 import model.Curriculum;
 import model.CurriculumSubject;
 import model.Subject;
@@ -122,6 +123,9 @@ public class CurriculumServlet extends HttpServlet {
             case "removeSubject":
                 doRemoveSubject(req, res);
                 break;
+            case "assignSyllabus":
+                doAssignSyllabus(req, res);
+                break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
@@ -169,6 +173,8 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
         req.setAttribute("mappings", poDAO.getPoPloMappings(id));
         req.setAttribute("availableSubjects", getAvailableSubjects(subjectsInCurriculum));
+        req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
+        req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
         forward(req, res, "/WEB-INF/views/curriculum/detail.jsp");
     }
 
@@ -327,7 +333,8 @@ public class CurriculumServlet extends HttpServlet {
         User user = getLoggedUser(req);
         Curriculum c = buildFromRequest(req);
         c.setCreatedBy(user.getUserId());
-
+        c.setStatus(0); 
+        c.setIsActive(false);
         if (c.getCurriculumCode() == null || c.getCurriculumCode().trim().isEmpty()
                 || curriculumDAO.checkCurriculumCodeExists(c.getCurriculumCode().trim())) {
             req.setAttribute("errorMessage", "Could not create curriculum. The Curriculum Code \""
@@ -385,8 +392,8 @@ public class CurriculumServlet extends HttpServlet {
         }
 
         // Admin tạo Curriculum thì duyệt và kích hoạt luôn, không cần qua vòng Review.
-        curriculumDAO.approveCurriculum(newId);
-        curriculumDAO.toggleActive(newId, true);
+//        curriculumDAO.approveCurriculum(newId);
+//        curriculumDAO.toggleActive(newId, true);
 
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=created");
     }
@@ -678,5 +685,20 @@ public class CurriculumServlet extends HttpServlet {
         }
         res.sendRedirect(req.getContextPath() + "/curriculum/list");
         return false;
+    }
+    
+    private void doAssignSyllabus(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        // Chỉ Admin mới được phân công
+        if (!requireRole(req, res, "Admin")) return;
+        
+        String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) return;
+        
+        String subjectId = req.getParameter("subjectId");
+        String designerId = req.getParameter("designerId");
+        String reviewerId = req.getParameter("reviewerId");        
+        SyllabusDAO syllabusDAO = new SyllabusDAO(); // Khai báo DAO ở trên đầu file Servlet nếu chưa có
+        syllabusDAO.assignSyllabusRoles(curriculumId, subjectId, designerId, reviewerId);
+        res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=assignedSyllabus");
     }
 }

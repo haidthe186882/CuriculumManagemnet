@@ -95,13 +95,14 @@
                     <div class="col-md-6"><div class="detail-label">Decision Date</div>
                         <div class="detail-value"><c:if test="${not empty curriculum.decisionDate}"><fmt:formatDate value="${curriculum.decisionDate}" pattern="dd/MM/yyyy"/></c:if></div>
                     </div>
-                    <div class="col-12"><div class="detail-label">Description</div><div class="detail-value">${curriculum.description}</div></div>
+                    <div class="col-12"><div class="detail-label">Description</div>
+                        <div class="detail-value" style="white-space:pre-wrap;">${curriculum.description}</div></div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card-dark p-4">
-                <div class="detail-label">isActive</div>
+<!--                <div class="detail-label">isActive</div>-->
                 <div class="mb-3">
                     <c:choose>
                         <c:when test="${curriculum.isActive}">
@@ -209,6 +210,10 @@
                                                 <input type="hidden" name="action" value="removeSubject">
                                                 <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
                                                 <input type="hidden" name="curriculumSubjectId" value="${cs.curriculumSubjectId}">
+                                                <button type="button" class="btn btn-sm btn-outline-primary me-1" title="Assign Roles" 
+                                                        data-bs-toggle="modal" data-bs-target="#assignModal_${cs.subject.subjectId}"> <%-- Dùng ID môn học để phân biệt modal --%>
+                                                    <i class="bi bi-person-plus"></i> Assign
+                                                </button>
                                                 <button type="submit" class="btn btn-action btn-danger-custom"><i class="bi bi-trash"></i></button>
                                             </form>
                                         </td>
@@ -218,7 +223,7 @@
                         </c:otherwise>
                     </c:choose>
                 </tbody>
-            </table>
+            </table>        
         </div>
     </div>
 
@@ -460,6 +465,50 @@
         </div>
     </c:if>
 </div>
+<%--assign syllabus --%>                            
+<c:if test="${canDesign}">
+    <c:forEach var="cs" items="${subjects}">
+        <div class="modal fade" id="assignModal_${cs.subject.subjectId}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <%-- Thêm bg-light và text-dark để modal có nền trắng, không bị trong suốt --%>
+                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="modal-content bg-light text-dark shadow">
+                    <div class="modal-header border-bottom">
+                        <h5 class="modal-title">Assign Syllabus: <span class="text-primary">${cs.subject.subjectCode}</span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-start">
+                        <input type="hidden" name="action" value="assignSyllabus">
+                        <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                        <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Assign Designer</label>
+                            <select name="designerId" class="form-select border-secondary">
+                                <option value="">-- Select Designer --</option>
+                                <c:forEach var="d" items="${designers}">
+                                    <option value="${d.userId}">${d.fullName} (${d.email})</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Assign Reviewer</label>
+                            <select name="reviewerId" class="form-select border-secondary">
+                                <option value="">-- Select Reviewer --</option>
+                                <c:forEach var="r" items="${reviewers}">
+                                    <option value="${r.userId}">${r.fullName} (${r.email})</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save"></i> Save Assignment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </c:forEach>
+</c:if>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>

@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet(name = "ReviewServlet", urlPatterns = {"/review/*"})
 public class ReviewServlet extends HttpServlet {
@@ -35,8 +36,12 @@ public class ReviewServlet extends HttpServlet {
         // 2. Kiểm tra xem có phải Admin không
         boolean isAdmin = user.hasRole("Admin") || "Admin".equalsIgnoreCase(user.getRole().getRoleName());
         String keyword = req.getParameter("keyword");
+        dao.SyllabusDAO syllabusDAO = new dao.SyllabusDAO();
+        List<model.CurriculumSubject> pendingSyllabuses = syllabusDAO.getAssignedSubjectsForReviewer(user.getUserId(), keyword);
+        
+        // 2. Truyền đúng biến "pendingSyllabuses" ra JSP
+        req.setAttribute("pendingSyllabuses", pendingSyllabuses);
         req.setAttribute("reviews", reviewDAO.getAllReviews(keyword));
-        req.setAttribute("pendingCurriculums", curriculumDAO.getPendingCurriculums(user.getUserId(), isAdmin));
         req.setAttribute("keyword", keyword);
         req.getRequestDispatcher("/WEB-INF/views/review/list.jsp").forward(req, res);
     }
