@@ -2,7 +2,6 @@ package controller;
 
 import dao.SyllabusDAO;
 import dao.SubjectDAO;
-import dao.DesignDAO;
 import dao.CloDAO;
 import dao.SessionDAO;
 import model.CourseLearningOutcome;
@@ -39,7 +38,6 @@ public class SyllabusServlet extends HttpServlet {
 
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
     private final SubjectDAO  subjectDAO  = new SubjectDAO();
-    private final DesignDAO   designDAO   = new DesignDAO();
     private final CloDAO      cloDAO      = new CloDAO();
     private final SessionDAO  sessionDAO  = new SessionDAO();
 
@@ -470,13 +468,7 @@ public class SyllabusServlet extends HttpServlet {
         String status  = req.getParameter("status");
         User user = getLoggedUser(req);
         boolean activeOnly = (user == null || hasRole(req, "Student", "Guest"));
-        // Chi Admin duoc xem Syllabus con dang Draft/Pending Review (chua hoan thanh).
-        // Tat ca role khac (Designer, Reviewer, Lecturer, Student, Guest...) trong man hinh
-        // danh sach chung nay chi thay Syllabus da Approved. Designer/Reviewer van xem duoc
-        // ban nhap cua rieng minh qua "My Assignments" / "Review" (khong bi anh huong).
-        boolean isAdmin = hasRole(req, "Admin");
-        boolean approvedOnly = !isAdmin;
-        List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly, approvedOnly);
+        List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly);
         req.setAttribute("syllabuses", list);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
@@ -489,18 +481,9 @@ public class SyllabusServlet extends HttpServlet {
         Syllabus s = syllabusDAO.getSyllabusById(id);
         if (s == null) { res.sendRedirect(req.getContextPath() + "/syllabus/list"); return; }
         User user = getLoggedUser(req);
-        boolean isAdmin = hasRole(req, "Admin");
-        boolean isApproved = s.isApproved();
-        if (!isApproved && !isAdmin) {
-            // Syllabus chua Approved: chi Admin, hoac chinh Designer/Reviewer duoc gan
-            // vao Syllabus nay, moi duoc xem. Nguoi khac (bao gom Student/Guest) bi chan.
-            boolean isAssigned = user != null && (
-                    designDAO.isAssignedToSyllabus(user.getUserId(), id, "Designer") ||
-                    designDAO.isAssignedToSyllabus(user.getUserId(), id, "Reviewer"));
-            if (!isAssigned) {
-                res.sendRedirect(req.getContextPath() + "/syllabus/list");
-                return;
-            }
+        if (!s.isActive() && (user == null || hasRole(req, "Student", "Guest"))) {
+            res.sendRedirect(req.getContextPath() + "/syllabus/list");
+            return;
         }
         req.setAttribute("syllabus", s);
         req.setAttribute("clos", cloDAO.getCLOsBySyllabus(id));

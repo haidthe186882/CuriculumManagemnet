@@ -43,4 +43,8 @@ public class Subject {
     private String prerequisiteCodes;
     public String getPrerequisiteCodes() { return prerequisiteCodes; }
     public void setPrerequisiteCodes(String prerequisiteCodes) { this.prerequisiteCodes = prerequisiteCodes; }
+
+    private java.util.List<Subject> prerequisites = new java.util.ArrayList<>();
+    public java.util.List<Subject> getPrerequisites() { return prerequisites; }
+    public void setPrerequisites(java.util.List<Subject> prerequisites) { this.prerequisites = prerequisites; }
 }

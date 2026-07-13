@@ -359,4 +359,58 @@ public class SubjectDAO {
         }
         return null;
     }
+
+    public boolean addPrerequisite(String subjectId, String requiredSubjectId) {
+        if (subjectId == null || requiredSubjectId == null || subjectId.equals(requiredSubjectId)) return false;
+        String sql = "INSERT INTO Subject_Prerequisites (Subject_Prerequisite_ID, Subject_ID, Required_Subject_ID) VALUES (NEWID(), ?, ?)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            ps.setString(2, requiredSubjectId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean removePrerequisite(String subjectId, String requiredSubjectId) {
+        if (subjectId == null || requiredSubjectId == null) return false;
+        String sql = "DELETE FROM Subject_Prerequisites WHERE Subject_ID = ? AND Required_Subject_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            ps.setString(2, requiredSubjectId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<Subject> getPrerequisitesForSubject(String subjectId) {
+        List<Subject> list = new ArrayList<>();
+        String sql = "SELECT req.Subject_ID, req.Subject_Code, req.Subject_Name, req.Credits "
+                   + "FROM Subject_Prerequisites sp "
+                   + "JOIN Subjects req ON sp.Required_Subject_ID = req.Subject_ID "
+                   + "WHERE sp.Subject_ID = ? AND req.Is_Active = 1 "
+                   + "ORDER BY req.Subject_Code";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Subject req = new Subject();
+                    req.setSubjectId(rs.getString("Subject_ID"));
+                    req.setSubjectCode(rs.getString("Subject_Code"));
+                    req.setSubjectName(rs.getString("Subject_Name"));
+                    req.setCredits(rs.getInt("Credits"));
+                    list.add(req);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
