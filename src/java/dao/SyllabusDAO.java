@@ -30,10 +30,12 @@ public class SyllabusDAO {
             boolean active = rs.getBoolean("Is_Active");
             s.setActive(active);
             s.setStatus(active ? "Approved" : "Draft");
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         try {
             s.setMaterialUrl(rs.getString("Material_URL"));
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         // join Subject
         try {
             Subject sub = new Subject();
@@ -42,7 +44,8 @@ public class SyllabusDAO {
             sub.setSubjectName(rs.getString("Subject_Name"));
             sub.setCredits(rs.getInt("Credits"));
             s.setSubject(sub);
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) {
+        }
         return s;
     }
 
@@ -50,16 +53,17 @@ public class SyllabusDAO {
     public List<Syllabus> searchSyllabuses(String keyword, String status, boolean activeOnly) {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
-          + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-          + "WHERE 1=1");
-        if (activeOnly) sql.append(" AND sy.Is_Active=1");
+                "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
+                        + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+                        + "WHERE 1=1");
+        if (activeOnly)
+            sql.append(" AND sy.Is_Active=1");
         if (keyword != null && !keyword.trim().isEmpty())
             sql.append(" AND (sy.Syllabus_Name LIKE ? OR s.Subject_Code LIKE ? OR s.Subject_Name LIKE ?)");
         // status filtering removed in new schema (no Status column)
         sql.append(" ORDER BY s.Subject_Code");
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+                PreparedStatement ps = con.prepareStatement(sql.toString())) {
             int idx = 1;
             if (keyword != null && !keyword.trim().isEmpty()) {
                 ps.setString(idx++, "%" + keyword + "%");
@@ -68,47 +72,56 @@ public class SyllabusDAO {
             }
             // status parameter ignored with new schema
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapSyllabus(rs));
-        } catch (Exception e) { e.printStackTrace(); }
+            while (rs.next())
+                list.add(mapSyllabus(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
     /** Lay syllabus theo ID */
     public Syllabus getSyllabusById(String id) {
         String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
-                   + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-                   + "WHERE sy.Syllabus_ID = ?";
+                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+                + "WHERE sy.Syllabus_ID = ?";
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return mapSyllabus(rs);
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next())
+                return mapSyllabus(rs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     /** Lay syllabus theo subject */
     public Syllabus getSyllabusBySubject(String subjectId) {
         String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
-                   + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-                   + "WHERE sy.Subject_ID = ? AND sy.Is_Active=1";
+                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+                + "WHERE sy.Subject_ID = ? AND sy.Is_Active=1";
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, subjectId);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return mapSyllabus(rs);
-        } catch (Exception e) { e.printStackTrace(); }
+            if (rs.next())
+                return mapSyllabus(rs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     /** Them syllabus moi */
     public boolean addSyllabus(Syllabus s) {
         String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, "
-                   + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
-                   + "Decision_No, Approved_Date, Is_Active) "
-                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
+                + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
+                + "Decision_No, Approved_Date, Is_Active) "
+                + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, s.getSubjectId());
             ps.setString(2, s.getSyllabusName());
             ps.setString(3, s.getEnglishName());
@@ -122,20 +135,69 @@ public class SyllabusDAO {
             ps.setString(11, s.getDecisionNo());
             ps.setDate(12, s.getApprovedDate() != null ? new java.sql.Date(s.getApprovedDate().getTime()) : null);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     /** Cap nhat trang thai */
     public boolean updateStatus(String syllabusId, String status) {
-        boolean activeVal = "Approved".equalsIgnoreCase(status) || "Active".equalsIgnoreCase(status) || "1".equals(status);
+        boolean activeVal = "Approved".equalsIgnoreCase(status) || "Active".equalsIgnoreCase(status)
+                || "1".equals(status);
         String sql = "UPDATE Syllabuses SET Is_Active=? WHERE Syllabus_ID=?";
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setBoolean(1, activeVal);
             ps.setString(2, syllabusId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /** Lay syllabus bat ky (ke ca inactive/draft) theo subjectId */
+    public Syllabus findExistingSyllabusBySubjectAny(String subjectId) {
+        String sql = "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
+                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+                + "WHERE sy.Subject_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next())
+                return mapSyllabus(rs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /** Cap nhat noi dung Syllabus da ton tai (khi Designer submit) */
+    public boolean updateSyllabusContent(String syllabusId, Syllabus s) {
+        String sql = "UPDATE Syllabuses SET Syllabus_Name=?, English_Name=?, Version=?, "
+                + "Description=?, Time_Allocation=?, Student_Tasks=?, Tools=?, "
+                + "Scoring_Scale=?, Min_Avg_Mark_To_Pass=?, Decision_No=?, Approved_Date=?, Is_Active=1 "
+                + "WHERE Syllabus_ID=?";
+        try (Connection con = new DBContext().getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, s.getSyllabusName());
+            ps.setString(2, s.getEnglishName());
+            ps.setString(3, s.getVersion());
+            ps.setString(4, s.getDescription());
+            ps.setString(5, s.getTimeAllocation());
+            ps.setString(6, s.getStudentTasks());
+            ps.setString(7, s.getTools());
+            ps.setString(8, s.getScoringScale());
+            ps.setDouble(9, s.getMinAvgMarkToPass());
+            ps.setString(10, s.getDecisionNo());
+            ps.setDate(11, s.getApprovedDate() != null ? new java.sql.Date(s.getApprovedDate().getTime()) : null);
+            ps.setString(12, syllabusId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
@@ -144,7 +206,7 @@ public class SyllabusDAO {
         List<SyllabusMaterial> list = new ArrayList<>();
         String sql = "SELECT * FROM Materials WHERE Syllabus_ID = ? ORDER BY Is_Main_Material DESC";
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, syllabusId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -162,7 +224,10 @@ public class SyllabusDAO {
                 m.setOnline(rs.getBoolean("Is_Online"));
                 m.setLink(rs.getString("Link"));
                 m.setNotes(rs.getString("Notes"));
-                try { m.setFilePath(rs.getString("Download_Link")); } catch (SQLException ignored) {}
+                try {
+                    m.setFilePath(rs.getString("Download_Link"));
+                } catch (SQLException ignored) {
+                }
                 list.add(m);
             }
         } catch (Exception e) {
@@ -174,12 +239,12 @@ public class SyllabusDAO {
     /** Insert syllabus and return the generated Syllabus_ID */
     public String addSyllabusAndGetId(Syllabus s) {
         String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, "
-                   + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
-                   + "Decision_No, Approved_Date, Is_Active) "
-                   + "OUTPUT INSERTED.Syllabus_ID "
-                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
+                + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
+                + "Decision_No, Approved_Date, Is_Active) "
+                + "OUTPUT INSERTED.Syllabus_ID "
+                + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, s.getSubjectId());
             ps.setString(2, s.getSyllabusName());
             ps.setString(3, s.getEnglishName());
@@ -196,17 +261,19 @@ public class SyllabusDAO {
             if (rs.next()) {
                 return rs.getString(1);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     /** Insert a material for a syllabus */
     public boolean addMaterial(SyllabusMaterial m) {
         String sql = "INSERT INTO Materials (Material_ID, Syllabus_ID, Material_Description, Author, Publisher, "
-                   + "Published_Date, Edition, ISBN, Is_Main_Material, Is_Hard_Copy, Is_Online, Link, Notes, Download_Link) "
-                   + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "Published_Date, Edition, ISBN, Is_Main_Material, Is_Hard_Copy, Is_Online, Link, Notes, Download_Link) "
+                + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, m.getSyllabusId());
             ps.setString(2, m.getMaterialDescription());
             ps.setString(3, m.getAuthor());
@@ -221,7 +288,9 @@ public class SyllabusDAO {
             ps.setString(12, m.getNotes());
             ps.setString(13, m.getFilePath());
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
@@ -230,8 +299,22 @@ public class SyllabusDAO {
         int count = 0;
         for (SyllabusMaterial m : materials) {
             m.setSyllabusId(syllabusId);
-            if (addMaterial(m)) count++;
+            if (addMaterial(m))
+                count++;
         }
         return count;
+    }
+
+    /** Xoa Materials cua Syllabus (khi UPSERT) */
+    public boolean deleteMaterialsBySyllabus(String syllabusId) {
+        String sql = "DELETE FROM Materials WHERE Syllabus_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            return ps.executeUpdate() >= 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

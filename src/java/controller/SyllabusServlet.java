@@ -123,8 +123,27 @@ public class SyllabusServlet extends HttpServlet {
             }
         } catch (Exception ignored) {}
 
-        // Insert syllabus and get the generated ID
-        String syllabusId = syllabusDAO.addSyllabusAndGetId(s);
+        // UPSERT logic: check if syllabus for subject already exists
+        Syllabus existingSyllabus = syllabusDAO.findExistingSyllabusBySubjectAny(subjectId);
+        String syllabusId;
+        
+        if (existingSyllabus != null) {
+            // Update the existing (Draft) syllabus to keep Syllabus_Assignments valid
+            syllabusId = existingSyllabus.getSyllabusId();
+            syllabusDAO.updateSyllabusContent(syllabusId, s);
+            
+            // Delete old CLOs, Sessions, Materials so we can insert new ones
+            // Note: Since SyllabusDAO doesn't have delete methods yet, we will
+            // add them below or use the existing DAOs if they have it.
+            // Actually, we must delete old items to prevent duplicates.
+            cloDAO.deleteCLOsBySyllabus(syllabusId);
+            sessionDAO.deleteSessionsBySyllabus(syllabusId);
+            syllabusDAO.deleteMaterialsBySyllabus(syllabusId);
+            
+        } else {
+            // Insert new syllabus
+            syllabusId = syllabusDAO.addSyllabusAndGetId(s);
+        }
 
         if (syllabusId != null) {
             // Insert CLOs
