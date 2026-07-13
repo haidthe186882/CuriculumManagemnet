@@ -67,6 +67,7 @@ CREATE TABLE User_Roles
     CONSTRAINT UQ_User_Role
         UNIQUE(User_ID, Role_ID)
 );
+
 /* =========================================
    MAJORS
 ========================================= */
@@ -187,6 +188,59 @@ CREATE TABLE Subject_Prerequisites
     CONSTRAINT FK_SP_Required
         FOREIGN KEY(Required_Subject_ID)
         REFERENCES Subjects(Subject_ID)
+);
+
+/* =========================================
+   COMBOS
+   (Nhom cac mon lien quan / chuyen sau
+   thuoc mot Curriculum, vi du combo
+   chuyen nganh tu chon)
+========================================= */
+CREATE TABLE Combos
+(
+    Combo_ID UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+
+    Curriculum_ID UNIQUEIDENTIFIER NOT NULL,
+
+    Combo_Code NVARCHAR(50) NOT NULL,
+    Combo_Name NVARCHAR(255) NOT NULL,
+    English_Name NVARCHAR(255),
+
+    Description NVARCHAR(MAX),
+
+    Is_Active BIT DEFAULT 1,
+
+    CONSTRAINT FK_Combo_Curriculum
+        FOREIGN KEY(Curriculum_ID)
+        REFERENCES Curriculums(Curriculum_ID),
+
+    CONSTRAINT UQ_Combo_Code
+        UNIQUE(Curriculum_ID, Combo_Code)
+);
+
+/* =========================================
+   COMBO SUBJECTS
+   (Cac mon hoc lien quan thuoc 1 combo)
+========================================= */
+CREATE TABLE Combo_Subjects
+(
+    Combo_Subject_ID UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+
+    Combo_ID UNIQUEIDENTIFIER NOT NULL,
+    Subject_ID UNIQUEIDENTIFIER NOT NULL,
+
+    Semester_No INT,
+
+    CONSTRAINT FK_ComboSubject_Combo
+        FOREIGN KEY(Combo_ID)
+        REFERENCES Combos(Combo_ID),
+
+    CONSTRAINT FK_ComboSubject_Subject
+        FOREIGN KEY(Subject_ID)
+        REFERENCES Subjects(Subject_ID),
+
+    CONSTRAINT UQ_Combo_Subject
+        UNIQUE(Combo_ID, Subject_ID)
 );
 
 /* =========================================
@@ -344,6 +398,12 @@ CREATE TABLE Sessions
 
 /* =========================================
    MATERIALS
+   (Da gop Materials + Teacher_Materials
+   thanh 1 bang duy nhat, dung chung
+   Download_Link. Uploaded_By = NULL
+   nghia la tai lieu chinh thuc do
+   Admin/Designer nhap; khac NULL nghia
+   la tai lieu do giao vien upload)
 ========================================= */
 CREATE TABLE Materials
 (
@@ -351,75 +411,57 @@ CREATE TABLE Materials
 
     Syllabus_ID UNIQUEIDENTIFIER NOT NULL,
 
-    Material_Description NVARCHAR(MAX),
+    Material_Type NVARCHAR(50) NOT NULL DEFAULT 'Textbook',
+    -- Textbook | Reference | Slide | Video | Document | Other
+
+    Material_Description NVARCHAR(MAX) NOT NULL,
 
     Author NVARCHAR(255),
-
     Publisher NVARCHAR(255),
-
     Published_Date DATE,
-
     Edition NVARCHAR(100),
-
     ISBN NVARCHAR(100),
 
     Is_Main_Material BIT DEFAULT 0,
-
     Is_Hard_Copy BIT DEFAULT 0,
-
     Is_Online BIT DEFAULT 1,
 
     Link NVARCHAR(1000),
+    -- Link URL cho tai lieu truc tuyen
+    
+    Download_Link NVARCHAR(1000),
+    -- Duong dan file upload tren server
 
     Notes NVARCHAR(MAX),
 
-    CONSTRAINT FK_Material_Syllabus
-        FOREIGN KEY(Syllabus_ID)
-        REFERENCES Syllabuses(Syllabus_ID)
-);
-
-/* =========================================
-   TEACHER MATERIALS
-========================================= */
-CREATE TABLE Teacher_Materials
-(
-    Teacher_Material_ID UNIQUEIDENTIFIER
-        PRIMARY KEY DEFAULT NEWID(),
-
-    User_ID UNIQUEIDENTIFIER NOT NULL,
-
-    Syllabus_ID UNIQUEIDENTIFIER NOT NULL,
-
-    Material_Type NVARCHAR(50) NOT NULL,
-
-    Material_Name NVARCHAR(255) NOT NULL,
-
-    Material_URL NVARCHAR(1000) NOT NULL,
-
-    Description NVARCHAR(MAX),
+    Uploaded_By UNIQUEIDENTIFIER NULL,
+    -- NULL = tai lieu chinh thuc; khac NULL = giao vien upload
 
     Created_Date DATETIME DEFAULT GETDATE(),
 
     Is_Active BIT DEFAULT 1,
 
-    CONSTRAINT FK_TM_User
-        FOREIGN KEY(User_ID)
-        REFERENCES Users(User_ID),
-
-    CONSTRAINT FK_TM_Syllabus
+    CONSTRAINT FK_Material_Syllabus
         FOREIGN KEY(Syllabus_ID)
-        REFERENCES Syllabuses(Syllabus_ID)
+        REFERENCES Syllabuses(Syllabus_ID),
+
+    CONSTRAINT FK_Material_Uploader
+        FOREIGN KEY(Uploaded_By)
+        REFERENCES Users(User_ID)
 );
 
 /* =========================================
-   CURRICULUM ASSIGNMENTS
+   SYLLABUS ASSIGNMENTS
+   (Thay the Curriculum_Assignments:
+   Admin assign Designer / Reviewer
+   theo tung Syllabus thay vi Curriculum)
 ========================================= */
-CREATE TABLE Curriculum_Assignments
+CREATE TABLE Syllabus_Assignments
 (
     Assignment_ID UNIQUEIDENTIFIER
         PRIMARY KEY DEFAULT NEWID(),
 
-    Curriculum_ID UNIQUEIDENTIFIER NOT NULL,
+    Syllabus_ID UNIQUEIDENTIFIER NOT NULL,
 
     User_ID UNIQUEIDENTIFIER NOT NULL,
 
@@ -430,27 +472,32 @@ CREATE TABLE Curriculum_Assignments
 
     Assigned_Date DATETIME DEFAULT GETDATE(),
 
-    CONSTRAINT FK_CA_Curriculum
-        FOREIGN KEY(Curriculum_ID)
-        REFERENCES Curriculums(Curriculum_ID),
+    CONSTRAINT FK_SA_Syllabus
+        FOREIGN KEY(Syllabus_ID)
+        REFERENCES Syllabuses(Syllabus_ID),
 
-    CONSTRAINT FK_CA_User
+    CONSTRAINT FK_SA_User
         FOREIGN KEY(User_ID)
         REFERENCES Users(User_ID),
 
-    CONSTRAINT FK_CA_AssignedBy
+    CONSTRAINT FK_SA_AssignedBy
         FOREIGN KEY(Assigned_By)
-        REFERENCES Users(User_ID)
+        REFERENCES Users(User_ID),
+
+    CONSTRAINT UQ_Syllabus_User_Type
+        UNIQUE(Syllabus_ID, User_ID, Assignment_Type)
 );
 
 /* =========================================
    REVIEWS
+   (Cap nhat theo Syllabus_ID de dong bo
+   voi Syllabus_Assignments ben tren)
 ========================================= */
 CREATE TABLE Reviews
 (
     Review_ID UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
 
-    Curriculum_ID UNIQUEIDENTIFIER NOT NULL,
+    Syllabus_ID UNIQUEIDENTIFIER NOT NULL,
 
     Reviewer_ID UNIQUEIDENTIFIER NOT NULL,
 
@@ -460,9 +507,9 @@ CREATE TABLE Reviews
 
     Review_Date DATETIME,
 
-    CONSTRAINT FK_Review_Curriculum
-        FOREIGN KEY(Curriculum_ID)
-        REFERENCES Curriculums(Curriculum_ID),
+    CONSTRAINT FK_Review_Syllabus
+        FOREIGN KEY(Syllabus_ID)
+        REFERENCES Syllabuses(Syllabus_ID),
 
     CONSTRAINT FK_Review_User
         FOREIGN KEY(Reviewer_ID)

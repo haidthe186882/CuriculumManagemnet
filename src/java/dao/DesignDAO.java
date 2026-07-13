@@ -7,7 +7,6 @@ package dao;
 import dal.DBContext;
 import model.Curriculum;
 import model.CurriculumAssignments;
-import model.Major;
 
 import java.sql.*;
 import java.util.ArrayList;

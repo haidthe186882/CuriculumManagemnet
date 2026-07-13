@@ -31,6 +31,7 @@ public class SyllabusExcelHelper {
     public static class SyllabusImportData {
 
         private Syllabus syllabus = new Syllabus();
+        private String subjectCode;
         private List<CourseLearningOutcome> clos = new ArrayList<>();
         private List<Session> sessions = new ArrayList<>();
         private List<SyllabusMaterial> materials = new ArrayList<>();
@@ -41,6 +42,14 @@ public class SyllabusExcelHelper {
 
         public void setSyllabus(Syllabus syllabus) {
             this.syllabus = syllabus;
+        }
+
+        public String getSubjectCode() {
+            return subjectCode;
+        }
+
+        public void setSubjectCode(String subjectCode) {
+            this.subjectCode = subjectCode;
         }
 
         public List<CourseLearningOutcome> getClos() {
@@ -115,14 +124,25 @@ public class SyllabusExcelHelper {
                 continue;
             }
 
-            // Try label:value pattern
-            if (label.contains("subject") && !label.contains("pre")) {
-                // Could be "Subject Code" or "Subject"
+            // Try label:value pattern — extract subject/course code
+            // Must match specific "code" labels, NOT "course name", "course learning outcome", etc.
+            boolean isCodeLabel = label.contains("course code") || label.contains("subject code")
+                    || label.contains("ma mon hoc") || label.contains("ma mon")
+                    || ((label.contains("subject") || label.contains("mon hoc"))
+                        && !label.contains("name") && !label.contains("ten")
+                        && !label.contains("learning") && !label.contains("outcome"));
+            if (isCodeLabel && !label.contains("pre")) {
                 String v = cellStr(row, labelCol + 1).trim();
                 if (v.isEmpty()) {
                     v = cellStr(row, labelCol + 2).trim();
                 }
-                // Don't set subjectId here – just name for reference
+                // Extract the code part — e.g. "SWT301" or "SWT301 - Software Testing"
+                if (!v.isEmpty()) {
+                    String extractedCode = v.split("[\\s\\-–—]")[0].trim().toUpperCase();
+                    if (!extractedCode.isEmpty()) {
+                        data.setSubjectCode(extractedCode);
+                    }
+                }
             }
             if (label.contains("syllabus name") || label.contains("ten de cuong") || label.contains("course name")) {
                 s.setSyllabusName(getValueFromRow(row, labelCol));
