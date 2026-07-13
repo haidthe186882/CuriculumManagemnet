@@ -4,17 +4,36 @@ import dao.SyllabusDAO;
 import dao.SubjectDAO;
 import dao.CloDAO;
 import dao.SessionDAO;
+import model.CourseLearningOutcome;
+import model.Session;
 import model.Syllabus;
+import model.SyllabusMaterial;
 import model.User;
+import util.SyllabusExcelHelper;
+import util.SyllabusExcelHelper.SyllabusImportData;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.UUID;
 
 @WebServlet(name = "SyllabusServlet", urlPatterns = {"/syllabus/*"})
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024,      // 1 MB
+    maxFileSize       = 1024 * 1024 * 10,  // 10 MB
+    maxRequestSize    = 1024 * 1024 * 15   // 15 MB
+)
 public class SyllabusServlet extends HttpServlet {
 
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
@@ -39,6 +58,24 @@ public class SyllabusServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
+        String pathInfo = req.getPathInfo();
+
+        // Check both pathInfo and a fallback parameter for multipart requests
+        boolean isImport = "/importExcel".equals(pathInfo)
+                || "importExcel".equals(req.getParameter("importAction"));
+
+        if (isImport) {
+            handleImportExcel(req, res);
+            return;
+        }
+
+        // Handle file upload (AJAX)
+        if ("/uploadFile".equals(pathInfo)) {
+            handleUploadFile(req, res);
+            return;
+        }
+
+        // Handle create action
         String action = req.getParameter("action");
         if (!"create".equals(action)) {
             res.sendRedirect(req.getContextPath() + "/syllabus/list");
@@ -48,19 +85,357 @@ public class SyllabusServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/login");
             return;
         }
+
+        // Build Syllabus object
         Syllabus s = new Syllabus();
-        s.setSubjectId(req.getParameter("subjectId"));
+        
+        String subjectCode = req.getParameter("subjectCode");
+        if (subjectCode == null || subjectCode.trim().isEmpty()) {
+            req.setAttribute("error", "Syllabus Code is required. Please enter a valid code (e.g. SWT301).");
+            req.setAttribute("subjects", subjectDAO.searchSubjects(null, null, null));
+            req.getRequestDispatcher("/WEB-INF/views/syllabus/form.jsp").forward(req, res);
+            return;
+        }
+        subjectCode = subjectCode.trim();
+        String subjectId = subjectDAO.findSubjectIdByCodeAny(subjectCode);
+        if (subjectId == null) {
+            req.setAttribute("error", "Subject code '" + safeStr(subjectCode) + "' does not exist in the system. Please create the subject first or check the code.");
+            req.setAttribute("subjects", subjectDAO.searchSubjects(null, null, null));
+            req.getRequestDispatcher("/WEB-INF/views/syllabus/form.jsp").forward(req, res);
+            return;
+        }
+        s.setSubjectId(subjectId);
         s.setSyllabusName(req.getParameter("syllabusName"));
         s.setEnglishName(req.getParameter("englishName"));
         s.setVersion(req.getParameter("version"));
         s.setDescription(req.getParameter("description"));
         s.setTimeAllocation(req.getParameter("timeAllocation"));
+        s.setStudentTasks(req.getParameter("studentTasks"));
+        s.setTools(req.getParameter("tools"));
         s.setScoringScale(req.getParameter("scoringScale"));
+        s.setDecisionNo(req.getParameter("decisionNo"));
         try { s.setMinAvgMarkToPass(Double.parseDouble(req.getParameter("minAvgMarkToPass"))); } catch (Exception ignored) {}
-        syllabusDAO.addSyllabus(s);
+        try {
+            String dateStr = req.getParameter("approvedDate");
+            if (dateStr != null && !dateStr.isEmpty()) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                s.setApprovedDate(new java.sql.Date(sdf.parse(dateStr).getTime()));
+            }
+        } catch (Exception ignored) {}
+
+        // UPSERT logic: check if syllabus for subject already exists
+        Syllabus existingSyllabus = syllabusDAO.findExistingSyllabusBySubjectAny(subjectId);
+        String syllabusId;
+        
+        if (existingSyllabus != null) {
+            // Update the existing (Draft) syllabus to keep Syllabus_Assignments valid
+            syllabusId = existingSyllabus.getSyllabusId();
+            syllabusDAO.updateSyllabusContent(syllabusId, s);
+            
+            // Delete old CLOs, Sessions, Materials so we can insert new ones
+            // Note: Since SyllabusDAO doesn't have delete methods yet, we will
+            // add them below or use the existing DAOs if they have it.
+            // Actually, we must delete old items to prevent duplicates.
+            cloDAO.deleteCLOsBySyllabus(syllabusId);
+            sessionDAO.deleteSessionsBySyllabus(syllabusId);
+            syllabusDAO.deleteMaterialsBySyllabus(syllabusId);
+            
+        } else {
+            // Insert new syllabus
+            syllabusId = syllabusDAO.addSyllabusAndGetId(s);
+        }
+
+        if (syllabusId != null) {
+            // Insert CLOs
+            String[] cloCodes = req.getParameterValues("cloCode[]");
+            String[] cloDescs = req.getParameterValues("cloDesc[]");
+            if (cloCodes != null && cloDescs != null) {
+                for (int i = 0; i < cloCodes.length; i++) {
+                    if (cloCodes[i] != null && !cloCodes[i].trim().isEmpty()) {
+                        CourseLearningOutcome clo = new CourseLearningOutcome();
+                        clo.setSyllabusId(syllabusId);
+                        clo.setCloCode(cloCodes[i].trim());
+                        clo.setDescription(i < cloDescs.length ? cloDescs[i].trim() : "");
+                        cloDAO.addCLO(clo);
+                    }
+                }
+            }
+
+            // Insert Sessions
+            String[] sessionNos = req.getParameterValues("sessionNo[]");
+            String[] sessionTopics = req.getParameterValues("sessionTopic[]");
+            String[] sessionTypes = req.getParameterValues("sessionType[]");
+            String[] sessionLOs = req.getParameterValues("sessionLO[]");
+            String[] sessionITUs = req.getParameterValues("sessionITU[]");
+            String[] sessionMats = req.getParameterValues("sessionMaterial[]");
+            String[] sessionTasks = req.getParameterValues("sessionTask[]");
+            String[] sessionURLs = req.getParameterValues("sessionURL[]");
+
+            if (sessionNos != null && sessionTopics != null) {
+                for (int i = 0; i < sessionNos.length; i++) {
+                    String topic = i < sessionTopics.length ? sessionTopics[i].trim() : "";
+                    if (topic.isEmpty() && (sessionNos[i] == null || sessionNos[i].trim().isEmpty())) continue;
+
+                    Session sess = new Session();
+                    sess.setSyllabusId(syllabusId);
+                    try { sess.setSessionNo(Integer.parseInt(sessionNos[i].trim())); }
+                    catch (Exception e) { sess.setSessionNo(i + 1); }
+                    sess.setTopic(topic);
+                    sess.setLearningTeachingType(i < sessionTypes.length ? safeStr(sessionTypes[i]) : "");
+                    sess.setLo(i < sessionLOs.length ? safeStr(sessionLOs[i]) : "");
+                    sess.setItu(i < sessionITUs.length ? safeStr(sessionITUs[i]) : "");
+                    sess.setStudentMaterials(i < sessionMats.length ? safeStr(sessionMats[i]) : "");
+                    sess.setStudentTasks(i < sessionTasks.length ? safeStr(sessionTasks[i]) : "");
+                    sess.setUrls(i < sessionURLs.length ? safeStr(sessionURLs[i]) : "");
+                    sessionDAO.addSession(sess);
+                }
+            }
+
+            // Insert Materials
+            String[] matDescs = req.getParameterValues("matDesc[]");
+            String[] matAuthors = req.getParameterValues("matAuthor[]");
+            String[] matPublishers = req.getParameterValues("matPublisher[]");
+            String[] matEditions = req.getParameterValues("matEdition[]");
+            String[] matIsbns = req.getParameterValues("matIsbn[]");
+            String[] matLinks = req.getParameterValues("matLink[]");
+            String[] matNotes = req.getParameterValues("matNotes[]");
+            String[] matMain = req.getParameterValues("matMain[]");
+
+            if (matDescs != null) {
+                for (int i = 0; i < matDescs.length; i++) {
+                    if (matDescs[i] == null || matDescs[i].trim().isEmpty()) continue;
+
+                    SyllabusMaterial m = new SyllabusMaterial();
+                    m.setSyllabusId(syllabusId);
+                    m.setMaterialDescription(matDescs[i].trim());
+                    m.setAuthor(i < matAuthors.length ? safeStr(matAuthors[i]) : "");
+                    m.setPublisher(i < matPublishers.length ? safeStr(matPublishers[i]) : "");
+                    m.setEdition(i < matEditions.length ? safeStr(matEditions[i]) : "");
+                    m.setIsbn(i < matIsbns.length ? safeStr(matIsbns[i]) : "");
+                    m.setLink(i < matLinks.length ? safeStr(matLinks[i]) : "");
+                    m.setNotes(i < matNotes.length ? safeStr(matNotes[i]) : "");
+                    // Check if this material index is flagged as main
+                    m.setMainMaterial(matMain != null && i < matMain.length && "on".equals(matMain[i]));
+                    m.setOnline(m.getLink() != null && !m.getLink().isEmpty());
+                    syllabusDAO.addMaterial(m);
+                }
+            }
+
+            // Insert Documents (uploaded files from Documents tab)
+            String[] docFilePaths = req.getParameterValues("docFilePath[]");
+            String[] docOrigNames = req.getParameterValues("docOrigName[]");
+            String[] docDescriptions = req.getParameterValues("docDescription[]");
+
+            if (docFilePaths != null) {
+                for (int i = 0; i < docFilePaths.length; i++) {
+                    String fp = safeStr(docFilePaths[i]);
+                    if (fp.isEmpty()) continue;
+
+                    SyllabusMaterial m = new SyllabusMaterial();
+                    m.setSyllabusId(syllabusId);
+                    m.setFilePath(fp);
+                    String origName = (docOrigNames != null && i < docOrigNames.length) ? safeStr(docOrigNames[i]) : "";
+                    m.setOriginalFileName(origName);
+                    m.setMaterialDescription(origName.isEmpty() ? "Uploaded Document" : origName);
+                    if (docDescriptions != null && i < docDescriptions.length) {
+                        String desc = safeStr(docDescriptions[i]);
+                        if (!desc.isEmpty()) m.setMaterialDescription(desc);
+                    }
+                    m.setOnline(true);
+                    syllabusDAO.addMaterial(m);
+                }
+            }
+        }
+
         res.sendRedirect(req.getContextPath() + "/syllabus/list?msg=created");
     }
+    /* ====== Upload File – AJAX endpoint returning JSON ====== */
+    private void handleUploadFile(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        res.setContentType("application/json");
+        res.setCharacterEncoding("UTF-8");
+        res.setHeader("Cache-Control", "no-cache");
+        PrintWriter out = res.getWriter();
 
+        try {
+            if (!hasRole(req, "Designer", "Admin", "Lecturer")) {
+                out.print("{\"error\":\"Access denied\"}");
+                out.flush();
+                return;
+            }
+
+            Part filePart = req.getPart("file");
+            if (filePart == null || filePart.getSize() == 0) {
+                out.print("{\"error\":\"No file uploaded\"}");
+                out.flush();
+                return;
+            }
+
+            // Get original file name
+            String originalName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+
+            // Validate file extension
+            String lowerName = originalName.toLowerCase();
+            String[] allowedExts = {".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt", ".zip", ".rar"};
+            boolean validExt = false;
+            for (String ext : allowedExts) {
+                if (lowerName.endsWith(ext)) { validExt = true; break; }
+            }
+            if (!validExt) {
+                out.print("{\"error\":\"File type not supported. Allowed: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, ZIP, RAR\"}");
+                out.flush();
+                return;
+            }
+
+            // Validate file size (max 10MB)
+            if (filePart.getSize() > 10 * 1024 * 1024) {
+                out.print("{\"error\":\"File too large. Maximum size is 10MB.\"}");
+                out.flush();
+                return;
+            }
+
+            // Create upload directory
+            String uploadDir = getServletContext().getRealPath("/uploads/documents");
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // Generate unique filename: timestamp_uuid_originalname
+            String safeFileName = System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8)
+                    + "_" + originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+            Path targetPath = Paths.get(uploadDir, safeFileName);
+
+            // Save file
+            try (InputStream is = filePart.getInputStream()) {
+                Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Return JSON response
+            String filePath = "/uploads/documents/" + safeFileName;
+            long fileSize = filePart.getSize();
+            String sizeDisplay;
+            if (fileSize < 1024) sizeDisplay = fileSize + " B";
+            else if (fileSize < 1024 * 1024) sizeDisplay = String.format("%.1f KB", fileSize / 1024.0);
+            else sizeDisplay = String.format("%.1f MB", fileSize / (1024.0 * 1024));
+
+            out.print("{\"success\":true,\"filePath\":\"" + escapeJson(filePath)
+                    + "\",\"originalName\":\"" + escapeJson(originalName)
+                    + "\",\"fileSize\":" + fileSize
+                    + ",\"fileSizeDisplay\":\"" + escapeJson(sizeDisplay) + "\"}");
+            out.flush();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+            out.print("{\"error\":\"" + escapeJson(msg) + "\"}");
+            out.flush();
+        }
+    }
+
+    /* ====== Import Excel – AJAX endpoint returning JSON ====== */
+    private void handleImportExcel(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        res.setContentType("application/json");
+        res.setCharacterEncoding("UTF-8");
+        res.setHeader("Cache-Control", "no-cache");
+        PrintWriter out = res.getWriter();
+
+        try {
+            if (!hasRole(req, "Designer", "Admin", "Lecturer")) {
+                out.print("{\"error\":\"Access denied\"}");
+                out.flush();
+                return;
+            }
+
+            Part filePart = req.getPart("excelFile");
+            if (filePart == null || filePart.getSize() == 0) {
+                out.print("{\"error\":\"No file uploaded\"}");
+                out.flush();
+                return;
+            }
+
+            try (InputStream is = filePart.getInputStream()) {
+                SyllabusImportData data = SyllabusExcelHelper.parseSyllabusExcel(is);
+                String json = toJson(data);
+                out.print(json);
+                out.flush();
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+            out.print("{\"error\":\"" + escapeJson(msg) + "\"}");
+            out.flush();
+        }
+    }
+
+    /* ====== build JSON from import data ====== */
+    private String toJson(SyllabusImportData data) {
+        StringBuilder sb = new StringBuilder("{");
+        Syllabus s = data.getSyllabus();
+
+        sb.append("\"subjectCode\":").append(jsonStr(data.getSubjectCode())).append(",");
+        sb.append("\"syllabusName\":").append(jsonStr(s.getSyllabusName())).append(",");
+        sb.append("\"englishName\":").append(jsonStr(s.getEnglishName())).append(",");
+        sb.append("\"version\":").append(jsonStr(s.getVersion())).append(",");
+        sb.append("\"description\":").append(jsonStr(s.getDescription())).append(",");
+        sb.append("\"timeAllocation\":").append(jsonStr(s.getTimeAllocation())).append(",");
+        sb.append("\"studentTasks\":").append(jsonStr(s.getStudentTasks())).append(",");
+        sb.append("\"tools\":").append(jsonStr(s.getTools())).append(",");
+        sb.append("\"scoringScale\":").append(jsonStr(s.getScoringScale())).append(",");
+        sb.append("\"minAvgMarkToPass\":").append(s.getMinAvgMarkToPass()).append(",");
+        sb.append("\"decisionNo\":").append(jsonStr(s.getDecisionNo())).append(",");
+        sb.append("\"approvedDate\":").append(jsonStr(
+            s.getApprovedDate() != null ? new SimpleDateFormat("yyyy-MM-dd").format(s.getApprovedDate()) : "")).append(",");
+
+        // CLOs
+        sb.append("\"clos\":[");
+        for (int i = 0; i < data.getClos().size(); i++) {
+            if (i > 0) sb.append(",");
+            CourseLearningOutcome clo = data.getClos().get(i);
+            sb.append("{\"code\":").append(jsonStr(clo.getCloCode()))
+              .append(",\"description\":").append(jsonStr(clo.getDescription())).append("}");
+        }
+        sb.append("],");
+
+        // Sessions
+        sb.append("\"sessions\":[");
+        for (int i = 0; i < data.getSessions().size(); i++) {
+            if (i > 0) sb.append(",");
+            Session sess = data.getSessions().get(i);
+            sb.append("{\"no\":").append(sess.getSessionNo())
+              .append(",\"topic\":").append(jsonStr(sess.getTopic()))
+              .append(",\"type\":").append(jsonStr(sess.getLearningTeachingType()))
+              .append(",\"lo\":").append(jsonStr(sess.getLo()))
+              .append(",\"itu\":").append(jsonStr(sess.getItu()))
+              .append(",\"materials\":").append(jsonStr(sess.getStudentMaterials()))
+              .append(",\"tasks\":").append(jsonStr(sess.getStudentTasks()))
+              .append(",\"urls\":").append(jsonStr(sess.getUrls())).append("}");
+        }
+        sb.append("],");
+
+        // Materials
+        sb.append("\"materials\":[");
+        for (int i = 0; i < data.getMaterials().size(); i++) {
+            if (i > 0) sb.append(",");
+            SyllabusMaterial m = data.getMaterials().get(i);
+            sb.append("{\"description\":").append(jsonStr(m.getMaterialDescription()))
+              .append(",\"author\":").append(jsonStr(m.getAuthor()))
+              .append(",\"publisher\":").append(jsonStr(m.getPublisher()))
+              .append(",\"edition\":").append(jsonStr(m.getEdition()))
+              .append(",\"isbn\":").append(jsonStr(m.getIsbn()))
+              .append(",\"isMain\":").append(m.isMainMaterial())
+              .append(",\"isHardCopy\":").append(m.isHardCopy())
+              .append(",\"isOnline\":").append(m.isOnline())
+              .append(",\"link\":").append(jsonStr(m.getLink()))
+              .append(",\"notes\":").append(jsonStr(m.getNotes())).append("}");
+        }
+        sb.append("]");
+
+        sb.append("}");
+        return sb.toString();
+    }
+
+    /* ====== existing handlers ====== */
     private void showList(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         String keyword = req.getParameter("keyword");
@@ -214,6 +589,7 @@ public class SyllabusServlet extends HttpServlet {
         }
     }
 
+    /* ====== utilities ====== */
     private User getLoggedUser(HttpServletRequest req) {
         HttpSession s = req.getSession(false);
         return (s != null) ? (User) s.getAttribute("loggedUser") : null;
@@ -231,5 +607,23 @@ public class SyllabusServlet extends HttpServlet {
             if ("Reviewer".equalsIgnoreCase(r) && (user.isReviewer() || user.hasRole("Reviewer"))) return true;
         }
         return false;
+    }
+
+    private String jsonStr(String val) {
+        if (val == null) return "\"\"";
+        return "\"" + escapeJson(val) + "\"";
+    }
+
+    private String escapeJson(String val) {
+        if (val == null) return "";
+        return val.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
+    }
+
+    private String safeStr(String val) {
+        return val != null ? val.trim() : "";
     }
 }

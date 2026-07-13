@@ -59,9 +59,12 @@ public class LoginServlet extends HttpServlet {
         }
 
         UserDAO dao = new UserDAO();
-        // Hash mật khẩu bằng MD5 trước khi so sánh với DB
-        String hashedPassword = hashMD5(password.trim());
+        String hashedPassword = hashMD5(password); //
         User user = dao.login(email.trim(), hashedPassword);
+        if (user == null) {
+            user = dao.login(email.trim(), password);
+        }
+        // Hash mật khẩu bằng MD5 trước khi so sánh với DB
 
         if (user == null) {
             req.setAttribute("error", "Email hoặc mật khẩu không đúng.");
@@ -78,14 +81,15 @@ public class LoginServlet extends HttpServlet {
         // we use the first one returned, priority: Admin > Designer > Reviewer > Teacher > Student)
         if (user.hasRole("Admin")) {
             res.sendRedirect(req.getContextPath() + "/admin/users");
-        } else if (user.hasRole("Reviewer") || user.isReviewer()) {
-            res.sendRedirect(req.getContextPath() + "/review/list");
         } else if (user.hasRole("Designer") || user.isDesigner()) {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
+        } else if (user.hasRole("Reviewer") || user.isReviewer()) {
+            res.sendRedirect(req.getContextPath() + "/review/list");
         } else {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
     }
+    
 
     /**
      * Mã hóa chuỗi đầu vào bằng thuật toán MD5.
@@ -96,12 +100,10 @@ public class LoginServlet extends HttpServlet {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] bytes = md.digest(input.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
-            for (byte b : bytes) {
-                sb.append(String.format("%02x", b));
-            }
+            for (byte b : bytes) sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) {
-            return input;
+        } catch (Exception e) { 
+            throw new RuntimeException("MD5 hashing failed", e); 
         }
     }
 }
