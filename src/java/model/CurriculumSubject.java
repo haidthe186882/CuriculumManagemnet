@@ -23,4 +23,11 @@ public class CurriculumSubject {
     public void setMandatory(boolean isMandatory) { this.isMandatory = isMandatory; }
     public Subject getSubject() { return subject; }
     public void setSubject(Subject subject) { this.subject = subject; }
+    private model.Curriculum curriculum; 
+    public void setCurriculum(Curriculum curriculum) {
+        this.curriculum = curriculum;
+    }
+    public Curriculum getCurriculum() {
+        return this.curriculum;
+    }
 }
