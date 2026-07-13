@@ -69,4 +69,15 @@ public class SessionDAO {
         }
         return count;
     }
+
+    /** Delete Sessions by syllabus (for UPSERT) */
+    public boolean deleteSessionsBySyllabus(String syllabusId) {
+        String sql = "DELETE FROM Sessions WHERE Syllabus_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            return ps.executeUpdate() >= 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
 }
