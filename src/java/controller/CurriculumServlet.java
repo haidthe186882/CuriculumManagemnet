@@ -8,7 +8,6 @@ import dao.SyllabusDAO;
 import dao.DesignDAO;
 import dao.PloDAO;
 import dao.PoDAO;
-import dao.SyllabusDAO;
 import model.Curriculum;
 import model.CurriculumSubject;
 import model.Subject;
@@ -138,8 +137,6 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "assignSubject":
                 doAssignSubject(req, res);
-            case "assignSyllabus":
-                doAssignSyllabus(req, res);
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
@@ -356,8 +353,7 @@ public class CurriculumServlet extends HttpServlet {
         User user = getLoggedUser(req);
         Curriculum c = buildFromRequest(req);
         c.setCreatedBy(user.getUserId());
-        c.setStatus(0); 
-        c.setIsActive(false);
+
         if (c.getCurriculumCode() == null || c.getCurriculumCode().trim().isEmpty()
                 || curriculumDAO.checkCurriculumCodeExists(c.getCurriculumCode().trim())) {
             req.setAttribute("errorMessage", "Could not create curriculum. The Curriculum Code \""
@@ -797,20 +793,5 @@ public class CurriculumServlet extends HttpServlet {
         }
         res.sendRedirect(req.getContextPath() + "/curriculum/list");
         return false;
-    }
-    
-    private void doAssignSyllabus(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        // Chỉ Admin mới được phân công
-        if (!requireRole(req, res, "Admin")) return;
-        
-        String curriculumId = req.getParameter("curriculumId");
-        if (!checkEditPermission(req, res, curriculumId)) return;
-        
-        String subjectId = req.getParameter("subjectId");
-        String designerId = req.getParameter("designerId");
-        String reviewerId = req.getParameter("reviewerId");        
-        SyllabusDAO syllabusDAO = new SyllabusDAO(); // Khai báo DAO ở trên đầu file Servlet nếu chưa có
-        syllabusDAO.assignSyllabusRoles(curriculumId, subjectId, designerId, reviewerId);
-        res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=assignedSyllabus");
     }
 }

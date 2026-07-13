@@ -69,7 +69,7 @@
                             </tr>
                         </c:when>
                         <c:otherwise>
-                            <c:forEach var="cs" items="${assignedSubjects}" varStatus="st">
+                            <c:forEach var="a" items="${assignments}" varStatus="st">
                                 <tr>
                                     <td class="text-muted">${st.count}</td>
                                     <td><code style="color:#4fc3f7;">${a.subjectCode}</code></td>
