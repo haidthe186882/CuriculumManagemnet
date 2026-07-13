@@ -69,4 +69,15 @@ public class CloDAO {
         }
         return count;
     }
+
+    /** Delete CLOs by syllabus (for UPSERT) */
+    public boolean deleteCLOsBySyllabus(String syllabusId) {
+        String sql = "DELETE FROM CLOs WHERE Syllabus_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            return ps.executeUpdate() >= 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
 }

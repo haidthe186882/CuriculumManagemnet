@@ -8,6 +8,7 @@ package controller;
 import dao.DesignDAO;
 import dao.SyllabusDAO;
 import model.SyllabusAssignment;
+import model.CurriculumAssignments;
 import model.User;
 
 import jakarta.servlet.ServletException;
@@ -61,8 +62,11 @@ public class DesginServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
         List<SyllabusAssignment> assignments =
                 designDAO.getAssignmentsByDesigner(loggedUser.getUserId(), keyword);
+        dao.SyllabusDAO syllabusDAO = new dao.SyllabusDAO(); 
+        List<model.CurriculumSubject> assignedSubjects = syllabusDAO.getAssignedSubjectsForDesigner(loggedUser.getUserId(), keyword);
 
-        request.setAttribute("assignments", assignments);
+
+        request.setAttribute("assignedSubjects", assignedSubjects);
         request.setAttribute("keyword", keyword);
         request.getRequestDispatcher("/WEB-INF/views/design/list.jsp").forward(request, response);
     }
