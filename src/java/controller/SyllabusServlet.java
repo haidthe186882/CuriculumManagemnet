@@ -2,6 +2,7 @@ package controller;
 
 import dao.SyllabusDAO;
 import dao.SubjectDAO;
+import dao.DesignDAO;
 import dao.CloDAO;
 import dao.SessionDAO;
 import model.CourseLearningOutcome;
@@ -38,6 +39,7 @@ public class SyllabusServlet extends HttpServlet {
 
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
     private final SubjectDAO  subjectDAO  = new SubjectDAO();
+    private final DesignDAO   designDAO   = new DesignDAO();
     private final CloDAO      cloDAO      = new CloDAO();
     private final SessionDAO  sessionDAO  = new SessionDAO();
 
@@ -97,11 +99,41 @@ public class SyllabusServlet extends HttpServlet {
             return;
         }
         subjectCode = subjectCode.trim();
+
+        // Neu form duoc mo tu 1 link co san subjectCode (fix cung, vd tu nut "Add
+        // Syllabus"), thi subjectCode nguoi dung/gui len (ke ca tu file Excel import)
+        // BAT BUOC phai trung voi ma mon da fix cung do. Khac di -> tu choi luon,
+        // khong cho import/luu, tranh ghi nham noi dung sang mot Subject khac.
+        String lockedSubjectCode = req.getParameter("lockedSubjectCode");
+        if (lockedSubjectCode != null && !lockedSubjectCode.trim().isEmpty()
+                && !lockedSubjectCode.trim().equalsIgnoreCase(subjectCode)) {
+            req.setAttribute("error", "Subject code mismatch: this form is locked to '" + safeStr(lockedSubjectCode.trim())
+                    + "', but the submitted/Excel-imported subject code is '" + safeStr(subjectCode)
+                    + "'. Please use a syllabus/Excel file that matches the correct subject.");
+            req.setAttribute("subjects", subjectDAO.searchSubjects(null, null, null));
+            req.setAttribute("prefillSubjectCode", lockedSubjectCode.trim());
+            req.setAttribute("lockedSubjectCode", lockedSubjectCode.trim());
+            req.getRequestDispatcher("/WEB-INF/views/syllabus/form.jsp").forward(req, res);
+            return;
+        }
+
         String subjectId = subjectDAO.findSubjectIdByCodeAny(subjectCode);
         if (subjectId == null) {
             req.setAttribute("error", "Subject code '" + safeStr(subjectCode) + "' does not exist in the system. Please create the subject first or check the code.");
             req.setAttribute("subjects", subjectDAO.searchSubjects(null, null, null));
             req.getRequestDispatcher("/WEB-INF/views/syllabus/form.jsp").forward(req, res);
+            return;
+        }
+
+        // Chan sua khi Syllabus da Submit for Review hoac da Approved (phai qua
+        // Reject cua Reviewer de dua ve Draft truoc thi moi sua tiep duoc).
+        Syllabus existingCheck = syllabusDAO.getSyllabusBySubject(subjectId);
+        if (existingCheck != null && existingCheck.getStatusCode() != Syllabus.STATUS_DRAFT) {
+            String reason = existingCheck.getStatusCode() == Syllabus.STATUS_PENDING_REVIEW
+                    ? "This syllabus has been submitted and is pending review. It cannot be edited until the Reviewer sends it back."
+                    : "This syllabus has already been approved and is locked from further edits.";
+            res.sendRedirect(req.getContextPath() + "/subject/detail?id=" + subjectId
+                    + "&error=" + java.net.URLEncoder.encode(reason, "UTF-8"));
             return;
         }
         s.setSubjectId(subjectId);
@@ -123,25 +155,21 @@ public class SyllabusServlet extends HttpServlet {
             }
         } catch (Exception ignored) {}
 
-        // UPSERT logic: check if syllabus for subject already exists
-        Syllabus existingSyllabus = syllabusDAO.findExistingSyllabusBySubjectAny(subjectId);
+        // Insert syllabus and get the generated ID
+        // Neu Subject nay DA CO san 1 Syllabus active (vi du: syllabus rong duoc tao
+        // tu dong khi Admin import Excel cho Subject moi), thi UPDATE ngay tren
+        // Syllabus_ID cu, KHONG insert dong moi -> tranh mo coi cac
+        // Syllabus_Assignments/Reviews da duoc Admin gan cho Syllabus do.
+        String existingSyllabusId = syllabusDAO.getActiveSyllabusIdBySubject(subjectId);
         String syllabusId;
-        
-        if (existingSyllabus != null) {
-            // Update the existing (Draft) syllabus to keep Syllabus_Assignments valid
-            syllabusId = existingSyllabus.getSyllabusId();
+        if (existingSyllabusId != null) {
+            syllabusId = existingSyllabusId;
             syllabusDAO.updateSyllabusContent(syllabusId, s);
-            
-            // Delete old CLOs, Sessions, Materials so we can insert new ones
-            // Note: Since SyllabusDAO doesn't have delete methods yet, we will
-            // add them below or use the existing DAOs if they have it.
-            // Actually, we must delete old items to prevent duplicates.
+            // Xoa noi dung cu de tranh trung lap khi Designer luu lai (form hien chua ho tro prefill)
             cloDAO.deleteCLOsBySyllabus(syllabusId);
             sessionDAO.deleteSessionsBySyllabus(syllabusId);
             syllabusDAO.deleteMaterialsBySyllabus(syllabusId);
-            
         } else {
-            // Insert new syllabus
             syllabusId = syllabusDAO.addSyllabusAndGetId(s);
         }
 
@@ -442,7 +470,13 @@ public class SyllabusServlet extends HttpServlet {
         String status  = req.getParameter("status");
         User user = getLoggedUser(req);
         boolean activeOnly = (user == null || hasRole(req, "Student", "Guest"));
-        List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly);
+        // Chi Admin duoc xem Syllabus con dang Draft/Pending Review (chua hoan thanh).
+        // Tat ca role khac (Designer, Reviewer, Lecturer, Student, Guest...) trong man hinh
+        // danh sach chung nay chi thay Syllabus da Approved. Designer/Reviewer van xem duoc
+        // ban nhap cua rieng minh qua "My Assignments" / "Review" (khong bi anh huong).
+        boolean isAdmin = hasRole(req, "Admin");
+        boolean approvedOnly = !isAdmin;
+        List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly, approvedOnly);
         req.setAttribute("syllabuses", list);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
@@ -455,9 +489,18 @@ public class SyllabusServlet extends HttpServlet {
         Syllabus s = syllabusDAO.getSyllabusById(id);
         if (s == null) { res.sendRedirect(req.getContextPath() + "/syllabus/list"); return; }
         User user = getLoggedUser(req);
-        if (!s.isActive() && (user == null || hasRole(req, "Student", "Guest"))) {
-            res.sendRedirect(req.getContextPath() + "/syllabus/list");
-            return;
+        boolean isAdmin = hasRole(req, "Admin");
+        boolean isApproved = s.isApproved();
+        if (!isApproved && !isAdmin) {
+            // Syllabus chua Approved: chi Admin, hoac chinh Designer/Reviewer duoc gan
+            // vao Syllabus nay, moi duoc xem. Nguoi khac (bao gom Student/Guest) bi chan.
+            boolean isAssigned = user != null && (
+                    designDAO.isAssignedToSyllabus(user.getUserId(), id, "Designer") ||
+                    designDAO.isAssignedToSyllabus(user.getUserId(), id, "Reviewer"));
+            if (!isAssigned) {
+                res.sendRedirect(req.getContextPath() + "/syllabus/list");
+                return;
+            }
         }
         req.setAttribute("syllabus", s);
         req.setAttribute("clos", cloDAO.getCLOsBySyllabus(id));
@@ -473,6 +516,30 @@ public class SyllabusServlet extends HttpServlet {
             return;
         }
         req.setAttribute("subjects", subjectDAO.searchSubjects(null, null, null));
+        String prefillCode = req.getParameter("subjectCode");
+        if (prefillCode != null && !prefillCode.trim().isEmpty()) {
+            prefillCode = prefillCode.trim();
+            // Fix cung ma mon: khi vao trang qua link co san subjectCode (vd tu nut
+            // "Add Syllabus" o trang Subject detail), khoa luon o Subject Code lai,
+            // khong cho doi sang mon khac (kho ca tren UI lan khi file Excel import
+            // co ma mon khac se bi tu choi - xem importExcel() o JS va check server-side ben duoi).
+            req.setAttribute("prefillSubjectCode", prefillCode);
+            req.setAttribute("lockedSubjectCode", prefillCode);
+
+            String subjectId = subjectDAO.findSubjectIdByCodeAny(prefillCode);
+            if (subjectId != null) {
+                Syllabus existing = syllabusDAO.getSyllabusBySubject(subjectId);
+                if (existing != null && existing.getStatusCode() != Syllabus.STATUS_DRAFT) {
+                    // Dang Pending Review hoac da Approved -> khoa, khong cho vao sua nua
+                    String reason = existing.getStatusCode() == Syllabus.STATUS_PENDING_REVIEW
+                            ? "This syllabus has been submitted and is pending review. It cannot be edited until the Reviewer sends it back."
+                            : "This syllabus has already been approved and is locked from further edits.";
+                    res.sendRedirect(req.getContextPath() + "/subject/detail?id=" + subjectId
+                            + "&error=" + java.net.URLEncoder.encode(reason, "UTF-8"));
+                    return;
+                }
+            }
+        }
         req.getRequestDispatcher("/WEB-INF/views/syllabus/form.jsp").forward(req, res);
     }
 

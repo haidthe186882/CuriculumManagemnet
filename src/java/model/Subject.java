@@ -31,4 +31,16 @@ public class Subject {
     private String syllabusId;
     public String getSyllabusId() { return syllabusId; }
     public void setSyllabusId(String syllabusId) { this.syllabusId = syllabusId; }
+
+    // Trang thai quy trinh thiet ke cua Syllabus gan voi subject nay, trong ngu canh
+    // 1 Curriculum cu the (0=Draft,1=PendingReview,2=Approved="hoan thanh")
+    private int syllabusStatusCode;
+    public int getSyllabusStatusCode() { return syllabusStatusCode; }
+    public void setSyllabusStatusCode(int syllabusStatusCode) { this.syllabusStatusCode = syllabusStatusCode; }
+    public boolean isDesignComplete() { return syllabusStatusCode == Syllabus.STATUS_APPROVED; }
+
+    // Danh sach ma mon tien quyet (Subject_Prerequisites), noi bang dau phay de hien thi
+    private String prerequisiteCodes;
+    public String getPrerequisiteCodes() { return prerequisiteCodes; }
+    public void setPrerequisiteCodes(String prerequisiteCodes) { this.prerequisiteCodes = prerequisiteCodes; }
 }
