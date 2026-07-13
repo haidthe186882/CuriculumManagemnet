@@ -18,7 +18,7 @@
 <div class="main-content">
     <div class="topbar">
         <div>
-            <div class="page-title">Curriculum Review</div>
+            <div class="page-title">Syllabuses Review</div>
             <div class="page-subtitle">Pending approvals and review history</div>
         </div>
         <div class="mb-3">
@@ -31,33 +31,33 @@
     </div>
 
     <c:if test="${param.msg == 'approved'}">
-        <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Curriculum approved.</div>
+        <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Syllabus approved.</div>
     </c:if>
     <c:if test="${param.msg == 'rejected'}">
-        <div class="alert alert-success-dark mb-3"><i class="bi bi-x-circle me-1"></i>Curriculum rejected.</div>
+        <div class="alert alert-success-dark mb-3"><i class="bi bi-x-circle me-1"></i>Syllabus rejected.</div>
     </c:if>
 
         <div class="card-dark mb-4">
         <div class="p-3 border-bottom">
-            <h6 class="mb-0"><i class="bi bi-hourglass me-2" style="color:#fbbf24;"></i>Pending Curriculums (${pendingCurriculums.size()})</h6>
+            <h6 class="mb-0"><i class="bi bi-hourglass me-2" style="color:#fbbf24;"></i>Pending Syllabuses (${pendingSyllabuses != null ? pendingSyllabuses.size() : 0})</h6>
         </div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>Code</th><th>Name</th><th>Version</th><th>Credits</th><th>Actions</th></tr></thead>
                 <tbody>
                     <c:choose>
-                        <c:when test="${empty pendingCurriculums}">
-                            <tr><td colspan="5" class="text-center py-4 text-muted">No pending curriculums.</td></tr>
+                        <c:when test="$${empty pendingSyllabuses}">
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No pending Syllabuses.</td></tr>
                         </c:when>
                         <c:otherwise>
-                            <c:forEach var="c" items="${pendingCurriculums}">
+                            <c:forEach var="cs" items="${pendingSyllabuses}">
                                 <tr>
-                                    <td><code style="color:#4fc3f7;">${c.curriculumCode}</code></td>
-                                    <td>${c.curriculumName}</td>
-                                    <td>${c.version}</td>
-                                    <td>${c.totalCredits}</td>
+                                    <td><code class="text-primary">${cs.subject.subjectCode}</code></td>
+                                    <td>${cs.subject.subjectName}</td>
+                                    <td>${cs.curriculum.curriculumCode}</td>
+                                    <td>${cs.semesterNo}</td>
                                     <td>
-                                        <a href="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" class="btn btn-action btn-view">
+                                        <a href="${pageContext.request.contextPath}/syllabus/detail?subjectId=${cs.subject.subjectId}" class="btn btn-action btn-view">
                                             <i class="bi bi-eye me-1"></i>Review
                                         </a>
                                     </td>
