@@ -16,6 +16,7 @@ public class Curriculum {
     private Date updatedDate;
     private boolean isActive;
     private int status;
+    private boolean isPublic;
     
     // Các trường dữ liệu phục vụ liên kết bảng (Joins) - Giữ bản sạch từ main
     private String majorId;
@@ -127,6 +128,15 @@ public class Curriculum {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    /** True khi curriculum da duoc Publish (hien thi cong khai cho Student/Guest). */
+    public boolean isIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
     
 

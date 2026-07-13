@@ -25,6 +25,12 @@
         </a>
     </div>
 
+    <c:if test="${not empty param.error}">
+        <div class="mb-3" style="background: rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:10px; padding: 0.8rem 1rem; color:#b91c1c;">
+            <i class="bi bi-exclamation-triangle me-1"></i>${param.error}
+        </div>
+    </c:if>
+
     <c:if test="${subject == null}">
         <div class="card-dark p-4 text-center" style="color:#64748b;">Subject not found.</div>
     </c:if>
@@ -42,6 +48,17 @@
                     <a href="${pageContext.request.contextPath}/syllabus/detail?id=${syllabus.syllabusId}" class="btn btn-view btn-action">
                         <i class="bi bi-file-earmark-text me-1"></i>View Syllabus
                     </a>
+                    <c:choose>
+                        <c:when test="${syllabus.statusCode == 2}">
+                            <span class="badge-status badge-approved ms-2"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                        </c:when>
+                        <c:when test="${syllabus.statusCode == 1}">
+                            <span class="badge-status badge-rejected ms-2"><i class="bi bi-hourglass me-1"></i>Pending Review</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="badge-status badge-draft ms-2"><i class="bi bi-pencil me-1"></i>Draft</span>
+                        </c:otherwise>
+                    </c:choose>
                 </c:when>
                 <c:otherwise>
                     <a href="${pageContext.request.contextPath}/syllabus/list?keyword=${subject.subjectCode}" class="btn btn-view btn-action">
@@ -49,6 +66,11 @@
                     </a>
                 </c:otherwise>
             </c:choose>
+            <c:if test="${canAddSyllabus}">
+                <a href="${pageContext.request.contextPath}/syllabus/create?subjectCode=${subject.subjectCode}" class="btn btn-primary-custom">
+                    <i class="bi bi-plus-lg me-1"></i>${not empty syllabus and syllabus.statusCode != 2 ? 'Fill Syllabus Content' : 'Add Syllabus'}
+                </a>
+            </c:if>
         </div>
     </c:if>
 </div>

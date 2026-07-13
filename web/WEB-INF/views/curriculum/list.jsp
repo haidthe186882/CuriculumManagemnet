@@ -142,6 +142,14 @@
                                                         <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
                                                     </c:otherwise>
                                                 </c:choose>
+                                                <c:choose>
+                                                    <c:when test="${c.isPublic}">
+                                                        <span class="badge-status badge-approved"><i class="bi bi-globe2 me-1"></i>Published</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge-status badge-draft"><i class="bi bi-lock me-1"></i>Not Published</span>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </td>
                                             <td class="text-muted">
                                                 <c:if test="${not empty c.decisionDate}">

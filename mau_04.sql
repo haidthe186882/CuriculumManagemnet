@@ -112,6 +112,12 @@ CREATE TABLE Curriculums
     Is_Active BIT DEFAULT 1,
     Status INT DEFAULT 0,
 
+    -- Is_Public: chi bat = 1 khi Admin bam "Publish" VA tat ca subject
+    -- trong curriculum da co Syllabus voi Status = 2 (Approved).
+    -- Trong khi Is_Public = 0, curriculum chi Admin/Designer/Reviewer thay,
+    -- Student/Guest khong thay trong danh sach cong khai.
+    Is_Public BIT DEFAULT 0,
+
     CONSTRAINT FK_Curriculum_Major
         FOREIGN KEY(Major_ID)
         REFERENCES Majors(Major_ID),
@@ -322,6 +328,12 @@ CREATE TABLE Syllabuses
 
     Decision_No NVARCHAR(100),
     Approved_Date DATE,
+
+    -- Status: trang thai quy trinh thiet ke/duyet cua chinh Syllabus nay
+    -- 0 = Draft (Designer dang thiet ke) | 1 = PendingReview (da submit, cho Reviewer duyet)
+    -- 2 = Approved (Reviewer da duyet dat -> subject duoc coi la "hoan thanh")
+    -- Reject cua Reviewer se dua Status ve lai 0 de Designer sua.
+    Status INT DEFAULT 0,
 
     Is_Active BIT DEFAULT 1,
 

@@ -108,9 +108,17 @@
                         <label class="detail-label">Syllabus Code *</label>
                         <input type="text" name="subjectCode" id="subjectCode"
                             class="form-control form-control-dark w-100" required list="subjectList"
-                            value="${syllabus != null ? syllabus.subject.subjectCode : ''}"
+                            value="${syllabus != null ? syllabus.subject.subjectCode : (not empty prefillSubjectCode ? prefillSubjectCode : '')}"
                             placeholder="e.g. SWT301, PRO192..." style="text-transform:uppercase;"
-                            oninput="validateSubjectCode(this)">
+                            oninput="validateSubjectCode(this)"
+                            <c:if test="${not empty lockedSubjectCode}">readonly</c:if>>
+                        <c:if test="${not empty lockedSubjectCode}">
+                            <input type="hidden" name="lockedSubjectCode" id="lockedSubjectCode" value="${lockedSubjectCode}">
+                            <div class="mt-1" style="font-size:0.8rem; color:#92400e;">
+                                <i class="bi bi-lock me-1"></i>Locked to subject <strong>${lockedSubjectCode}</strong>.
+                                An imported Excel file with a different subject code will be rejected.
+                            </div>
+                        </c:if>
                         <datalist id="subjectList">
                             <c:forEach var="s" items="${subjects}">
                                 <option value="${s.subjectCode}">${s.subjectName}</option>
@@ -673,6 +681,19 @@
 
                         if (data.error) {
                             showStatus('danger', '<i class="bi bi-x-circle me-1"></i>' + data.error);
+                            return;
+                        }
+
+                        // Fix cung Subject Code: neu form dang bi khoa vao 1 mon (vd mo tu
+                        // nut "Add Syllabus" cua 1 Subject cu the), ma file Excel lai chua
+                        // ma mon KHAC, thi tu choi import luon, khong dien du lieu vao form.
+                        const lockedEl = document.getElementById('lockedSubjectCode');
+                        const lockedCode = lockedEl ? lockedEl.value.trim().toUpperCase() : '';
+                        const importedCode = (data.subjectCode || '').trim().toUpperCase();
+                        if (lockedCode && importedCode && lockedCode !== importedCode) {
+                            showStatus('danger', '<i class="bi bi-x-circle me-1"></i>Import rejected: this page is locked to subject <strong>'
+                                + lockedCode + '</strong>, but the Excel file contains subject code <strong>' + importedCode
+                                + '</strong>. Please upload the correct Excel file for ' + lockedCode + '.');
                             return;
                         }
 

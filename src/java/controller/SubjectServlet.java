@@ -3,6 +3,7 @@ package controller;
 import dao.MajorDAO;
 import dao.SubjectDAO;
 import dao.SyllabusDAO;
+import dao.DesignDAO;
 import model.User;
 import model.Syllabus;
 
@@ -16,6 +17,7 @@ public class SubjectServlet extends HttpServlet {
 
     private final SubjectDAO subjectDAO = new SubjectDAO();
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
+    private final DesignDAO designDAO = new DesignDAO();
     private final MajorDAO majorDAO = new MajorDAO();
 
     @Override
@@ -58,8 +60,35 @@ public class SubjectServlet extends HttpServlet {
     private void showDetail(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         String id = req.getParameter("id");
-        req.setAttribute("subject", subjectDAO.getSubjectById(id));
-        req.setAttribute("syllabus", syllabusDAO.getSyllabusBySubject(id));
+        model.Subject subject = subjectDAO.getSubjectById(id);
+        Syllabus syllabus = syllabusDAO.getSyllabusBySubject(id);
+        req.setAttribute("subject", subject);
+        req.setAttribute("syllabus", syllabus);
+
+        User user = getLoggedUser(req);
+        boolean canAddSyllabus = false;
+        if (user != null && subject != null) {
+            String primaryRole = user.getRole() != null ? user.getRole().getRoleName() : "";
+            boolean isAdmin = "Admin".equalsIgnoreCase(primaryRole) || user.hasRole("Admin");
+            if (isAdmin) {
+                canAddSyllabus = true;
+            } else {
+                // Chi cho phep Designer da duoc Admin gan (Syllabus_Assignments) vao
+                // chinh Syllabus cua Subject nay duoc them/sua noi dung.
+                String syllabusId = syllabus != null ? syllabus.getSyllabusId()
+                        : syllabusDAO.getActiveSyllabusIdBySubject(id);
+                canAddSyllabus = syllabusId != null
+                        && designDAO.isAssignedToSyllabus(user.getUserId(), syllabusId, "Designer");
+            }
+        }
+        // Chi cho phep them/sua noi dung khi Syllabus dang o trang thai Draft.
+        // Neu da Submit for Review (PendingReview) hoac da Approved, khoa lai —
+        // Designer khong duoc sua tiep cho den khi Reviewer Reject (tra ve Draft).
+        if (syllabus != null && syllabus.getStatusCode() != Syllabus.STATUS_DRAFT) {
+            canAddSyllabus = false;
+        }
+        req.setAttribute("canAddSyllabus", canAddSyllabus);
+
         req.getRequestDispatcher("/WEB-INF/views/subject/detail.jsp").forward(req, res);
     }
 
