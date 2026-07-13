@@ -26,7 +26,7 @@
                     <div class="page-subtitle">Browse and manage training programs</div>
                 </div>
 
-                <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin'}">
+                <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.designer}">
                     <a href="${pageContext.request.contextPath}/curriculum/create" class="btn btn-primary-custom">
                         <i class="bi bi-plus-lg me-1"></i> New Curriculum
                     </a>            
@@ -95,7 +95,8 @@
             <div class="card-dark p-3 mb-3">
                 <form method="get" action="${pageContext.request.contextPath}/curriculum/list">
                     <div class="row g-2">
-                        <div class="${(sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer') ? 'col-md-7' : 'col-md-10'}">
+                        <c:set var="isStaff" value="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer'}"/>
+                        <div class="${isStaff ? 'col-md-4' : 'col-md-7'}">
                             <div class="input-group">
                                 <input type="text" name="keyword" class="search-bar form-control border-end-0"
                                        placeholder="Search by name, code..." value="${keyword}">
@@ -104,9 +105,17 @@
                                 </span>
                             </div>
                         </div>
-                        <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.role.roleName == 'Reviewer'}">
+                        <div class="col-md-3">
+                            <select name="majorId" class="form-select form-select-dark w-100" onchange="this.form.submit()">
+                                <option value="">All Programs</option>
+                                <c:forEach var="m" items="${majors}">
+                                    <option value="${m.majorId}" ${selectedMajorId == m.majorId ? 'selected' : ''}>${m.majorName}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <c:if test="${isStaff}">
                             <div class="col-md-3">
-                                <select name="status" class="form-select form-select-dark w-100">
+                                <select name="status" class="form-select form-select-dark w-100" onchange="this.form.submit()">
                                     <option value="">All Status</option>
                                     <option value="Draft"    ${selectedStatus=='Draft'    ? 'selected' : ''}>Draft</option>
                                     <option value="Pending"  ${selectedStatus=='Pending'  ? 'selected' : ''}>Pending Review</option>
@@ -136,14 +145,14 @@
                                 <th class="sortable" data-sort="version" style="cursor: pointer; user-select: none;">Version <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
                                 <th class="sortable" data-sort="status" style="cursor: pointer; user-select: none;">Is Active <i class="bi bi-arrow-down-up" style="font-size: 0.75rem; opacity: 0.5;"></i></th>
                                 <th style="cursor: default;">Decision Date</th>
-                                <th style="cursor: default;">Action</th>
+                                <th style="cursor: default;">Action</th> 
                             </tr>
                         </thead>
                         <tbody>
                             <c:choose>
                                 <c:when test="${empty curriculums}">
                                     <tr>
-                                        <td colspan="9" class="text-center py-5 text-muted">
+                                        <td colspan="8" class="text-center py-5 text-muted">
                                             <i class="bi bi-inbox display-6 d-block mb-2"></i>
                                             No curriculum found matching your search criteria.
                                         </td>
@@ -176,10 +185,63 @@
                                                     <fmt:formatDate value="${c.decisionDate}" pattern="dd/MM/yyyy"/>
                                                 </c:if>
                                             </td>
-                                            <td>
-                                                <a href="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" class="btn btn-action btn-view">
-                                                    <i class="bi bi-eye me-1"></i>View
-                                                </a>
+                                            <td class="align-middle">
+                                                <div class="d-flex gap-2 justify-content-center">
+                                                    <a href="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" class="btn btn-sm btn-outline-warning">
+                                                        <i class="bi bi-eye"></i> View
+                                                    </a>
+
+                                                    <c:if test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignModal_${c.curriculumId}">
+                                                            <i class="bi bi-person-plus"></i> Assign
+                                                        </button>
+                                                    </c:if>
+                                                </div>
+
+                                                <c:if test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
+                                                    <div class="modal fade text-start" id="assignModal_${c.curriculumId}" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <form action="${pageContext.request.contextPath}/curriculum" method="POST" class="modal-content bg-white border-0 shadow">
+                                                                <input type="hidden" name="action" value="assign">
+                                                                <input type="hidden" name="curriculumId" value="${c.curriculumId}">
+
+                                                                <div class="modal-header border-bottom">
+                                                                    <h5 class="modal-title text-dark">Assign Staff</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                </div>
+
+                                                                <div class="modal-body text-dark">
+                                                                    <p class="small text-muted mb-3">Phân công Designer và Reviewer cho chương trình <strong>${c.curriculumCode}</strong>.</p>
+
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label small fw-bold">Select Designer</label>
+                                                                        <select name="designerId" class="form-select border-secondary">
+                                                                            <option value="">-- Leave Blank / None --</option>
+                                                                            <c:forEach var="d" items="${designers}">
+                                                                                <option value="${d.userId}">${d.fullName} (${d.email})</option>
+                                                                            </c:forEach>
+                                                                        </select>
+                                                                    </div>
+
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label small fw-bold">Select Reviewer</label>
+                                                                        <select name="reviewerId" class="form-select border-secondary">
+                                                                            <option value="">-- Leave Blank / None --</option>
+                                                                            <c:forEach var="r" items="${reviewers}">
+                                                                                <option value="${r.userId}">${r.fullName} (${r.email})</option>
+                                                                            </c:forEach>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="modal-footer border-top bg-light">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                    <button type="submit" class="btn btn-primary">Save Assignments</button>
+                                                                </div>
+                                                            //</form>
+                                                        </div>
+                                                    </div>
+                                                </c:if>
                                             </td>
                                         </tr>
                                     </c:forEach>
@@ -187,9 +249,13 @@
                             </c:choose>
                         </tbody>
                     </table>
+                    
                 </div>
+                
             </div>
+                                
         </div>
+                                
  
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
@@ -198,7 +264,8 @@
                 const curriculumRows = document.querySelectorAll('.curriculum-row');
                 curriculumRows.forEach(row => {
                     row.addEventListener('click', function(e) {
-                        if (e.target.closest('a, button')) return;
+//                        if (e.target.closest('a, button')) return;
+                        if (e.target.closest('a, button, input, select, form, .modal')) return;
                         const detailUrl = this.getAttribute('data-detail-url');
                         if (detailUrl) window.location.href = detailUrl;
                     });

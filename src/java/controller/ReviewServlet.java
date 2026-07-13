@@ -30,9 +30,13 @@ public class ReviewServlet extends HttpServlet {
     private void showList(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         if (!requireReviewer(req, res)) return;
+        // 1. Lấy thông tin user đang đăng nhập
+        User user = (User) req.getSession().getAttribute("loggedUser");
+        // 2. Kiểm tra xem có phải Admin không
+        boolean isAdmin = user.hasRole("Admin") || "Admin".equalsIgnoreCase(user.getRole().getRoleName());
         String keyword = req.getParameter("keyword");
         req.setAttribute("reviews", reviewDAO.getAllReviews(keyword));
-        req.setAttribute("pendingCurriculums", curriculumDAO.getPendingCurriculums());
+        req.setAttribute("pendingCurriculums", curriculumDAO.getPendingCurriculums(user.getUserId(), isAdmin));
         req.setAttribute("keyword", keyword);
         req.getRequestDispatcher("/WEB-INF/views/review/list.jsp").forward(req, res);
     }
@@ -45,7 +49,16 @@ public class ReviewServlet extends HttpServlet {
         }
         User user = (User) session.getAttribute("loggedUser");
         String role = user.getRole() != null ? user.getRole().getRoleName() : "";
-        if (!"Reviewer".equals(role) && !"Admin".equals(role)) {
+//        if (!"Reviewer".equals(role) && !"Admin".equals(role)) {
+//            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+//            return false;
+//        }
+        boolean isPrimaryReviewer = "Reviewer".equalsIgnoreCase(role) || "Admin".equalsIgnoreCase(role);
+        // 2. Kiểm tra trong danh sách Roles 
+        boolean hasRoleReviewer = user.hasRole("Reviewer") || user.hasRole("Admin");
+        // 3. Kiểm tra cờ phụ
+        boolean hasSubReviewer = user.isReviewer();
+        if (!isPrimaryReviewer && !hasRoleReviewer && !hasSubReviewer) {
             res.sendRedirect(req.getContextPath() + "/curriculum/list");
             return false;
         }

@@ -51,43 +51,51 @@
     </button>
 </form>
     
-    <c:if test="${!isEdit}">
     <div class="container-fluid px-4 mt-3">
-        <c:if test="${not empty successMessage}">
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i> ${successMessage}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:if>
-        <c:if test="${not empty errorMessage}">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i> ${errorMessage}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:if>
+    <c:if test="${not empty successMessage}">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> ${successMessage}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </c:if>
+    <c:if test="${not empty errorMessage}">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> ${errorMessage}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </c:if>
 
-        <div class="card mb-4 border-secondary bg-dark text-white">
-            <div class="card-header bg-secondary text-white d-flex align-items-center">
-                <i class="bi bi-file-earmark-excel me-2 fs-5 text-warning"></i>
-                <strong class="card-title mb-0">Quick Import Curriculum from Excel</strong>
-            </div>
-            <div class="card-body">
-                <form method="post" action="${pageContext.request.contextPath}/curriculum/importExcel" enctype="multipart/form-data">
-                    <div class="row align-items-center g-3">
-                        <div class="col-md-3">
-                            <label class="form-label mb-0 text-light">Select Excel Template (.xlsx):</label>
-                        </div>
-                        <div class="col-md-6">
-                            <input type="file" name="excelFile" class="form-control form-control-dark" accept=".xlsx, .xls" required />
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="bi bi-cloud-upload me-1"></i> Load Data From Excel
-                            </button>
-                        </div>
+    <div class="card mb-4 border-secondary bg-dark text-white">
+        <div class="card-header bg-secondary text-white d-flex align-items-center">
+            <i class="bi bi-file-earmark-excel me-2 fs-5 text-warning"></i>
+            <strong class="card-title mb-0">${isEdit ? 'Re-import this Curriculum from Excel' : 'Quick Import Curriculum from Excel'}</strong>
+        </div>
+        <div class="card-body">
+            <c:if test="${isEdit}">
+                <p class="small text-secondary mb-3">
+                    <i class="bi bi-info-circle me-1"></i>This will refresh Name, English Name, Description, Decision No/Date
+                    and Total Credits of <strong>${curriculum.curriculumCode}</strong> from the file below.
+                    Curriculum Code and Major are kept unchanged.
+                </p>
+            </c:if>
+            <form method="post" action="${pageContext.request.contextPath}/curriculum/importExcel" enctype="multipart/form-data">
+                <c:if test="${isEdit}">
+                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}"/>
+                </c:if>
+                <div class="row align-items-center g-3">
+                    <div class="col-md-3">
+                        <label class="form-label mb-0 text-light">Select Excel Template (.xlsx):</label>
                     </div>
-                </form>
-            </div>
+                    <div class="col-md-6">
+                        <input type="file" name="excelFile" class="form-control form-control-dark" accept=".xlsx, .xls" required />
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-cloud-upload me-1"></i> Load Data From Excel
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-</c:if>
+    </div>

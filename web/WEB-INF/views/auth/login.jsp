@@ -171,11 +171,7 @@
                     </div>
 
                     <div class="controls">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                            <label class="form-check-label" for="remember">Remember me</label>
-                        </div>
-                        <a href="#" style="color:#374151;text-decoration:none">Forgot password?</a>
+                        <a href="${pageContext.request.contextPath}/forgot-password" style="color:#374151;text-decoration:none">Forgot password?</a>
                     </div>
 
                     <button type="submit" class="btn-signin">Sign in</button>

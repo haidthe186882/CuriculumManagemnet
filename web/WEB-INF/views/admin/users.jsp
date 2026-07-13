@@ -79,18 +79,26 @@
                     <div class="card-dark p-3 mb-3">
                         <form method="get" action="${pageContext.request.contextPath}/admin/users">
                             <div class="row g-2">
-                                <div class="col-md-7">
+                                <div class="col-12 col-lg-5">
                                     <input type="text" name="keyword" class="search-bar form-control w-100"
                                            placeholder="Search by name or email..." value="${keyword}">
                                 </div>
-                                <div class="col-md-3">
+                                           <div class="col-6 col-lg-3">
+                                               <select name="roleId" class="form-select form-select-dark w-100">
+                                                   <option value="">All Roles</option>
+                                                   <c:forEach var="r" items="${roles}">
+                                                       <option value="${r.roleId}" ${selectedRole == r.roleId.toString() ? 'selected' : ''}>${r.roleName}</option>
+                                                   </c:forEach>
+                                               </select>
+                                           </div>
+                                <div class="col-6 col-lg-2">
                                     <select name="status" class="form-select form-select-dark w-100">
                                         <option value="">All Status</option>
                                         <option value="Active" ${selectedStatus=='Active' ? 'selected' : ''}>Active</option>
                                         <option value="Inactive" ${selectedStatus=='Inactive' ? 'selected' : ''}>Inactive</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-12 col-lg-2">
                                     <button type="submit" class="btn btn-primary-custom w-100">Search</button>
                                 </div>
                             </div>
@@ -270,8 +278,13 @@
 
                                 <div class="mb-3">
                                     <label class="form-label text-light small">Current Primary Role</label>
-                                    <input type="text" class="form-control bg-secondary text-light border-secondary w-100" value="${u.role.roleName}" readonly>
-                                    <input type="hidden" name="roleId" value="${u.role.roleId}">
+                                   <select name="roleId" class="form-select bg-dark text-white border-secondary w-100 edit-role-select" data-userid="${u.userId}" required>
+                                        <c:forEach var="r" items="${roles}">
+                                            <option value="${r.roleId}" data-name="${r.roleName}" ${r.roleId == u.role.roleId ? 'selected' : ''}>
+                                                ${r.roleName}
+                                            </option>
+                                        </c:forEach>
+                                    </select>
                                 </div>
 
                                 <!--                        <div class="d-flex gap-4">
@@ -289,6 +302,11 @@
                                     <c:when test="${u.role.roleName == 'Student'}">
                                         <div class="alert alert-warning p-2 mt-2 mb-0 small border-warning text-warning bg-transparent">
                                             <i class="bi bi-info-circle me-1"></i> Student account can not assign Reviewer or Designer.
+                                        </div>
+                                    </c:when>
+                                    <c:when test="${u.role.roleName == 'Reviewer' || u.role.roleName == 'Designer'}">
+                                        <div class="alert alert-info p-2 mt-2 mb-0 small border-info text-info bg-transparent">
+                                            <i class="bi bi-shield-check me-1"></i> Primary Role <strong>${u.role.roleName}</strong>, No need addition role.
                                         </div>
                                     </c:when>
                                     <c:otherwise>
@@ -322,7 +340,8 @@
         const roleSelect = document.getElementById("addRoleSelect");
         const extraRolesDiv = document.getElementById("extraRolesDiv");
         const extraCheckboxes = extraRolesDiv.querySelectorAll("input[type=checkbox]");
-
+        const editRoleSelects = document.querySelectorAll(".edit-role-select");
+        
         function toggleExtraRoles() {
             const selectedOption = roleSelect.options[roleSelect.selectedIndex];
             // Nếu chọn Student thì ẩn khu vực phân quyền
@@ -333,6 +352,23 @@
             } else {
                 extraRolesDiv.style.display = 'block';
             }
+            editRoleSelects.forEach(select => {
+            select.addEventListener("change", function() {
+                const userId = this.getAttribute("data-userid");
+                const extraRolesDiv = document.getElementById("editExtraRolesDiv_" + userId);
+                const extraCheckboxes = extraRolesDiv.querySelectorAll("input[type=checkbox]");
+                
+                const selectedOption = this.options[this.selectedIndex];
+                const roleName = selectedOption.getAttribute("data-name");
+
+                // Nếu Role chính đã là Student, Reviewer, hoặc Designer thì không cần cờ phụ
+                if (roleName === 'Student' || roleName === 'Reviewer' || roleName === 'Designer') {
+                    extraRolesDiv.style.display = 'none';
+                    extraCheckboxes.forEach(cb => cb.checked = false); // Tự động bỏ tick
+                } else {
+                    extraRolesDiv.style.display = 'block';
+                }
+            });s
         }
 
         // Bắt sự kiện khi người dùng thay đổi Dropdown

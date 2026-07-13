@@ -5,10 +5,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Model class matching the Users table in mau_02.sql:
- *   User_ID (UNIQUEIDENTIFIER), Full_Name, Email, Password_Hash, Is_Active, Created_Date
- *
- * Roles are assigned via the User_Roles junction table (many-to-many).
+ * @author Mai Duy An
+ * @MSSV HE197000
+ * @Date 19/6/2026
  */
 public class User {
 
@@ -68,25 +67,16 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    /** Backward-compatible status getter used by JSP views */
     public String getStatus() {
         return isActive ? "Active" : "Inactive";
     }
 
-    /** Backward-compatible status setter */
+    /** Backward-compatible status setter
+     * @param status */
     public void setStatus(String status) {
         this.isActive = status != null && status.equalsIgnoreCase("Active");
     }
 
-    /** Alias kept for old JSP EL expressions like ${user.isActive} */
     public String getIsActive() {
         return isActive ? "Active" : "Inactive";
     }
@@ -104,7 +94,6 @@ public class User {
     }
 
     // --- Roles (many-to-many via User_Roles) ---
-
     public List<Role> getRoles() {
         return roles;
     }
@@ -119,8 +108,8 @@ public class User {
     }
 
     /**
-     * Returns the primary (first) Role, or null if none assigned.
-     * Used by LoginServlet / DashboardServlet for redirect logic.
+     * Returns the primary (first) Role, or null if none assigned.Used by LoginServlet / DashboardServlet for redirect logic.
+     * @return
      */
     public Role getRole() {
         return (roles != null && !roles.isEmpty()) ? roles.get(0) : null;
@@ -128,6 +117,8 @@ public class User {
 
     /**
      * Convenience: check whether the user has a specific role name.
+     * @param roleName
+     * @return 
      */
     public boolean hasRole(String roleName) {
         if (roles == null || roleName == null) return false;

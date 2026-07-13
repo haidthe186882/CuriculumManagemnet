@@ -27,6 +27,7 @@
 		<p class="text-muted">Please login to continue</p>
 		<div class="d-flex justify-content-center gap-3 mt-3">
 			<a class="btn btn-primary-custom" href="${pageContext.request.contextPath}/login">Login</a>
+			<a class="btn btn-primary-custom" href="${pageContext.request.contextPath}/login?action=guest">Guest</a>
 		</div>
 		<p class="mt-4 text-muted" style="font-size:0.9rem">Or, if you already have a session, you will be redirected.</p>
 	</div>

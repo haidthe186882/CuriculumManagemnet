@@ -1,5 +1,6 @@
 package controller;
 
+import dao.MajorDAO;
 import dao.SubjectDAO;
 import dao.SyllabusDAO;
 import model.User;
@@ -15,6 +16,7 @@ public class SubjectServlet extends HttpServlet {
 
     private final SubjectDAO subjectDAO = new SubjectDAO();
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
+    private final MajorDAO majorDAO = new MajorDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
@@ -63,10 +65,15 @@ public class SubjectServlet extends HttpServlet {
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+        req.setAttribute("majors", majorDAO.getAllMajors());
         req.getRequestDispatcher("/WEB-INF/views/subject/form.jsp").forward(req, res);
     }
 
-    private void doCreate(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    private void doCreate(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+
         model.Subject s = new model.Subject();
         s.setSubjectCode(req.getParameter("subjectCode"));
         s.setSubjectName(req.getParameter("subjectName"));
@@ -74,11 +81,25 @@ public class SubjectServlet extends HttpServlet {
         try { s.setCredits(Integer.parseInt(req.getParameter("credits"))); } catch (Exception ignored) {}
         s.setDescription(req.getParameter("description"));
         s.setDepartment(req.getParameter("department"));
-        subjectDAO.addSubject(s);
-        res.sendRedirect(req.getContextPath() + "/subject/list?msg=created");
+
+        boolean ok = subjectDAO.addSubject(s);
+        if (ok) {
+            res.sendRedirect(req.getContextPath() + "/subject/list?msg=created");
+        } else {
+            // Insert that nhat thuong la do Subject_Code da ton tai (UNIQUE constraint)
+            req.setAttribute("errorMessage",
+                    "Could not create subject. The Subject Code \"" + s.getSubjectCode()
+                    + "\" may already exist, please choose another one.");
+            req.setAttribute("subject", s);
+            req.setAttribute("majors", majorDAO.getAllMajors());
+            req.getRequestDispatcher("/WEB-INF/views/subject/form.jsp").forward(req, res);
+        }
     }
 
-    private void doUpdate(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    private void doUpdate(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+
         model.Subject s = new model.Subject();
         s.setSubjectId(req.getParameter("subjectId"));
         s.setSubjectName(req.getParameter("subjectName"));
@@ -88,5 +109,27 @@ public class SubjectServlet extends HttpServlet {
         s.setDepartment(req.getParameter("department"));
         subjectDAO.updateSubject(s);
         res.sendRedirect(req.getContextPath() + "/subject/list?msg=updated");
+    }
+
+    // ===== Helpers =====
+
+    private User getLoggedUser(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        return (session != null) ? (User) session.getAttribute("loggedUser") : null;
+    }
+
+    private boolean requireRole(HttpServletRequest req, HttpServletResponse res, String... roles)
+            throws IOException {
+        User user = getLoggedUser(req);
+        if (user == null) {
+            res.sendRedirect(req.getContextPath() + "/login");
+            return false;
+        }
+        String userRole = (user.getRole() != null) ? user.getRole().toString() : "";
+        for (String r : roles) {
+            if (r.equals(userRole)) return true;
+        }
+        res.sendRedirect(req.getContextPath() + "/subject/list");
+        return false;
     }
 }

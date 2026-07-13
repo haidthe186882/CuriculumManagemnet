@@ -2,6 +2,8 @@ package controller;
 
 import dao.SyllabusDAO;
 import dao.SubjectDAO;
+import dao.CloDAO;
+import dao.SessionDAO;
 import model.Syllabus;
 import model.User;
 
@@ -17,6 +19,8 @@ public class SyllabusServlet extends HttpServlet {
 
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
     private final SubjectDAO  subjectDAO  = new SubjectDAO();
+    private final CloDAO      cloDAO      = new CloDAO();
+    private final SessionDAO  sessionDAO  = new SessionDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
@@ -62,7 +66,7 @@ public class SyllabusServlet extends HttpServlet {
         String keyword = req.getParameter("keyword");
         String status  = req.getParameter("status");
         User user = getLoggedUser(req);
-        boolean activeOnly = user == null;
+        boolean activeOnly = (user == null || hasRole(req, "Student", "Guest"));
         List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly);
         req.setAttribute("syllabuses", list);
         req.setAttribute("keyword", keyword);
@@ -75,7 +79,15 @@ public class SyllabusServlet extends HttpServlet {
         String id = req.getParameter("id");
         Syllabus s = syllabusDAO.getSyllabusById(id);
         if (s == null) { res.sendRedirect(req.getContextPath() + "/syllabus/list"); return; }
+        User user = getLoggedUser(req);
+        if (!s.isActive() && (user == null || hasRole(req, "Student", "Guest"))) {
+            res.sendRedirect(req.getContextPath() + "/syllabus/list");
+            return;
+        }
         req.setAttribute("syllabus", s);
+        req.setAttribute("clos", cloDAO.getCLOsBySyllabus(id));
+        req.setAttribute("sessions", sessionDAO.getSessionsBySyllabus(id));
+        req.setAttribute("materials", syllabusDAO.getMaterialsBySyllabusId(id));
         req.getRequestDispatcher("/WEB-INF/views/syllabus/detail.jsp").forward(req, res);
     }
 
@@ -211,7 +223,13 @@ public class SyllabusServlet extends HttpServlet {
         User user = getLoggedUser(req);
         if (user == null) return false;
         String userRole = user.getRole() != null ? user.getRole().getRoleName() : "";
-        for (String r : roles) if (r.equals(userRole)) return true;
+//        for (String r : roles) if (r.equals(userRole)) return true;
+        for (String r : roles) {
+            if (r.equalsIgnoreCase(userRole)) return true;
+            if (user.hasRole(r)) return true;
+            if ("Designer".equalsIgnoreCase(r) && (user.isDesigner() || user.hasRole("Designer"))) return true;
+            if ("Reviewer".equalsIgnoreCase(r) && (user.isReviewer() || user.hasRole("Reviewer"))) return true;
+        }
         return false;
     }
 }
