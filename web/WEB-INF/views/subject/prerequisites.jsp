@@ -133,7 +133,7 @@
                         <c:otherwise>
                             <c:forEach var="sy" items="${syllabuses}" varStatus="st">
                                 <tr>
-                                    <td>${st.count}</td>
+                                    <td>${(currentPage - 1) * pageSize + st.count}</td>
                                     <td><span class="text-muted" style="font-size:0.8rem;">${sy.syllabusId}</span></td>
                                     <td><code style="color:var(--accent);">${sy.subject.subjectCode}</code></td>
                                     <td class="align-middle">${sy.syllabusName}</td>
@@ -167,6 +167,7 @@
                 </tbody>
             </table>
         </div>
+        <%@ include file="/WEB-INF/views/common/pagination.jsp" %>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

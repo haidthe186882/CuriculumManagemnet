@@ -6,11 +6,13 @@ import dao.SyllabusDAO;
 import dao.DesignDAO;
 import model.User;
 import model.Syllabus;
+import util.PaginationHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet(name = "SubjectServlet", urlPatterns = {"/subject/*"})
 public class SubjectServlet extends HttpServlet {
@@ -147,9 +149,13 @@ public class SubjectServlet extends HttpServlet {
     private void showPrerequisites(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         String keyword = req.getParameter("keyword");
-        req.setAttribute("syllabuses", syllabusDAO.getSyllabusesWithSubjectsLearnAfter(keyword));
+        List<Syllabus> list = syllabusDAO.getSyllabusesWithSubjectsLearnAfter(keyword);
+        List<Syllabus> pageList = PaginationHelper.paginate(req, list);
+        req.setAttribute("syllabuses", pageList);
         req.setAttribute("allSubjects", subjectDAO.searchSubjects(null, null, null));
         req.setAttribute("keyword", keyword);
+        req.setAttribute("paginationPath", "/subject/prerequisites");
+        req.setAttribute("paginationQuery", PaginationHelper.buildQuery("keyword", keyword));
         req.getRequestDispatcher("/WEB-INF/views/subject/prerequisites.jsp").forward(req, res);
     }
 

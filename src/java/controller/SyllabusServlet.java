@@ -11,6 +11,7 @@ import model.SyllabusMaterial;
 import model.User;
 import util.SyllabusExcelHelper;
 import util.SyllabusExcelHelper.SyllabusImportData;
+import util.PaginationHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -469,9 +470,12 @@ public class SyllabusServlet extends HttpServlet {
         User user = getLoggedUser(req);
         boolean activeOnly = (user == null || hasRole(req, "Student", "Guest"));
         List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly);
-        req.setAttribute("syllabuses", list);
+        List<Syllabus> pageList = PaginationHelper.paginate(req, list);
+        req.setAttribute("syllabuses", pageList);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
+        req.setAttribute("paginationPath", "/syllabus/list");
+        req.setAttribute("paginationQuery", PaginationHelper.buildQuery("keyword", keyword, "status", status));
         req.getRequestDispatcher("/WEB-INF/views/syllabus/list.jsp").forward(req, res);
     }
 

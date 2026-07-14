@@ -111,7 +111,7 @@
                                 <c:otherwise>
                                     <c:forEach var="c" items="${curriculums}" varStatus="st">
                                         <tr class="curriculum-row">
-                                            <td class="text-muted">${st.count}</td>
+                                            <td class="text-muted">${(currentPage - 1) * pageSize + st.count}</td>
                                             <td><code style="color:var(--accent);background:rgba(255,106,0,0.06);padding:2px 8px;border-radius:4px;">${c.curriculumCode}</code></td>
                                             <td>
                                                 <div class="detail-value">${c.curriculumName}</div>
@@ -193,6 +193,7 @@
                         </tbody>
                     </table>
                 </div>
+                <%@ include file="/WEB-INF/views/common/pagination.jsp" %>
             </div>
         </div>
 
