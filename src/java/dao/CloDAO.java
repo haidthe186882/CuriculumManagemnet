@@ -33,6 +33,20 @@ public class CloDAO {
         return list;
     }
 
+    /** Xoa toan bo CLO cua 1 Syllabus, dung khi Designer luu lai noi dung (tranh trung lap). */
+    public boolean deleteCLOsBySyllabus(String syllabusId) {
+        String sql = "DELETE FROM CLOs WHERE Syllabus_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ps.executeUpdate();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /** Insert a single CLO */
     public boolean addCLO(CourseLearningOutcome clo) {
         String sql = "INSERT INTO CLOs (CLO_ID, Syllabus_ID, CLO_Code, Description) VALUES (NEWID(), ?, ?, ?)";
@@ -54,16 +68,5 @@ public class CloDAO {
             if (addCLO(clo)) count++;
         }
         return count;
-    }
-
-    /** Delete CLOs by syllabus (for UPSERT) */
-    public boolean deleteCLOsBySyllabus(String syllabusId) {
-        String sql = "DELETE FROM CLOs WHERE Syllabus_ID = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, syllabusId);
-            return ps.executeUpdate() >= 0;
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
     }
 }

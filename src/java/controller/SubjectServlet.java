@@ -3,19 +3,23 @@ package controller;
 import dao.MajorDAO;
 import dao.SubjectDAO;
 import dao.SyllabusDAO;
+import dao.DesignDAO;
 import model.User;
 import model.Syllabus;
+import util.PaginationHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet(name = "SubjectServlet", urlPatterns = {"/subject/*"})
 public class SubjectServlet extends HttpServlet {
 
     private final SubjectDAO subjectDAO = new SubjectDAO();
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
+    private final DesignDAO designDAO = new DesignDAO();
     private final MajorDAO majorDAO = new MajorDAO();
 
     @Override
@@ -27,6 +31,7 @@ public class SubjectServlet extends HttpServlet {
             case "/list":   showList(req, res);   break;
             case "/detail": showDetail(req, res); break;
             case "/create": showCreate(req, res); break;
+            case "/prerequisites": showPrerequisites(req, res); break;
             default: res.sendRedirect(req.getContextPath() + "/subject/list");
         }
     }
@@ -37,6 +42,8 @@ public class SubjectServlet extends HttpServlet {
         String action = req.getParameter("action");
         if ("create".equals(action))      doCreate(req, res);
         else if ("update".equals(action)) doUpdate(req, res);
+        else if ("addPrereq".equals(action)) doAddPrereq(req, res);
+        else if ("removePrereq".equals(action)) doRemovePrereq(req, res);
         else res.sendRedirect(req.getContextPath() + "/subject/list");
     }
 
@@ -58,8 +65,36 @@ public class SubjectServlet extends HttpServlet {
     private void showDetail(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         String id = req.getParameter("id");
-        req.setAttribute("subject", subjectDAO.getSubjectById(id));
-        req.setAttribute("syllabus", syllabusDAO.getSyllabusBySubject(id));
+        model.Subject subject = subjectDAO.getSubjectById(id);
+        Syllabus syllabus = syllabusDAO.getSyllabusBySubject(id);
+        req.setAttribute("subject", subject);
+        req.setAttribute("syllabus", syllabus);
+        req.setAttribute("prerequisites", subjectDAO.getPrerequisitesForSubject(id));
+
+        User user = getLoggedUser(req);
+        boolean canAddSyllabus = false;
+        if (user != null && subject != null) {
+            String primaryRole = user.getRole() != null ? user.getRole().getRoleName() : "";
+            boolean isAdmin = "Admin".equalsIgnoreCase(primaryRole) || user.hasRole("Admin");
+            if (isAdmin) {
+                canAddSyllabus = true;
+            } else {
+                // Chi cho phep Designer da duoc Admin gan (Syllabus_Assignments) vao
+                // chinh Syllabus cua Subject nay duoc them/sua noi dung.
+                String syllabusId = syllabus != null ? syllabus.getSyllabusId()
+                        : syllabusDAO.getActiveSyllabusIdBySubject(id);
+                canAddSyllabus = syllabusId != null
+                        && designDAO.isAssignedToSyllabus(user.getUserId(), syllabusId, "Designer");
+            }
+        }
+        // Chi cho phep them/sua noi dung khi Syllabus dang o trang thai Draft.
+        // Neu da Submit for Review (PendingReview) hoac da Approved, khoa lai —
+        // Designer khong duoc sua tiep cho den khi Reviewer Reject (tra ve Draft).
+        if (syllabus != null && syllabus.getStatusCode() != Syllabus.STATUS_DRAFT) {
+            canAddSyllabus = false;
+        }
+        req.setAttribute("canAddSyllabus", canAddSyllabus);
+
         req.getRequestDispatcher("/WEB-INF/views/subject/detail.jsp").forward(req, res);
     }
 
@@ -109,6 +144,37 @@ public class SubjectServlet extends HttpServlet {
         s.setDepartment(req.getParameter("department"));
         subjectDAO.updateSubject(s);
         res.sendRedirect(req.getContextPath() + "/subject/list?msg=updated");
+    }
+
+    private void showPrerequisites(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        String keyword = req.getParameter("keyword");
+        List<Syllabus> list = syllabusDAO.getSyllabusesWithSubjectsLearnAfter(keyword);
+        List<Syllabus> pageList = PaginationHelper.paginate(req, list);
+        req.setAttribute("syllabuses", pageList);
+        req.setAttribute("allSubjects", subjectDAO.searchSubjects(null, null, null));
+        req.setAttribute("keyword", keyword);
+        req.setAttribute("paginationPath", "/subject/prerequisites");
+        req.setAttribute("paginationQuery", PaginationHelper.buildQuery("keyword", keyword));
+        req.getRequestDispatcher("/WEB-INF/views/subject/prerequisites.jsp").forward(req, res);
+    }
+
+    private void doAddPrereq(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+        String subjectId = req.getParameter("subjectId");
+        String requiredSubjectId = req.getParameter("requiredSubjectId");
+        subjectDAO.addPrerequisite(subjectId, requiredSubjectId);
+        res.sendRedirect(req.getContextPath() + "/subject/prerequisites");
+    }
+
+    private void doRemovePrereq(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Designer", "Admin")) return;
+        String subjectId = req.getParameter("subjectId");
+        String requiredSubjectId = req.getParameter("requiredSubjectId");
+        subjectDAO.removePrerequisite(subjectId, requiredSubjectId);
+        res.sendRedirect(req.getContextPath() + "/subject/prerequisites");
     }
 
     // ===== Helpers =====
