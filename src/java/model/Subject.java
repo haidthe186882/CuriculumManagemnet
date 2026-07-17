@@ -9,7 +9,7 @@ public class Subject {
     private String description;
     private String department;
     private String status;
-
+    private int semesterNo;
     public Subject() {}
 
     public String getSubjectId() { return subjectId; }
@@ -31,4 +31,6 @@ public class Subject {
     private String syllabusId;
     public String getSyllabusId() { return syllabusId; }
     public void setSyllabusId(String syllabusId) { this.syllabusId = syllabusId; }
+    public int getSemesterNo() {return semesterNo;}
+    public void setSemesterNo(int semesterNo) {this.semesterNo = semesterNo;}
 }
