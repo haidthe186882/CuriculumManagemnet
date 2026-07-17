@@ -37,6 +37,17 @@
         <form method="post" action="${pageContext.request.contextPath}/syllabus/list" id="syllabusCreateForm"
             enctype="multipart/form-data">
             <input type="hidden" name="action" value="create">
+            <c:if test="${mappingOnlyMode}">
+                <input type="hidden" name="mappingOnlySave" id="mappingOnlySave" value="true">
+                <input type="hidden" name="mappingOnlyCurriculumId" value="${mappingOnlyCurriculumId}">
+                <div class="alert d-flex align-items-center mb-3"
+                    style="border-radius:10px; font-size:0.9rem; background:rgba(255,106,0,0.08); border:1px solid rgba(255,106,0,0.25); color:#9a3412;">
+                    <i class="bi bi-lock me-2" style="font-size:1.1rem;"></i>
+                    This syllabus has already been Approved and is shared with another curriculum. You can only
+                    tick the <strong>CLO &rarr; PLO mapping</strong> for this curriculum below — all other fields
+                    are locked and shown for reference only.
+                </div>
+            </c:if>
 
             <!-- Server-side error/success messages -->
             <c:if test="${not empty error}">
@@ -70,6 +81,14 @@
                         style="font-weight:600; font-size:0.9rem; color:#374151; border-radius:10px 10px 0 0;">
                         <i class="bi bi-mortarboard me-1"></i>CLOs <span class="badge bg-secondary ms-1"
                             id="cloCount">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-mapping" data-bs-toggle="tab" data-bs-target="#pane-mapping"
+                        type="button" role="tab"
+                        style="font-weight:600; font-size:0.9rem; color:#374151; border-radius:10px 10px 0 0;">
+                        <i class="bi bi-diagram-3 me-1"></i>Mapping <span class="badge bg-secondary ms-1"
+                            id="mappingCount">${empty mappingCurricula ? 0 : mappingCurricula.size()}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -114,6 +133,9 @@
                             <c:if test="${not empty lockedSubjectCode}">readonly</c:if>>
                         <c:if test="${not empty lockedSubjectCode}">
                             <input type="hidden" name="lockedSubjectCode" id="lockedSubjectCode" value="${lockedSubjectCode}">
+                            <c:if test="${not empty prefillJson}">
+                                <script type="application/json" id="prefillDataJson">${prefillJson}</script>
+                            </c:if>
                             <div class="mt-1" style="font-size:0.8rem; color:#92400e;">
                                 <i class="bi bi-lock me-1"></i>Locked to subject <strong>${lockedSubjectCode}</strong>.
                                 An imported Excel file with a different subject code will be rejected.
@@ -224,6 +246,75 @@
                         <i class="bi bi-inbox" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
                         No CLOs added yet. Click "Add CLO" or import from Excel.
                     </div>
+                </div>
+
+                <!-- ===== TAB: CLO - PLO Mapping ===== -->
+                <div class="tab-pane fade" id="pane-mapping" role="tabpanel">
+                    <h6 class="mb-3" style="font-weight:700;">Mapping of CLOs to PLOs</h6>
+                    <c:choose>
+                        <c:when test="${empty lockedSubjectCode}">
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-lock" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+                                Open this form from a specific subject's "Add Syllabus" button first
+                                (so the subject code is locked) to configure PLO mapping here.
+                            </div>
+                        </c:when>
+                        <c:when test="${empty mappingCurricula}">
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-diagram-3" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+                                Subject <strong>${lockedSubjectCode}</strong> is not linked to any curriculum yet,
+                                so there is no PLO set to map against.
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="mb-2" style="font-size:0.85rem; color:#6b7280;">
+                                <i class="bi bi-info-circle me-1"></i>Add CLOs in the "CLOs" tab first — the rows below
+                                follow the CLO codes you entered there. Tick a box where a CLO supports a PLO.
+                            </div>
+                            <c:forEach var="table" items="${mappingCurricula}">
+                                <input type="hidden" name="mappingCurriculumIds[]" value="${table.curriculumId}"/>
+                                <div class="mapping-block mb-4"
+                                     data-plo-ids='[<c:forEach var="plo" items="${table.plos}" varStatus="pst">"${plo.ploId}"<c:if test="${!pst.last}">,</c:if></c:forEach>]'
+                                     data-plo-codes='[<c:forEach var="plo" items="${table.plos}" varStatus="pst">"${plo.ploCode}"<c:if test="${!pst.last}">,</c:if></c:forEach>]'>
+                                    <div class="p-2 mb-1" style="background:var(--accent); border-radius:8px 8px 0 0;">
+                                        <strong style="color:#fff; font-size:0.85rem;">
+                                            Curriculum ${table.curriculumCode} — ${table.curriculumName}
+                                        </strong>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-dark-custom mb-0 text-center">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:left; background-color:var(--accent)!important; color:#fff!important; text-transform:none;">CLO</th>
+                                                    <c:choose>
+                                                        <c:when test="${empty table.plos}">
+                                                            <th style="background-color:var(--accent)!important; color:#fff!important; text-transform:none;">
+                                                                No PLO defined for this curriculum
+                                                            </th>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:forEach var="plo" items="${table.plos}">
+                                                                <th style="background-color:var(--accent)!important; color:#fff!important; text-transform:none;" title="${plo.description}">
+                                                                    ${plo.ploCode}
+                                                                </th>
+                                                            </c:forEach>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="${(empty table.plos ? 1 : table.plos.size()) + 1}" class="text-center py-3 text-muted">
+                                                        Add CLOs first in the CLOs tab.
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
                 <!-- ===== TAB 3: SESSIONS ===== -->
@@ -771,6 +862,27 @@
                     document.getElementById('materialCards').innerHTML = '';
                     data.materials.forEach(m => addMaterialRow(m.description, m.author, m.publisher, m.edition, m.isbn, m.link, m.notes, m.isMain));
                 }
+
+                // CLO - PLO Mapping: tu dong tick theo du lieu doc duoc trong sheet
+                // "CLO-PLO Mapping" cua file Excel (khop theo PLO_Code, vi luc nay
+                // CLO chua co PLO_ID nao ca, chi co PLO cua Curriculum la co san ID that).
+                mappingState = {};
+                if (data.cloPloMapping) {
+                    document.querySelectorAll('.mapping-block').forEach(function (block) {
+                        var ids = [], codes = [];
+                        try { ids = JSON.parse(block.getAttribute('data-plo-ids') || '[]'); } catch (e) { ids = []; }
+                        try { codes = JSON.parse(block.getAttribute('data-plo-codes') || '[]'); } catch (e) { codes = []; }
+                        var codeToId = {};
+                        codes.forEach(function (code, idx) { codeToId[(code || '').toUpperCase()] = ids[idx]; });
+                        Object.keys(data.cloPloMapping).forEach(function (cloCode) {
+                            (data.cloPloMapping[cloCode] || []).forEach(function (ploCode) {
+                                var ploId = codeToId[(ploCode || '').toUpperCase()];
+                                if (ploId) toggleMappingCheck(ploId, cloCode, true);
+                            });
+                        });
+                    });
+                }
+                renderMappingTables();
             }
 
             /* ====== CLO DYNAMIC TABLE ====== */
@@ -928,12 +1040,111 @@
                 document.getElementById('sessionEmpty').style.display = sessionCount > 0 ? 'none' : 'block';
                 document.getElementById('materialEmpty').style.display = matCount > 0 ? 'none' : 'block';
                 document.getElementById('docEmpty').style.display = docCount > 0 ? 'none' : 'block';
+
+                renderMappingTables();
             }
 
             function escHtml(str) {
                 if (!str) return '';
                 return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             }
+
+            /* ====== CLO - PLO MAPPING TAB ====== */
+            // mappingState[ploId] = Set cua cac CLO_Code dang duoc tick cho PLO do.
+            // Duy tri rieng vi bang duoc ve lai (re-render) moi khi danh sach CLO thay doi.
+            var mappingState = {};
+
+            function toggleMappingCheck(ploId, cloCode, checked) {
+                if (!mappingState[ploId]) mappingState[ploId] = {};
+                if (checked) mappingState[ploId][cloCode] = true;
+                else delete mappingState[ploId][cloCode];
+            }
+
+            function getCurrentCloCodes() {
+                return Array.from(document.querySelectorAll('#cloBody input[name="cloCode[]"]'))
+                    .map(function (i) { return i.value.trim(); })
+                    .filter(function (v) { return v.length > 0; });
+            }
+
+            function renderMappingTables() {
+                var codes = getCurrentCloCodes();
+                document.querySelectorAll('.mapping-block').forEach(function (block) {
+                    var tbody = block.querySelector('tbody');
+                    if (!tbody) return;
+                    var ploIds = [];
+                    try { ploIds = JSON.parse(block.getAttribute('data-plo-ids') || '[]'); } catch (e) { ploIds = []; }
+                    tbody.innerHTML = '';
+                    if (codes.length === 0) {
+                        var colspan = (ploIds.length || 1) + 1;
+                        tbody.innerHTML = '<tr><td colspan="' + colspan + '" class="text-center py-3 text-muted">Add CLOs first in the CLOs tab.</td></tr>';
+                        return;
+                    }
+                    codes.forEach(function (code) {
+                        var row = document.createElement('tr');
+                        var cells = '<td style="text-align:left;"><strong style="color:#111827;">' + escHtml(code) + '</strong></td>';
+                        ploIds.forEach(function (ploId) {
+                            var isChecked = !!(mappingState[ploId] && mappingState[ploId][code]);
+                            cells += '<td><input type="checkbox" name="mapping.' + ploId + '" value="' + escHtml(code) + '"'
+                                + (isChecked ? ' checked' : '')
+                                + ' onchange="toggleMappingCheck(\'' + ploId + '\', this.value, this.checked)"></td>';
+                        });
+                        row.innerHTML = cells;
+                        tbody.appendChild(row);
+                    });
+                });
+            }
+
+            // Sua lai ma CLO ngay trong tab CLOs cung phai lam moi tab Mapping (blur, khong
+            // phai moi phim go, de tranh giat lien tuc trong luc dang go).
+            document.addEventListener('DOMContentLoaded', function () {
+                var cloBody = document.getElementById('cloBody');
+                if (cloBody) {
+                    cloBody.addEventListener('blur', function (e) {
+                        if (e.target && e.target.name === 'cloCode[]') renderMappingTables();
+                    }, true);
+                }
+
+                // Prefill khi vao sua 1 Syllabus (Draft) da co san CLO/Session/Material/mapping
+                // trong DB - tai su dung dung ham fillFormFromImport() von dung cho "Load Data
+                // From Excel", chi khac nguon du lieu la tu server thay vi tu file Excel do
+                // nguoi dung upload (xem prefillJson duoc set trong SyllabusServlet#showCreate).
+                var prefillEl = document.getElementById('prefillDataJson');
+                if (prefillEl && prefillEl.textContent.trim()) {
+                    try {
+                        var prefillData = JSON.parse(prefillEl.textContent);
+                        fillFormFromImport(prefillData);
+                    } catch (e) {
+                        console.error('Prefill parse error:', e);
+                    }
+                }
+
+                renderMappingTables();
+
+                // Che do "CHI SUA MAPPING" (Syllabus da Approved, dang mapping bo sung cho 1
+                // Curriculum khac dung chung Subject - xem mappingOnlyMode ben Java). Khoa TOAN
+                // BO field/nut tren form, CHI de lai checkbox trong bang Mapping la sua duoc.
+                if (document.getElementById('mappingOnlySave')) {
+                    var form = document.getElementById('syllabusCreateForm');
+                    // Khoa moi input/textarea/select KHONG nam trong .mapping-block
+                    form.querySelectorAll('input, textarea, select, button').forEach(function (el) {
+                        if (el.closest('.mapping-block')) return; // giu nguyen checkbox mapping
+                        if (el.classList.contains('nav-link')) return; // giu nut chuyen tab de con xem duoc cac tab khac
+                        if (el.id === 'subjectCode') return; // BAT BUOC gui len (server can de xac dinh Subject) - da readonly san roi nen van "khoa" ve mat UI
+                        if (el.type === 'hidden' || el.type === 'submit') return; // giu hidden field + nut Save
+                        el.setAttribute('disabled', 'disabled');
+                    });
+                    // An hoan toan card "Import from Excel" va cac nut them/xoa dong (CLO/Session/Material)
+                    document.querySelectorAll('.card.mb-4').forEach(function (card) {
+                        if (card.querySelector('#btnImportExcel')) card.style.display = 'none';
+                    });
+                    document.querySelectorAll('[onclick^="addCloRow"], [onclick^="addSessionRow"], [onclick^="addMaterialRow"], [onclick*="removeRow"], [onclick*="removeClo"], [onclick*="removeSession"], [onclick*="removeMaterial"]').forEach(function (btn) {
+                        btn.style.display = 'none';
+                    });
+                    // Nhay thang toi tab Mapping cho de thao tac
+                    var mappingTabBtn = document.getElementById('tab-mapping');
+                    if (mappingTabBtn && mappingTabBtn.click) mappingTabBtn.click();
+                }
+            });
 
             /* ====== FORM VALIDATION ====== */
             /** Check subject code against datalist, returns {found, name} */

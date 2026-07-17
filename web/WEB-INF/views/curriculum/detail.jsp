@@ -85,11 +85,40 @@
     <c:if test="${not empty successMessage}">
         <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>${successMessage}</div>
     </c:if>
+    <c:if test="${not empty param.success}">
+        <div class="mb-3" style="background: rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding: 0.8rem 1rem; color:#047857;">
+            <i class="bi bi-check-circle me-1"></i>${param.success}
+        </div>
+    </c:if>
+    <c:if test="${not empty param.error}">
+        <div class="mb-3" style="background: rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:10px; padding: 0.8rem 1rem; color:#b91c1c;">
+            <i class="bi bi-exclamation-triangle me-1"></i>${param.error}
+        </div>
+    </c:if>
     <c:if test="${not canPublish and not curriculum.isPublic and not empty incompleteSubjects}">
         <div class="mb-3" style="background: rgba(255,206,102,0.12); border:1px solid rgba(255,206,102,0.3); border-radius:10px; padding: 0.8rem 1rem; color:#b45309;">
             <i class="bi bi-hourglass-split me-1"></i>
-            ${incompleteSubjects.size()} subject(s) still need Design/Review before this curriculum can be published:
-            <c:forEach var="is" items="${incompleteSubjects}" varStatus="ist">${is.subjectCode}<c:if test="${!ist.last}">, </c:if></c:forEach>
+            ${incompleteSubjects.size()} subject(s) still need action before this curriculum can be published:
+            <ul class="mb-0 mt-1" style="padding-left:1.2rem;">
+                <c:forEach var="is" items="${incompleteSubjects}">
+                    <li>
+                        <c:choose>
+                            <c:when test="${is.needsPloMapping}">
+                                <strong>${is.subjectCode}</strong> — Syllabus already Approved (reused from another
+                                curriculum), but its CLOs are not mapped to this curriculum's PLOs yet.
+                                <c:url var="fixMappingUrl" value="/syllabus/create">
+                                    <c:param name="subjectCode" value="${is.subjectCode}"/>
+                                    <c:param name="curriculumId" value="${curriculum.curriculumId}"/>
+                                </c:url>
+                                <a href="${fixMappingUrl}">Map CLOs to PLOs now</a>
+                            </c:when>
+                            <c:otherwise>
+                                <strong>${is.subjectCode}</strong> — Design/Review pending.
+                            </c:otherwise>
+                        </c:choose>
+                    </li>
+                </c:forEach>
+            </ul>
         </div>
     </c:if>
 
@@ -238,7 +267,7 @@
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
-                                <tr class="subject-row" data-detail-url="${pageContext.request.contextPath}/subject/detail?id=${cs.subject.subjectId}" style="cursor: pointer;">
+                                <tr class="subject-row" data-detail-url="${pageContext.request.contextPath}/subject/detail?id=${cs.subject.subjectId}&curriculumId=${curriculum.curriculumId}" style="cursor: pointer;">
                                     <td>${st.count}</td>
                                     <td><code style="color:var(--accent);">${cs.subject.subjectCode}</code></td>
                                     <td>${cs.subject.subjectName}</td>

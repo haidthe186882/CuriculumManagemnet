@@ -323,13 +323,30 @@ public class SubjectDAO {
      */
     public List<Subject> getIncompleteSubjects(String curriculumId) {
         List<Subject> list = new ArrayList<>();
-        String sql = "SELECT s.*, sy.Syllabus_ID, sy.Status AS Syllabus_Status " +
+        // "Hoan thanh" cho 1 Curriculum cu the nghia la: co Syllabus DA Approved
+        // (Status = 2) VA (neu Curriculum nay co PLO va Syllabus co CLO) thi it
+        // nhat 1 cap CLO-PLO da duoc mapping RIENG cho Curriculum nay. Ly do:
+        // Subject co the dung chung 1 Syllabus da Approved tu 1 Curriculum khac
+        // (tai su dung theo Subject_Code trung nhau khi import Excel) nhung moi
+        // Curriculum co bo PLO khac nhau, nen KHONG the coi la xong neu chua
+        // mapping lai CLO-PLO cho Curriculum nay.
+        String needsMappingExpr =
+                "(sy.Status = 2 " +
+                "AND EXISTS (SELECT 1 FROM PLOs p2 WHERE p2.Curriculum_ID = cs.Curriculum_ID) " +
+                "AND EXISTS (SELECT 1 FROM CLOs c2 WHERE c2.Syllabus_ID = sy.Syllabus_ID) " +
+                "AND NOT EXISTS ( " +
+                "      SELECT 1 FROM PLO_CLO_Mappings m " +
+                "      JOIN CLOs c ON m.CLO_ID = c.CLO_ID " +
+                "      JOIN PLOs p ON m.PLO_ID = p.PLO_ID " +
+                "      WHERE c.Syllabus_ID = sy.Syllabus_ID AND p.Curriculum_ID = cs.Curriculum_ID))";
+        String sql = "SELECT s.*, sy.Syllabus_ID, sy.Status AS Syllabus_Status, " +
+                     "  CASE WHEN " + needsMappingExpr + " THEN 1 ELSE 0 END AS Needs_Plo_Mapping " +
                      "FROM Curriculum_Subjects cs " +
                      "JOIN Subjects s ON cs.Subject_ID = s.Subject_ID " +
                      "OUTER APPLY (SELECT TOP 1 sy2.Syllabus_ID, sy2.Status FROM Syllabuses sy2 " +
                      "              WHERE sy2.Subject_ID = s.Subject_ID AND sy2.Is_Active = 1 " +
                      "              ORDER BY sy2.Status DESC, sy2.Syllabus_ID) sy " +
-                     "WHERE cs.Curriculum_ID = ? AND (sy.Syllabus_ID IS NULL OR sy.Status <> 2) " +
+                     "WHERE cs.Curriculum_ID = ? AND (sy.Syllabus_ID IS NULL OR sy.Status <> 2 OR " + needsMappingExpr + ") " +
                      "ORDER BY s.Subject_Code";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -339,6 +356,7 @@ public class SubjectDAO {
                 Subject s = mapSubject(rs);
                 try { s.setSyllabusId(rs.getString("Syllabus_ID")); } catch (SQLException ignored) {}
                 try { s.setSyllabusStatusCode(rs.getInt("Syllabus_Status")); } catch (SQLException ignored) {}
+                try { s.setNeedsPloMapping(rs.getInt("Needs_Plo_Mapping") == 1); } catch (SQLException ignored) {}
                 list.add(s);
             }
         } catch (Exception e) {

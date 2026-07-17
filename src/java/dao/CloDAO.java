@@ -49,13 +49,17 @@ public class CloDAO {
 
     /** Insert a single CLO */
     public boolean addCLO(CourseLearningOutcome clo) {
-        String sql = "INSERT INTO CLOs (CLO_ID, Syllabus_ID, CLO_Code, Description) VALUES (NEWID(), ?, ?, ?)";
+        String id = clo.getCloId() != null ? clo.getCloId() : java.util.UUID.randomUUID().toString();
+        String sql = "INSERT INTO CLOs (CLO_ID, Syllabus_ID, CLO_Code, Description) VALUES (?, ?, ?, ?)";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, clo.getSyllabusId());
-            ps.setString(2, clo.getCloCode());
-            ps.setString(3, clo.getDescription());
-            return ps.executeUpdate() > 0;
+            ps.setString(1, id);
+            ps.setString(2, clo.getSyllabusId());
+            ps.setString(3, clo.getCloCode());
+            ps.setString(4, clo.getDescription());
+            boolean ok = ps.executeUpdate() > 0;
+            if (ok) clo.setCloId(id);
+            return ok;
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
