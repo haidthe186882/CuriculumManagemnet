@@ -101,11 +101,19 @@ public class SubjectDAO {
     public List<CurriculumSubject> getSubjectsByCurriculum(String curriculumId) {
         List<CurriculumSubject> list = new ArrayList<>();
         String sql = "SELECT cs.*, s.Subject_Code, s.Subject_Name, s.English_Name, s.Credits, "
-                   + "s.Description, s.Is_Active, m.Major_Name AS Department, sy.Syllabus_ID "
+                   + "s.Description, s.Is_Active, m.Major_Name AS Department, sy.Syllabus_ID, sy.Status AS Syllabus_Status, "
+                   + "(SELECT STUFF((SELECT ', ' + rs.Subject_Code FROM Subject_Prerequisites sp "
+                   + " JOIN Subjects rs ON sp.Required_Subject_ID = rs.Subject_ID "
+                   + " WHERE sp.Subject_ID = s.Subject_ID FOR XML PATH('')), 1, 2, '')) AS Prerequisite_Codes "
                    + "FROM Curriculum_Subjects cs "
                    + "JOIN Subjects s ON cs.Subject_ID = s.Subject_ID "
                    + "LEFT JOIN Majors m ON s.Major_ID = m.Major_ID "
-                   + "LEFT JOIN Syllabuses sy ON s.Subject_ID = sy.Subject_ID AND sy.Is_Active = 1 "
+                   // Chi lay DUY NHAT 1 Syllabus dai dien cho moi Subject (uu tien Status cao nhat)
+                   // de tranh nhan doi dong khi 1 Subject lo co > 1 Syllabus dang Is_Active=1
+                   // (du lieu cu truoc khi fix trung lap syllabus).
+                   + "OUTER APPLY (SELECT TOP 1 sy2.Syllabus_ID, sy2.Status FROM Syllabuses sy2 "
+                   + "              WHERE sy2.Subject_ID = s.Subject_ID AND sy2.Is_Active = 1 "
+                   + "              ORDER BY sy2.Status DESC, sy2.Syllabus_ID) sy "
                    + "WHERE cs.Curriculum_ID = ? ORDER BY cs.Semester_No, s.Subject_Code";
         try (Connection con = new DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -120,6 +128,8 @@ public class SubjectDAO {
                 cs.setMandatory(rs.getBoolean("Is_Mandatory"));
                 Subject s = mapSubject(rs);
                 try { s.setSyllabusId(rs.getString("Syllabus_ID")); } catch (SQLException ignored) {}
+                try { s.setSyllabusStatusCode(rs.getInt("Syllabus_Status")); } catch (SQLException ignored) {}
+                try { s.setPrerequisiteCodes(rs.getString("Prerequisite_Codes")); } catch (SQLException ignored) {}
                 cs.setSubject(s);
                 list.add(cs);
             }
@@ -244,6 +254,99 @@ public class SubjectDAO {
      * Used during Excel import so subjects that exist but are inactive
      * can still be linked to a curriculum.
      */
+    /**
+     * Tao 1 Subject moi (chua tung ton tai trong he thong) khi import Excel
+     * gap 1 Subject_Code chua co. Subject nay se can duoc Admin gan Designer +
+     * Reviewer va thiet ke Syllabus truoc khi Curriculum chua no co the Publish.
+     * Tra ve Subject_ID moi tao, hoac null neu that bai.
+     */
+    public String createDraftSubject(String subjectCode, String subjectName, String englishName,
+                                      int credits, String majorId) {
+        String newId = java.util.UUID.randomUUID().toString();
+        String sql = "INSERT INTO Subjects (Subject_ID, Major_ID, Subject_Code, Subject_Name, English_Name, Credits, Description, Is_Active) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, NULL, 1)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, newId);
+            if (majorId != null) ps.setString(2, majorId); else ps.setNull(2, Types.CHAR);
+            ps.setString(3, subjectCode.trim());
+            ps.setString(4, subjectName != null ? subjectName.trim() : subjectCode.trim());
+            ps.setString(5, englishName);
+            ps.setInt(6, Math.max(credits, 0));
+            int rows = ps.executeUpdate();
+            return rows > 0 ? newId : null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Ghi nhan 1 quan he tien quyet (Subject_Prerequisites) tu ma mon hoc,
+     * bo qua neu 1 trong 2 ma khong ton tai hoac da co san. Dung trong
+     * luong import Excel (cot PreRequisite). Khong nem loi ra ngoai (best-effort).
+     */
+    public void addPrerequisiteByCode(String subjectCode, String requiredSubjectCode) {
+        if (subjectCode == null || requiredSubjectCode == null) return;
+        String code = subjectCode.trim();
+        String reqCode = requiredSubjectCode.trim();
+        if (code.isEmpty() || reqCode.isEmpty() || "none".equalsIgnoreCase(reqCode)) return;
+
+        String subjectId = findSubjectIdByCodeAny(code);
+        String requiredId = findSubjectIdByCodeAny(reqCode);
+        if (subjectId == null || requiredId == null) return;
+
+        String checkSql = "SELECT 1 FROM Subject_Prerequisites WHERE Subject_ID = ? AND Required_Subject_ID = ?";
+        String insertSql = "INSERT INTO Subject_Prerequisites (Subject_Prerequisite_ID, Subject_ID, Required_Subject_ID) VALUES (?, ?, ?)";
+        try (Connection con = new DBContext().getConnection()) {
+            try (PreparedStatement check = con.prepareStatement(checkSql)) {
+                check.setString(1, subjectId);
+                check.setString(2, requiredId);
+                if (check.executeQuery().next()) return; // already exists
+            }
+            try (PreparedStatement ins = con.prepareStatement(insertSql)) {
+                ins.setString(1, java.util.UUID.randomUUID().toString());
+                ins.setString(2, subjectId);
+                ins.setString(3, requiredId);
+                ins.executeUpdate();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Danh sach cac Subject trong 1 Curriculum ma VAN CHUA "hoan thanh"
+     * (chua co Syllabus, hoac Syllabus chua duoc Reviewer Approve).
+     * Dung de: (1) chan nut Publish khi danh sach nay khong rong,
+     * (2) hien thi cho Admin biet con thieu subject nao.
+     */
+    public List<Subject> getIncompleteSubjects(String curriculumId) {
+        List<Subject> list = new ArrayList<>();
+        String sql = "SELECT s.*, sy.Syllabus_ID, sy.Status AS Syllabus_Status " +
+                     "FROM Curriculum_Subjects cs " +
+                     "JOIN Subjects s ON cs.Subject_ID = s.Subject_ID " +
+                     "OUTER APPLY (SELECT TOP 1 sy2.Syllabus_ID, sy2.Status FROM Syllabuses sy2 " +
+                     "              WHERE sy2.Subject_ID = s.Subject_ID AND sy2.Is_Active = 1 " +
+                     "              ORDER BY sy2.Status DESC, sy2.Syllabus_ID) sy " +
+                     "WHERE cs.Curriculum_ID = ? AND (sy.Syllabus_ID IS NULL OR sy.Status <> 2) " +
+                     "ORDER BY s.Subject_Code";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Subject s = mapSubject(rs);
+                try { s.setSyllabusId(rs.getString("Syllabus_ID")); } catch (SQLException ignored) {}
+                try { s.setSyllabusStatusCode(rs.getInt("Syllabus_Status")); } catch (SQLException ignored) {}
+                list.add(s);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public String findSubjectIdByCodeAny(String subjectCode) {
         String sql = "SELECT Subject_ID FROM Subjects WHERE UPPER(Subject_Code) = UPPER(?)";
         try (Connection con = new DBContext().getConnection();
@@ -255,5 +358,59 @@ public class SubjectDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean addPrerequisite(String subjectId, String requiredSubjectId) {
+        if (subjectId == null || requiredSubjectId == null || subjectId.equals(requiredSubjectId)) return false;
+        String sql = "INSERT INTO Subject_Prerequisites (Subject_Prerequisite_ID, Subject_ID, Required_Subject_ID) VALUES (NEWID(), ?, ?)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            ps.setString(2, requiredSubjectId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean removePrerequisite(String subjectId, String requiredSubjectId) {
+        if (subjectId == null || requiredSubjectId == null) return false;
+        String sql = "DELETE FROM Subject_Prerequisites WHERE Subject_ID = ? AND Required_Subject_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            ps.setString(2, requiredSubjectId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<Subject> getPrerequisitesForSubject(String subjectId) {
+        List<Subject> list = new ArrayList<>();
+        String sql = "SELECT req.Subject_ID, req.Subject_Code, req.Subject_Name, req.Credits "
+                   + "FROM Subject_Prerequisites sp "
+                   + "JOIN Subjects req ON sp.Required_Subject_ID = req.Subject_ID "
+                   + "WHERE sp.Subject_ID = ? AND req.Is_Active = 1 "
+                   + "ORDER BY req.Subject_Code";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Subject req = new Subject();
+                    req.setSubjectId(rs.getString("Subject_ID"));
+                    req.setSubjectCode(rs.getString("Subject_Code"));
+                    req.setSubjectName(rs.getString("Subject_Name"));
+                    req.setCredits(rs.getInt("Credits"));
+                    list.add(req);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }
