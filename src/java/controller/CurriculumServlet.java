@@ -16,6 +16,7 @@ import util.ExcelHelper;
 import util.ExcelHelper.ImportResult;
 import util.ExcelHelper.PloRow;
 import util.ExcelHelper.SubjectRow;
+import util.PaginationHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -156,7 +157,8 @@ public class CurriculumServlet extends HttpServlet {
 
         // Gọi hàm tìm kiếm truyền bộ lọc status và majorId sang cho DAO
         List<Curriculum> list = curriculumDAO.searchCurriculums(keyword, status, majorId, publicOnly);
-        req.setAttribute("curriculums", list);
+        List<Curriculum> pageList = PaginationHelper.paginate(req, list);
+        req.setAttribute("curriculums", pageList);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
         req.setAttribute("selectedMajorId", majorId);
@@ -164,6 +166,9 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("totalCount", list.size());
         req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
         req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
+        req.setAttribute("paginationPath", "/curriculum/list");
+        req.setAttribute("paginationQuery", PaginationHelper.buildQuery(
+                "keyword", keyword, "status", status, "majorId", majorId));
         forward(req, res, "/WEB-INF/views/curriculum/list.jsp");
     }
 

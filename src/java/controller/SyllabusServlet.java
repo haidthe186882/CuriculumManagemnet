@@ -2,7 +2,6 @@ package controller;
 
 import dao.SyllabusDAO;
 import dao.SubjectDAO;
-import dao.DesignDAO;
 import dao.CloDAO;
 import dao.SessionDAO;
 import model.CourseLearningOutcome;
@@ -12,6 +11,7 @@ import model.SyllabusMaterial;
 import model.User;
 import util.SyllabusExcelHelper;
 import util.SyllabusExcelHelper.SyllabusImportData;
+import util.PaginationHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -39,7 +39,6 @@ public class SyllabusServlet extends HttpServlet {
 
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
     private final SubjectDAO  subjectDAO  = new SubjectDAO();
-    private final DesignDAO   designDAO   = new DesignDAO();
     private final CloDAO      cloDAO      = new CloDAO();
     private final SessionDAO  sessionDAO  = new SessionDAO();
     private final dao.CurriculumDAO curriculumDAO = new dao.CurriculumDAO();
@@ -585,16 +584,13 @@ public class SyllabusServlet extends HttpServlet {
         String status  = req.getParameter("status");
         User user = getLoggedUser(req);
         boolean activeOnly = (user == null || hasRole(req, "Student", "Guest"));
-        // Chi Admin duoc xem Syllabus con dang Draft/Pending Review (chua hoan thanh).
-        // Tat ca role khac (Designer, Reviewer, Lecturer, Student, Guest...) trong man hinh
-        // danh sach chung nay chi thay Syllabus da Approved. Designer/Reviewer van xem duoc
-        // ban nhap cua rieng minh qua "My Assignments" / "Review" (khong bi anh huong).
-        boolean isAdmin = hasRole(req, "Admin");
-        boolean approvedOnly = !isAdmin;
-        List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly, approvedOnly);
-        req.setAttribute("syllabuses", list);
+        List<Syllabus> list = syllabusDAO.searchSyllabuses(keyword, status, activeOnly);
+        List<Syllabus> pageList = PaginationHelper.paginate(req, list);
+        req.setAttribute("syllabuses", pageList);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
+        req.setAttribute("paginationPath", "/syllabus/list");
+        req.setAttribute("paginationQuery", PaginationHelper.buildQuery("keyword", keyword, "status", status));
         req.getRequestDispatcher("/WEB-INF/views/syllabus/list.jsp").forward(req, res);
     }
 

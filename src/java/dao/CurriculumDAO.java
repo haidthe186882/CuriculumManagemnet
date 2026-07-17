@@ -76,9 +76,9 @@ public class CurriculumDAO {
                 "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
                 + "LEFT JOIN Majors m ON c.Major_ID = m.Major_ID WHERE 1=1");
         
-        // Nếu là khách/học sinh, chỉ xem các Curriculum đã Publish (Is_Public = 1) và đang kích hoạt (Is_Active = 1)
+        // Nếu là khách/học sinh, chỉ xem các Curriculum đã Approved (Status = 1) và đang kích hoạt (Is_Active = 1)
         if (publicOnly) {
-            sql.append(" AND c.Is_Public = 1 AND c.Is_Active = 1");
+            sql.append(" AND c.Status = 1 AND c.Is_Active = 1");
         } else if (status != null && !status.trim().isEmpty()) {
             sql.append(" AND c.Status = ?");
         }
