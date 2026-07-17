@@ -9,7 +9,7 @@ public class Subject {
     private String description;
     private String department;
     private String status;
-
+    private int semesterNo;
     public Subject() {}
 
     public String getSubjectId() { return subjectId; }
@@ -31,6 +31,8 @@ public class Subject {
     private String syllabusId;
     public String getSyllabusId() { return syllabusId; }
     public void setSyllabusId(String syllabusId) { this.syllabusId = syllabusId; }
+    public int getSemesterNo() {return semesterNo;}
+    public void setSemesterNo(int semesterNo) {this.semesterNo = semesterNo;}
 
     // Trang thai quy trinh thiet ke cua Syllabus gan voi subject nay, trong ngu canh
     // 1 Curriculum cu the (0=Draft,1=PendingReview,2=Approved="hoan thanh")

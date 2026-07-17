@@ -207,9 +207,9 @@
                             <div class="mb-2">
                                 <input type="file" name="file" class="form-control form-control-dark w-100" accept=".xlsx,.xls,.csv" required>
                             </div>
-                            <div class="text-muted small mb-3">
-                                Template: <a href="${pageContext.request.contextPath}/static/templates/user_import_template.README.txt" target="_blank">user_import_template.xlsx (see README)</a>
-                            </div>
+                            <a href="${pageContext.request.contextPath}/admin?action=downloadTemplate" download="user_import_template.xlsx">
+                                <i class="bi bi-file-earmark-excel text-success me-1"></i> Download user_import_template.xlsx
+                            </a>
                             <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-upload me-1"></i>Import Excel</button>
                         </form>         
                                 <h6 class="mb-3">Add New User</h6>
