@@ -284,6 +284,29 @@ public class CurriculumDAO {
         return false;
     }
 
+    /**
+     * Danh sach cac Curriculum co dung Subject nay (1 Subject co the dung chung
+     * nhieu Curriculum). Dung cho trang "View mapping of CLOs to PLOs": voi moi
+     * Curriculum co dung mon hoc, hien 1 bang mapping CLO-PLO rieng (vi PLO
+     * thuoc ve tung Curriculum, khac nhau giua cac Curriculum).
+     */
+    public List<Curriculum> getCurriculumsBySubject(String subjectId) {
+        List<Curriculum> list = new ArrayList<>();
+        String sql = "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
+                   + "LEFT JOIN Majors m ON c.Major_ID = m.Major_ID "
+                   + "JOIN Curriculum_Subjects cs ON c.Curriculum_ID = cs.Curriculum_ID "
+                   + "WHERE cs.Subject_ID = ? ORDER BY c.Curriculum_Code";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapCurriculum(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public boolean checkCurriculumCodeExists(String curriculumCode) {
         String sql = "SELECT 1 FROM Curriculums WHERE Curriculum_Code = ?";
         try (Connection con = new dal.DBContext().getConnection();

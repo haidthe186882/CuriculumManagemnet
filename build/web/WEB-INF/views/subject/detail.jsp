@@ -67,7 +67,13 @@
                 </c:otherwise>
             </c:choose>
             <c:if test="${canAddSyllabus}">
-                <a href="${pageContext.request.contextPath}/syllabus/create?subjectCode=${subject.subjectCode}" class="btn btn-primary-custom">
+                <c:url var="addSyllabusUrl" value="/syllabus/create">
+                    <c:param name="subjectCode" value="${subject.subjectCode}"/>
+                    <c:if test="${not empty param.curriculumId}">
+                        <c:param name="curriculumId" value="${param.curriculumId}"/>
+                    </c:if>
+                </c:url>
+                <a href="${addSyllabusUrl}" class="btn btn-primary-custom">
                     <i class="bi bi-plus-lg me-1"></i>${not empty syllabus and syllabus.statusCode != 2 ? 'Fill Syllabus Content' : 'Add Syllabus'}
                 </a>
             </c:if>

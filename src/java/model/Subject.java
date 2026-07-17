@@ -39,6 +39,16 @@ public class Subject {
     public void setSyllabusStatusCode(int syllabusStatusCode) { this.syllabusStatusCode = syllabusStatusCode; }
     public boolean isDesignComplete() { return syllabusStatusCode == Syllabus.STATUS_APPROVED; }
 
+    // True khi Syllabus da Approved (thuong la duoc "tai su dung" tu 1 Curriculum
+    // khac dua vao Subject_Code trung nhau) NHUNG cac CLO cua no CHUA duoc mapping
+    // toi bo PLO cua Curriculum dang xet (moi Curriculum co PLO rieng nen phai
+    // mapping lai tung noi). Dung de phan biet ly do "chua hoan thanh": do
+    // Design/Review chua xong, hay do con thieu buoc mapping CLO-PLO rieng cho
+    // Curriculum nay.
+    private boolean needsPloMapping;
+    public boolean isNeedsPloMapping() { return needsPloMapping; }
+    public void setNeedsPloMapping(boolean needsPloMapping) { this.needsPloMapping = needsPloMapping; }
+
     // Danh sach ma mon tien quyet (Subject_Prerequisites), noi bang dau phay de hien thi
     private String prerequisiteCodes;
     public String getPrerequisiteCodes() { return prerequisiteCodes; }

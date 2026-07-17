@@ -35,6 +35,17 @@ public class SyllabusExcelHelper {
         private List<CourseLearningOutcome> clos = new ArrayList<>();
         private List<Session> sessions = new ArrayList<>();
         private List<SyllabusMaterial> materials = new ArrayList<>();
+        // cloCode (vd "CLO1") -> danh sach ploCode duoc tick (vd ["PLO4"]), doc tu sheet
+        // "CLO-PLO Mapping" cua file Excel syllabus.
+        private java.util.Map<String, List<String>> cloPloMapping = new java.util.LinkedHashMap<>();
+
+        public java.util.Map<String, List<String>> getCloPloMapping() {
+            return cloPloMapping;
+        }
+
+        public void setCloPloMapping(java.util.Map<String, List<String>> cloPloMapping) {
+            this.cloPloMapping = cloPloMapping;
+        }
 
         public Syllabus getSyllabus() {
             return syllabus;
@@ -91,6 +102,7 @@ public class SyllabusExcelHelper {
             parseCLOs(workbook, data);
             parseSessions(workbook, data);
             parseMaterials(workbook, data);
+            parseCloPloMapping(workbook, data);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -247,6 +259,72 @@ public class SyllabusExcelHelper {
             }
             if (!data.getClos().isEmpty()) {
                 return; // Found in this sheet, no need to check others
+            }
+        }
+    }
+
+    /**
+     * Parse sheet "CLO-PLO Mapping" (header row co dang: '', PLO1, PLO2, ..., cac
+     * dong sau la CLO_Code + dau tick o cot PLO tuong ung). Ket qua luu vao
+     * data.cloPloMapping: cloCode -> danh sach ploCode duoc tick, dung de FE
+     * tu dong tick san cac checkbox trong tab "Mapping" khi import Excel.
+     */
+    private static void parseCloPloMapping(Workbook workbook, SyllabusImportData data) {
+        for (int sheetIdx = 0; sheetIdx < workbook.getNumberOfSheets(); sheetIdx++) {
+            Sheet sheet = workbook.getSheetAt(sheetIdx);
+            String sheetName = sheet.getSheetName().toUpperCase();
+            if (!sheetName.contains("PLO")) {
+                continue;
+            }
+
+            // Tim dong header: dong co chua it nhat 1 o dang "PLO<so>"
+            int headerRowIdx = -1;
+            java.util.Map<Integer, String> colToPloCode = new java.util.LinkedHashMap<>();
+            for (int r = 0; r <= sheet.getLastRowNum(); r++) {
+                Row row = sheet.getRow(r);
+                if (row == null) {
+                    continue;
+                }
+                java.util.Map<Integer, String> found = new java.util.LinkedHashMap<>();
+                for (int c = 0; c < row.getLastCellNum(); c++) {
+                    String cv = cellStr(row, c).trim();
+                    if (cv.toUpperCase().matches("^PLO\\s*\\d+.*")) {
+                        found.put(c, cv.toUpperCase().replaceAll("\\s+", ""));
+                    }
+                }
+                if (!found.isEmpty()) {
+                    headerRowIdx = r;
+                    colToPloCode = found;
+                    break;
+                }
+            }
+            if (headerRowIdx == -1) {
+                continue;
+            }
+
+            for (int r = headerRowIdx + 1; r <= sheet.getLastRowNum(); r++) {
+                Row row = sheet.getRow(r);
+                if (row == null) {
+                    continue;
+                }
+                String cloCode = cellStr(row, 0).trim().toUpperCase();
+                if (cloCode.isEmpty()) {
+                    continue;
+                }
+                for (java.util.Map.Entry<Integer, String> e : colToPloCode.entrySet()) {
+                    String mark = cellStr(row, e.getKey()).trim();
+                    if (!mark.isEmpty()) {
+                        List<String> ploList = data.getCloPloMapping()
+                                .computeIfAbsent(cloCode, k -> new ArrayList<>());
+                        if (!ploList.contains(e.getValue())) {
+                            ploList.add(e.getValue());
+                        }
+                    }
+                }
+            }
+
+            if (!data.getCloPloMapping().isEmpty()) {
+                return;
             }
         }
     }
