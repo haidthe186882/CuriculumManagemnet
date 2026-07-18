@@ -55,20 +55,6 @@
                 border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12);outline:none
             }
 
-            /* Strength meter */
-            .strength-wrap{margin-top:8px}
-            .strength-bar-bg{
-                height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden
-            }
-            .strength-bar{
-                height:100%;width:0;border-radius:3px;
-                transition:width .3s,background .3s
-            }
-            .strength-label{
-                font-size:12px;margin-top:4px;font-weight:500;
-                transition:color .3s
-            }
-
             /* Match indicator */
             .match-indicator{
                 font-size:13px;margin-top:6px;display:flex;
@@ -143,13 +129,6 @@
                             <button type="button" class="toggle-pwd" data-target="newPassword">
                                 <i class="bi bi-eye"></i>
                             </button>
-                        </div>
-                        <!-- Strength meter -->
-                        <div class="strength-wrap">
-                            <div class="strength-bar-bg">
-                                <div class="strength-bar" id="strengthBar"></div>
-                            </div>
-                            <div class="strength-label" id="strengthLabel">&nbsp;</div>
                         </div>
                     </div>
 

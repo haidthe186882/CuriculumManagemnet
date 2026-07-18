@@ -19,7 +19,17 @@
 <div class="main-content">
             <div class="topbar">
         <div>
-            <div class="page-title">${curriculum.curriculumName}</div>
+            <div class="page-title">
+                ${curriculum.curriculumName}
+                <c:choose>
+                    <c:when test="${curriculum.isPublic}">
+                        <span class="badge-status badge-approved ms-2"><i class="bi bi-globe2 me-1"></i>Published</span>
+                    </c:when>
+                    <c:otherwise>
+                        <span class="badge-status badge-draft ms-2"><i class="bi bi-lock me-1"></i>Not Published</span>
+                    </c:otherwise>
+                </c:choose>
+            </div>
             <div class="page-subtitle"><code style="color:var(--accent);">${curriculum.curriculumCode}</code> · ${curriculum.majorName}</div>
         </div>
         <div class="d-flex gap-2">
@@ -28,13 +38,29 @@
                 <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                     <i class="bi bi-pencil me-1"></i>Edit
                 </a>
-                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
-                    <input type="hidden" name="action" value="submit">
-                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                    <button type="submit" class="btn btn-primary-custom" onclick="return confirm('Submit for review?')">
-                        <i class="bi bi-send me-1"></i>Submit for Review
-                    </button>
-                </form>
+                
+            </c:if>
+            <c:if test="${canEdit}">
+                <c:choose>
+                    <c:when test="${curriculum.isPublic}">
+                        <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
+                            <input type="hidden" name="action" value="unpublish">
+                            <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                            <button type="submit" class="btn btn-secondary-custom" onclick="return confirm('Unpublish this curriculum?')">
+                                <i class="bi bi-eye-slash me-1"></i>Unpublish
+                            </button>
+                        </form>
+                    </c:when>
+                    <c:otherwise>
+                        <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
+                            <input type="hidden" name="action" value="publish">
+                            <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                            <button type="submit" class="btn btn-primary-custom" ${canPublish ? '' : 'disabled title="All subjects must be Approved before publishing"'}>
+                                <i class="bi bi-globe2 me-1"></i>Publish
+                            </button>
+                        </form>
+                    </c:otherwise>
+                </c:choose>
             </c:if>
             <!-- <a href="${pageContext.request.contextPath}/curriculum/po?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                 <i class="bi bi-eye me-1"></i>View PO
@@ -44,6 +70,51 @@
             </a>
         </div>
     </div>
+
+    <c:if test="${not empty errorMessage}">
+        <div class="mb-3" style="background: rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:10px; padding: 0.8rem 1rem; color:#b91c1c;">
+            <i class="bi bi-exclamation-triangle me-1"></i>${errorMessage}
+        </div>
+    </c:if>
+    <c:if test="${not empty successMessage}">
+        <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>${successMessage}</div>
+    </c:if>
+    <c:if test="${not empty param.success}">
+        <div class="mb-3" style="background: rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding: 0.8rem 1rem; color:#047857;">
+            <i class="bi bi-check-circle me-1"></i>${param.success}
+        </div>
+    </c:if>
+    <c:if test="${not empty param.error}">
+        <div class="mb-3" style="background: rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:10px; padding: 0.8rem 1rem; color:#b91c1c;">
+            <i class="bi bi-exclamation-triangle me-1"></i>${param.error}
+        </div>
+    </c:if>
+    <c:if test="${not canPublish and not curriculum.isPublic and not empty incompleteSubjects}">
+        <div class="mb-3" style="background: rgba(255,206,102,0.12); border:1px solid rgba(255,206,102,0.3); border-radius:10px; padding: 0.8rem 1rem; color:#b45309;">
+            <i class="bi bi-hourglass-split me-1"></i>
+            ${incompleteSubjects.size()} subject(s) still need action before this curriculum can be published:
+            <ul class="mb-0 mt-1" style="padding-left:1.2rem;">
+                <c:forEach var="is" items="${incompleteSubjects}">
+                    <li>
+                        <c:choose>
+                            <c:when test="${is.needsPloMapping}">
+                                <strong>${is.subjectCode}</strong> — Syllabus already Approved (reused from another
+                                curriculum), but its CLOs are not mapped to this curriculum's PLOs yet.
+                                <c:url var="fixMappingUrl" value="/syllabus/create">
+                                    <c:param name="subjectCode" value="${is.subjectCode}"/>
+                                    <c:param name="curriculumId" value="${curriculum.curriculumId}"/>
+                                </c:url>
+                                <a href="${fixMappingUrl}">Map CLOs to PLOs now</a>
+                            </c:when>
+                            <c:otherwise>
+                                <strong>${is.subjectCode}</strong> — Design/Review pending.
+                            </c:otherwise>
+                        </c:choose>
+                    </li>
+                </c:forEach>
+            </ul>
+        </div>
+    </c:if>
 
     <c:if test="${param.msg == 'updated'}">
         <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Updated successfully.</div>
@@ -95,7 +166,9 @@
                     <div class="col-md-6"><div class="detail-label">Decision Date</div>
                         <div class="detail-value"><c:if test="${not empty curriculum.decisionDate}"><fmt:formatDate value="${curriculum.decisionDate}" pattern="dd/MM/yyyy"/></c:if></div>
                     </div>
-                    <div class="col-12"><div class="detail-label">Description</div><div class="detail-value">${curriculum.description}</div></div>
+                    <div class="col-12"><div class="detail-label">Description</div>
+                        <div class="detail-value" style="white-space:pre-wrap;">${curriculum.description}</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -111,6 +184,10 @@
                             <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
                         </c:otherwise>
                     </c:choose>
+                            <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
+                               class="btn btn-warning text-dark fw-bold">
+                                <i class="bi bi-collection me-1"></i> View Combos
+                            </a>       
                 </div>
                 <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' and not curriculum.isActive}">
                     <form method="post" action="${pageContext.request.contextPath}/curriculum" class="mb-2">
@@ -173,23 +250,31 @@
 
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
-                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>Mandatory</th><th>Syllabus</th>
+                <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>PreRequisite</th><th>Syllabus</th><th>Design Status</th>
+                    <c:if test="${canEdit}"><th>Assign</th></c:if>
                     <c:if test="${canDesign}"><th>Action</th></c:if>
                 </tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="${canDesign ? 8 : 7}" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
+                            <tr><td colspan="10" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
-                                <tr class="subject-row" data-detail-url="${pageContext.request.contextPath}/subject/detail?id=${cs.subject.subjectId}" style="cursor: pointer;">
+                                <tr class="subject-row" data-detail-url="${pageContext.request.contextPath}/subject/detail?id=${cs.subject.subjectId}&curriculumId=${curriculum.curriculumId}" style="cursor: pointer;">
                                     <td>${st.count}</td>
                                     <td><code style="color:var(--accent);">${cs.subject.subjectCode}</code></td>
                                     <td>${cs.subject.subjectName}</td>
                                     <td>${cs.semesterNo}</td>
                                     <td>${cs.subject.credits}</td>
-                                    <td><c:if test="${cs.mandatory}"><i class="bi bi-check-circle text-success"></i></c:if></td>
+                                    <td class="text-muted" style="font-size:0.82rem;">
+                                        <c:choose>
+                                            <c:when test="${not empty cs.subject.prerequisiteCodes}">
+                                                <code style="color:#fbbf24;">${cs.subject.prerequisiteCodes}</code>
+                                            </c:when>
+                                            <c:otherwise>—</c:otherwise>
+                                        </c:choose>
+                                    </td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${not empty cs.subject.syllabusId}">
@@ -202,6 +287,51 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${cs.subject.syllabusStatusCode == 2}">
+                                                <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Completed</span>
+                                            </c:when>
+                                            <c:when test="${cs.subject.syllabusStatusCode == 1}">
+                                                <span class="badge-status badge-rejected"><i class="bi bi-hourglass me-1"></i>Pending Review</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Draft</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <c:if test="${canEdit}">
+                                        <td style="min-width:240px;">
+                                            <c:if test="${cs.subject.syllabusStatusCode != 2}">
+                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1">
+                                                    <input type="hidden" name="action" value="assignSubject">
+                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
+                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
+                                                        <option value="">-- Designer --</option>
+                                                        <c:forEach var="d" items="${designers}">
+                                                            <option value="${d.userId}">${d.fullName}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    <input type="hidden" name="assignmentType" value="Designer">
+                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Designer"><i class="bi bi-person-plus"></i></button>
+                                                </form>
+                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1 mt-1">
+                                                    <input type="hidden" name="action" value="assignSubject">
+                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
+                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
+                                                        <option value="">-- Reviewer --</option>
+                                                        <c:forEach var="r" items="${reviewers}">
+                                                            <option value="${r.userId}">${r.fullName}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    <input type="hidden" name="assignmentType" value="Reviewer">
+                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Reviewer"><i class="bi bi-person-plus"></i></button>
+                                                </form>
+                                            </c:if>
+                                        </td>
+                                    </c:if>
                                     <c:if test="${canDesign}">
                                         <td>
                                             <form method="post" action="${pageContext.request.contextPath}/curriculum"
@@ -467,7 +597,7 @@
         const subjectRows = document.querySelectorAll('.subject-row');
         subjectRows.forEach(row => {
             row.addEventListener('click', function(e) {
-                if (e.target.closest('a, button')) return;
+                if (e.target.closest('a, button, select, input, textarea, label, form, option')) return;
                 const detailUrl = this.getAttribute('data-detail-url');
                 if (detailUrl) window.location.href = detailUrl;
             });

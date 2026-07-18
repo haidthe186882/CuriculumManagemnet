@@ -16,7 +16,13 @@ public class Syllabus {
     private double minAvgMarkToPass;
     private String decisionNo;
     private Date approvedDate;
-    private String status;   // Draft / Pending / Approved / Archived
+    private String status;   // Draft / Pending / Approved / Archived (label, derived from statusCode)
+    // Workflow state may thiet ke: 0=Draft (dang thiet ke), 1=PendingReview (da submit, cho Reviewer duyet),
+    // 2=Approved (Reviewer da duyet dat -> subject duoc tinh la "hoan thanh" trong curriculum)
+    public static final int STATUS_DRAFT = 0;
+    public static final int STATUS_PENDING_REVIEW = 1;
+    public static final int STATUS_APPROVED = 2;
+    private int statusCode = STATUS_DRAFT;
     private boolean isActive;
     private String materialUrl;
     // join
@@ -54,8 +60,22 @@ public class Syllabus {
     public void setApprovedDate(Date approvedDate) { this.approvedDate = approvedDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public int getStatusCode() { return statusCode; }
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
+        switch (statusCode) {
+            case STATUS_APPROVED: this.status = "Approved"; break;
+            case STATUS_PENDING_REVIEW: this.status = "Pending Review"; break;
+            default: this.status = "Draft";
+        }
+    }
+    public boolean isApproved() { return statusCode == STATUS_APPROVED; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean isActive) { this.isActive = isActive; }
     public Subject getSubject() { return subject; }
     public void setSubject(Subject subject) { this.subject = subject; }
+
+    private java.util.List<Subject> subjectsLearnAfter = new java.util.ArrayList<>();
+    public java.util.List<Subject> getSubjectsLearnAfter() { return subjectsLearnAfter; }
+    public void setSubjectsLearnAfter(java.util.List<Subject> subjectsLearnAfter) { this.subjectsLearnAfter = subjectsLearnAfter; }
 }

@@ -204,6 +204,19 @@ public class UserDAO {
         return false;
     }
 
+    public boolean updateProfileName(String userId, String fullName) {
+        String sql = "UPDATE Users SET Full_Name = ? WHERE User_ID = ?";
+        try (Connection con = new DBContext().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            ps.setString(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
     public boolean addUser(User u) {
         String newUserId = java.util.UUID.randomUUID().toString();
         String insertUserSql = "INSERT INTO Users (User_ID, Full_Name, Email, Password_Hash, Is_Active) VALUES (?, ?, ?, ?, 1)";
@@ -366,5 +379,89 @@ public class UserDAO {
             e.printStackTrace();
         }
         return list;
+    }
+    
+    /**
+     * Cập nhật Role hàng loạt cho nhiều User cùng lúc
+     */
+    public boolean bulkUpdateRoles(String[] userIds, String roleId, boolean isReviewer, boolean isDesigner) {
+        if (userIds == null || userIds.length == 0 || roleId == null || roleId.isEmpty()) return false;
+
+        String deleteOldRolesSql = "DELETE FROM User_Roles WHERE User_ID = ?";
+        String insertPrimaryRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) VALUES (NEWID(), ?, ?, GETDATE())";
+        String insertExtraRoleSql = "INSERT INTO User_Roles (User_Role_ID, User_ID, Role_ID, Assigned_Date) " +
+                                    "SELECT NEWID(), ?, Role_ID, DATEADD(second, 1, GETDATE()) FROM Roles WHERE Role_Name = ?";
+
+        try (Connection con = new DBContext().getConnection()) {
+            con.setAutoCommit(false); // Bắt đầu Transaction
+            
+            try (PreparedStatement psDel = con.prepareStatement(deleteOldRolesSql);
+                 PreparedStatement psRole = con.prepareStatement(insertPrimaryRoleSql);
+                 PreparedStatement psExtra = con.prepareStatement(insertExtraRoleSql)) {
+
+                for (String uid : userIds) {
+                    // 1. Gom lệnh xóa quyền cũ
+                    psDel.setString(1, uid);
+                    psDel.addBatch();
+
+                    // 2. Gom lệnh thêm quyền chính mới
+                    psRole.setString(1, uid);
+                    psRole.setInt(2, Integer.parseInt(roleId));
+                    psRole.addBatch();
+
+                    // 3. Gom lệnh thêm quyền phụ (nếu có)
+                    if (isReviewer) {
+                        psExtra.setString(1, uid);
+                        psExtra.setString(2, "Reviewer");
+                        psExtra.addBatch();
+                    }
+                    if (isDesigner) {
+                        psExtra.setString(1, uid);
+                        psExtra.setString(2, "Designer");
+                        psExtra.addBatch();
+                    }
+                }
+                
+                // THỰC THI TOÀN BỘ LÔ LỆNH CÙNG LÚC
+                psDel.executeBatch();
+                psRole.executeBatch();
+                psExtra.executeBatch();
+                
+                con.commit();
+                return true;
+            } catch (Exception ex) {
+                con.rollback();
+                ex.printStackTrace();
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+    
+    /**
+     * Vô hiệu hóa (Deactivate) hàng loạt nhiều User cùng lúc
+     */
+    public boolean bulkDeactivateUsers(String[] userIds) {
+        if (userIds == null || userIds.length == 0) return false;
+
+        String sql = "UPDATE Users SET Is_Active = 0 WHERE User_ID = ?";
+
+        try (Connection con = new DBContext().getConnection()) {
+            con.setAutoCommit(false); // Bắt đầu Transaction bảo vệ dữ liệu
+            
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                for (String uid : userIds) {
+                    ps.setString(1, uid);
+                    ps.addBatch(); // Gom lệnh vào lô
+                }
+                
+                ps.executeBatch(); // Bắn toàn bộ lô lệnh xuống DB cùng lúc
+                con.commit(); // Chốt sổ thành công
+                return true;
+            } catch (Exception ex) {
+                con.rollback(); // Hủy bỏ toàn bộ nếu có lỗi xảy ra
+                ex.printStackTrace();
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
     }
 }

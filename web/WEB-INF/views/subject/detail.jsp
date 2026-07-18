@@ -25,6 +25,12 @@
         </a>
     </div>
 
+    <c:if test="${not empty param.error}">
+        <div class="mb-3" style="background: rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:10px; padding: 0.8rem 1rem; color:#b91c1c;">
+            <i class="bi bi-exclamation-triangle me-1"></i>${param.error}
+        </div>
+    </c:if>
+
     <c:if test="${subject == null}">
         <div class="card-dark p-4 text-center" style="color:#64748b;">Subject not found.</div>
     </c:if>
@@ -36,12 +42,40 @@
                 <div class="col-md-3"><div class="detail-label">Department</div><div class="detail-value">${subject.department}</div></div>
                 <div class="col-md-3"><div class="detail-label">Status</div><div class="detail-value">${subject.status}</div></div>
                 <div class="col-12"><div class="detail-label">Description</div><div class="detail-value">${subject.description}</div></div>
+                <div class="col-12 mt-2">
+                    <div class="detail-label">Prerequisites</div>
+                    <div class="detail-value">
+                        <c:choose>
+                            <c:when test="${empty prerequisites}">
+                                <span class="text-muted" style="font-style:italic;">None</span>
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach var="req" items="${prerequisites}">
+                                    <span class="badge bg-secondary me-2 p-2" style="font-size:0.85rem; font-weight:500;">
+                                        <code style="color:#fff;">${req.subjectCode}</code> — ${req.subjectName}
+                                    </span>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
             </div>
             <c:choose>
                 <c:when test="${not empty syllabus}">
                     <a href="${pageContext.request.contextPath}/syllabus/detail?id=${syllabus.syllabusId}" class="btn btn-view btn-action">
                         <i class="bi bi-file-earmark-text me-1"></i>View Syllabus
                     </a>
+                    <c:choose>
+                        <c:when test="${syllabus.statusCode == 2}">
+                            <span class="badge-status badge-approved ms-2"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                        </c:when>
+                        <c:when test="${syllabus.statusCode == 1}">
+                            <span class="badge-status badge-rejected ms-2"><i class="bi bi-hourglass me-1"></i>Pending Review</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="badge-status badge-draft ms-2"><i class="bi bi-pencil me-1"></i>Draft</span>
+                        </c:otherwise>
+                    </c:choose>
                 </c:when>
                 <c:otherwise>
                     <a href="${pageContext.request.contextPath}/syllabus/list?keyword=${subject.subjectCode}" class="btn btn-view btn-action">
@@ -49,6 +83,17 @@
                     </a>
                 </c:otherwise>
             </c:choose>
+            <c:if test="${canAddSyllabus}">
+                <c:url var="addSyllabusUrl" value="/syllabus/create">
+                    <c:param name="subjectCode" value="${subject.subjectCode}"/>
+                    <c:if test="${not empty param.curriculumId}">
+                        <c:param name="curriculumId" value="${param.curriculumId}"/>
+                    </c:if>
+                </c:url>
+                <a href="${addSyllabusUrl}" class="btn btn-primary-custom">
+                    <i class="bi bi-plus-lg me-1"></i>${not empty syllabus and syllabus.statusCode != 2 ? 'Fill Syllabus Content' : 'Add Syllabus'}
+                </a>
+            </c:if>
         </div>
     </c:if>
 </div>

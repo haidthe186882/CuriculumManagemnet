@@ -4,6 +4,8 @@ import dao.CurriculumDAO;
 import dao.MajorDAO;
 import dao.SubjectDAO;
 import dao.ReviewDAO;
+import dao.SyllabusDAO;
+import dao.DesignDAO;
 import dao.PloDAO;
 import dao.PoDAO;
 import model.Curriculum;
@@ -11,6 +13,10 @@ import model.CurriculumSubject;
 import model.Subject;
 import model.User;
 import util.ExcelHelper;
+import util.ExcelHelper.ImportResult;
+import util.ExcelHelper.PloRow;
+import util.ExcelHelper.SubjectRow;
+import util.PaginationHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -35,6 +41,8 @@ public class CurriculumServlet extends HttpServlet {
     private final MajorDAO majorDAO = new MajorDAO();
     private final SubjectDAO subjectDAO = new SubjectDAO();
     private final ReviewDAO reviewDAO = new ReviewDAO();
+    private final SyllabusDAO syllabusDAO = new SyllabusDAO();
+    private final DesignDAO designDAO = new DesignDAO();
     private final dao.UserDAO userDAO = new dao.UserDAO();//
 
     private final PloDAO ploDAO = new PloDAO();
@@ -119,6 +127,18 @@ public class CurriculumServlet extends HttpServlet {
             case "removeSubject":
                 doRemoveSubject(req, res);
                 break;
+            case "publish":
+                doPublish(req, res);
+                break;
+            case "unpublish":
+                doUnpublish(req, res);
+                break;
+            case "assign":
+                doAssign(req, res);
+                break;
+            case "assignSubject":
+                doAssignSubject(req, res);
+                break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
@@ -137,7 +157,8 @@ public class CurriculumServlet extends HttpServlet {
 
         // Gọi hàm tìm kiếm truyền bộ lọc status và majorId sang cho DAO
         List<Curriculum> list = curriculumDAO.searchCurriculums(keyword, status, majorId, publicOnly);
-        req.setAttribute("curriculums", list);
+        List<Curriculum> pageList = PaginationHelper.paginate(req, list);
+        req.setAttribute("curriculums", pageList);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedStatus", status);
         req.setAttribute("selectedMajorId", majorId);
@@ -145,6 +166,9 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("totalCount", list.size());
         req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
         req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
+        req.setAttribute("paginationPath", "/curriculum/list");
+        req.setAttribute("paginationQuery", PaginationHelper.buildQuery(
+                "keyword", keyword, "status", status, "majorId", majorId));
         forward(req, res, "/WEB-INF/views/curriculum/list.jsp");
     }
 
@@ -158,14 +182,30 @@ public class CurriculumServlet extends HttpServlet {
         }
         req.setAttribute("canEdit", isAllowedToEdit(getLoggedUser(req), id));
         List<CurriculumSubject> subjectsInCurriculum = subjectDAO.getSubjectsByCurriculum(id);
+        List<Subject> incompleteSubjects = subjectDAO.getIncompleteSubjects(id);
 
         req.setAttribute("curriculum", c);
         req.setAttribute("subjects", subjectsInCurriculum);
+        req.setAttribute("incompleteSubjects", incompleteSubjects);
+        req.setAttribute("canPublish", incompleteSubjects.isEmpty() && !subjectsInCurriculum.isEmpty());
         req.setAttribute("reviews", reviewDAO.getReviewsByCurriculum(id));
         req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
         req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
         req.setAttribute("mappings", poDAO.getPoPloMappings(id));
         req.setAttribute("availableSubjects", getAvailableSubjects(subjectsInCurriculum));
+        req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
+        req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
+        String msg = req.getParameter("msg");
+        if ("notReady".equals(msg)) {
+            req.setAttribute("errorMessage", "Cannot publish: some subjects are not completed yet "
+                    + "(Design/Review pending): " + req.getParameter("codes"));
+        } else if ("published".equals(msg)) {
+            req.setAttribute("successMessage", "Curriculum has been published.");
+        } else if ("unpublished".equals(msg)) {
+            req.setAttribute("successMessage", "Curriculum has been unpublished.");
+        } else if ("assigned".equals(msg)) {
+            req.setAttribute("successMessage", "Assignment saved.");
+        }
         forward(req, res, "/WEB-INF/views/curriculum/detail.jsp");
     }
 
@@ -187,7 +227,8 @@ public class CurriculumServlet extends HttpServlet {
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        if (!requireRole(req, res, "Designer", "Admin")) return;
+        // Chỉ Admin được tạo Curriculum mới — Designer chỉ thiết kế Subject.
+        if (!requireRole(req, res, "Admin")) return;
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", false);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
@@ -195,7 +236,7 @@ public class CurriculumServlet extends HttpServlet {
 
     private void showEdit(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String id = req.getParameter("id");
         if (!checkEditPermission(req, res, id)) return;
@@ -207,13 +248,14 @@ public class CurriculumServlet extends HttpServlet {
 
     // ===== POST handlers =====
 
-    private void doImportExcel(HttpServletRequest req, HttpServletResponse res) 
+    private void doImportExcel(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
-            return;
 
         String curriculumId = req.getParameter("curriculumId");
         boolean editMode = curriculumId != null && !curriculumId.trim().isEmpty();
+
+        // Chỉ Admin được tạo/sửa Curriculum bằng Excel — Designer chỉ thiết kế Subject.
+        if (!requireRole(req, res, "Admin")) return;
 
         Curriculum baseCurriculum = null;
         if (editMode) {
@@ -226,31 +268,73 @@ public class CurriculumServlet extends HttpServlet {
         }
 
         try {
-            Part filePart = req.getPart("excelFile"); 
+            Part filePart = req.getPart("excelFile");
             if (filePart != null && filePart.getSize() > 0) {
                 InputStream fileContent = filePart.getInputStream();
 
-                Curriculum importedData = ExcelHelper.parseCurriculumExcel(fileContent);
+                // Parse all 3 sheets at once
+                ImportResult result = ExcelHelper.parseFullExcel(fileContent);
+                Curriculum importedData = result.curriculum;
 
                 if (editMode) {
-                    // Giu nguyen Curriculum_ID, Curriculum_Code, Major, Status, IsActive cua ban ghi
-                    // dang sua - Excel chi nap lai cac field noi dung (Name, Description, Credits...)
+                    // Edit mode: keep Code, Major, Status, IsActive — refresh content fields only
                     baseCurriculum.setCurriculumName(importedData.getCurriculumName());
                     baseCurriculum.setEnglishName(importedData.getEnglishName());
                     baseCurriculum.setDescription(importedData.getDescription());
                     baseCurriculum.setDecisionNo(importedData.getDecisionNo());
                     baseCurriculum.setDecisionDate(importedData.getDecisionDate());
                     baseCurriculum.setTotalCredits(importedData.getTotalCredits());
+                    if (importedData.getVersion() != null && !importedData.getVersion().isEmpty()) {
+                        baseCurriculum.setVersion(importedData.getVersion());
+                    }
+
+                    // Re-import PLOs if any found in the file
+                    if (!result.plos.isEmpty()) {
+                        ploDAO.deletePLOsByCurriculum(curriculumId);
+                        for (PloRow pr : result.plos) {
+                            ploDAO.addPLO(curriculumId, pr.ploCode, pr.description);
+                        }
+                    }
+
+                    // Re-import POs if any found in the file
+                    if (!result.pos.isEmpty()) {
+                        poDAO.deletePOsByCurriculum(curriculumId);
+                        for (util.ExcelHelper.PoRow pr : result.pos) {
+                            poDAO.addPO(curriculumId, pr.poCode, pr.description);
+                        }
+                    }
+
+                    // Re-import PO-PLO mapping matrix if any found in the file
+                    if (!result.mappingPairs.isEmpty()) {
+                        poDAO.addMappingsByCode(curriculumId, result.mappingPairs);
+                    }
+
+                    // Re-import subjects if any found in the file
+                    if (!result.subjects.isEmpty()) {
+                        subjectDAO.removeAllSubjectsFromCurriculum(curriculumId);
+                        importSubjectsIntoCurriculum(curriculumId, baseCurriculum.getMajorId(), result.subjects, req);
+                    }
+
                     req.setAttribute("curriculum", baseCurriculum);
+                    int ploCount = result.plos.size();
+                    int subjCount = result.subjects.size();
+                    req.setAttribute("successMessage",
+                            "Re-imported from Excel: " + ploCount + " PLO(s), " + result.pos.size() + " PO(s) and "
+                            + subjCount + " subject(s) refreshed (new subject codes were created as Draft and now need Design + Review). Verify then save.");
                 } else {
-                    // ĐỒNG BỘ: Mặc định dữ liệu vừa bóc tách từ Excel nhận trạng thái tiến trình là 0 (Draft)
+                    // Create mode: new curriculum from Excel
                     importedData.setStatus(0);
-                    // Mở kích hoạt Is_Active hiển thị hệ thống mặc định
                     importedData.setIsActive(false);
+                    // Stash PLO, PO, Mapping & subject rows in session so they can be saved after Create
+                    req.getSession().setAttribute("pendingImportPlos", result.plos);
+                    req.getSession().setAttribute("pendingImportPos", result.pos);
+                    req.getSession().setAttribute("pendingImportMappings", result.mappingPairs);
+                    req.getSession().setAttribute("pendingImportSubjects", result.subjects);
                     req.setAttribute("curriculum", importedData);
+                    req.setAttribute("successMessage",
+                            "Imported from Excel: " + result.plos.size() + " PLO(s), " + result.pos.size() + " PO(s) and "
+                            + result.subjects.size() + " subject(s) detected. Choose Major and click Create to save.");
                 }
-                req.setAttribute("successMessage",
-                        "Imported successfully from Excel! Please verify data" + (editMode ? "" : " and choose Major") + " before saving.");
             } else {
                 req.setAttribute("errorMessage", "Please select a valid Excel file.");
                 if (editMode) req.setAttribute("curriculum", baseCurriculum);
@@ -260,25 +344,110 @@ public class CurriculumServlet extends HttpServlet {
             req.setAttribute("errorMessage", "Error parsing Excel file: " + e.getMessage());
             if (editMode) req.setAttribute("curriculum", baseCurriculum);
         }
+
         req.setAttribute("majors", majorDAO.getAllMajors());
         req.setAttribute("isEdit", editMode);
         forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
     }
 
-    private void doCreate(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+    @SuppressWarnings("unchecked")
+    private void doCreate(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
+        // Chỉ Admin được tạo Curriculum mới — Designer chỉ thiết kế Subject.
+        if (!requireRole(req, res, "Admin"))
             return;
         User user = getLoggedUser(req);
         Curriculum c = buildFromRequest(req);
         c.setCreatedBy(user.getUserId());
-        
-        // Gọi hàm addCurriculum, DB tự gán Status = 0 (Nhờ Default Constraint) và Is_Active = 1
-        curriculumDAO.addCurriculum(c);
+
+        if (c.getCurriculumCode() == null || c.getCurriculumCode().trim().isEmpty()
+                || curriculumDAO.checkCurriculumCodeExists(c.getCurriculumCode().trim())) {
+            req.setAttribute("errorMessage", "Could not create curriculum. The Curriculum Code \""
+                    + c.getCurriculumCode() + "\" is empty or already exists, please choose another one.");
+            req.setAttribute("curriculum", c);
+            req.setAttribute("majors", majorDAO.getAllMajors());
+            req.setAttribute("isEdit", false);
+            forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
+            return;
+        }
+
+        String newId = curriculumDAO.addCurriculumAndReturnId(c);
+
+        if (newId == null) {
+            // Thực sự lưu thất bại (lỗi DB/ràng buộc) — báo lỗi rõ ràng, KHÔNG redirect "created" giả.
+            req.setAttribute("errorMessage", "Could not create curriculum. Please check the required fields and try again.");
+            req.setAttribute("curriculum", c);
+            req.setAttribute("majors", majorDAO.getAllMajors());
+            req.setAttribute("isEdit", false);
+            forward(req, res, "/WEB-INF/views/curriculum/form.jsp");
+            return;
+        }
+
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            List<PloRow> pendingPlos = (List<PloRow>) session.getAttribute("pendingImportPlos");
+            List<util.ExcelHelper.PoRow> pendingPos = (List<util.ExcelHelper.PoRow>) session.getAttribute("pendingImportPos");
+            List<String[]> pendingMappings = (List<String[]>) session.getAttribute("pendingImportMappings");
+            List<SubjectRow> pendingSubjects = (List<SubjectRow>) session.getAttribute("pendingImportSubjects");
+            if (pendingPlos != null) {
+                for (PloRow pr : pendingPlos) {
+                    ploDAO.addPLO(newId, pr.ploCode, pr.description);
+                }
+                session.removeAttribute("pendingImportPlos");
+            }
+            if (pendingPos != null) {
+                for (util.ExcelHelper.PoRow pr : pendingPos) {
+                    poDAO.addPO(newId, pr.poCode, pr.description);
+                }
+                session.removeAttribute("pendingImportPos");
+            }
+            if (pendingMappings != null) {
+                poDAO.addMappingsByCode(newId, pendingMappings);
+                session.removeAttribute("pendingImportMappings");
+            }
+            if (pendingSubjects != null) {
+                importSubjectsIntoCurriculum(newId, c.getMajorId(), pendingSubjects, req);
+                session.removeAttribute("pendingImportSubjects");
+            }
+        }
+
+        // Curriculum moi tao: chi Admin/Designer/Reviewer thay (Is_Active=1),
+        // CHUA Publish (Is_Public=0). Admin phai gan Designer+Reviewer cho tung
+        // subject moi, cho thiet ke + duyet xong het thi moi bam "Publish" duoc.
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=created");
     }
 
+    /**
+     * Voi moi dong Subject doc tu Excel:
+     *  - Subject_Code DA TON TAI trong he thong (dung chung tu Curriculum khac)
+     *    -> chi lien ket vao Curriculum_Subjects, coi nhu "hoan thanh" ngay
+     *      (Syllabus cua no da co san, khong tao lai).
+     *  - Subject_Code CHUA TUNG CO -> tao Subject moi (draft) + tao 1 Syllabus
+     *    rong o trang thai Draft, roi lien ket vao Curriculum_Subjects. Subject
+     *    nay se can Admin gan Designer/Reviewer va cho quy trinh Design -> Review
+     *    hoan tat (Syllabus.Status = Approved) truoc khi Curriculum duoc Publish.
+     */
+    private void importSubjectsIntoCurriculum(String curriculumId, String majorId,
+                                                List<SubjectRow> pendingSubjects, HttpServletRequest req) {
+        for (SubjectRow sr : pendingSubjects) {
+            if (sr.subjectCode == null || sr.subjectCode.trim().isEmpty()) continue;
+
+            String sid = subjectDAO.findSubjectIdByCodeAny(sr.subjectCode);
+            if (sid == null) {
+                // Subject moi hoan toan -> tao draft + syllabus rong
+                sid = subjectDAO.createDraftSubject(sr.subjectCode, sr.subjectName, null, sr.credits, majorId);
+                if (sid == null) continue; // tao that bai, bo qua dong nay
+                syllabusDAO.createEmptySyllabus(sid, sr.subjectName != null ? sr.subjectName : sr.subjectCode);
+            }
+            subjectDAO.addSubjectToCurriculum(curriculumId, sid, sr.semesterNo, true);
+
+            if (sr.preRequisite != null && !sr.preRequisite.trim().isEmpty()) {
+                subjectDAO.addPrerequisiteByCode(sr.subjectCode, sr.preRequisite);
+            }
+        }
+    }
+
     private void doUpdate(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         
         String curriculumId = req.getParameter("curriculumId");
@@ -290,7 +459,7 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private void doSubmit(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String id = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, id)) return;
@@ -329,7 +498,7 @@ public class CurriculumServlet extends HttpServlet {
     // ===== PO / PLO / Mapping handlers =====
 
     private void doAddPo(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
@@ -340,7 +509,7 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private void doDeletePo(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
@@ -350,7 +519,7 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private void doAddPlo(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
@@ -361,7 +530,7 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private void doDeletePlo(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
@@ -371,7 +540,7 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     private void doSaveMapping(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
@@ -396,7 +565,7 @@ public class CurriculumServlet extends HttpServlet {
      * curriculum con o trang thai Draft - Status = 0).
      */
     private void doAddSubject(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
@@ -429,7 +598,7 @@ public class CurriculumServlet extends HttpServlet {
      * curriculum con o trang thai Draft - Status = 0).
      */
     private void doRemoveSubject(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        if (!requireRole(req, res, "Designer", "Admin"))
+        if (!requireRole(req, res, "Admin"))
             return;
         String curriculumId = req.getParameter("curriculumId");
         if (!checkEditPermission(req, res, curriculumId)) return;
@@ -545,22 +714,80 @@ public class CurriculumServlet extends HttpServlet {
         curriculumDAO.assignCurriculumRoles(curriculumId, designerId, reviewerId, admin.getUserId());
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=assigned");
     }
+
+    /**
+     * Admin bam "Publish": chi cho phep khi TAT CA subject trong Curriculum
+     * da "hoan thanh" (co Syllabus va Syllabus.Status = Approved). Neu con
+     * subject chua xong, tu choi va bao cho Admin biet con thieu subject nao.
+     */
+    private void doPublish(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
+        if (!requireRole(req, res, "Admin")) return;
+        String curriculumId = req.getParameter("curriculumId");
+        if (curriculumId == null || curriculumId.trim().isEmpty()) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+
+        List<Subject> incomplete = subjectDAO.getIncompleteSubjects(curriculumId);
+        if (!incomplete.isEmpty()) {
+            StringBuilder codes = new StringBuilder();
+            for (Subject s : incomplete) {
+                if (codes.length() > 0) codes.append(", ");
+                codes.append(s.getSubjectCode());
+            }
+            res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId
+                    + "&msg=notReady&codes=" + java.net.URLEncoder.encode(codes.toString(), "UTF-8"));
+            return;
+        }
+
+        curriculumDAO.setPublic(curriculumId, true);
+        res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=published");
+    }
+
+    /** Admin thu hoi Publish (dua curriculum ve nhu ban nhap noi bo). */
+    private void doUnpublish(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        if (!requireRole(req, res, "Admin")) return;
+        String curriculumId = req.getParameter("curriculumId");
+        if (curriculumId != null && !curriculumId.trim().isEmpty()) {
+            curriculumDAO.setPublic(curriculumId, false);
+        }
+        res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=unpublished");
+    }
+
+    /**
+     * Admin gan 1 Designer hoac 1 Reviewer cho 1 Subject cu the trong trang
+     * chi tiet Curriculum (thay vi gan hang loat qua doAssign).
+     */
+    private void doAssignSubject(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
+        if (!requireRole(req, res, "Admin")) return;
+        String curriculumId = req.getParameter("curriculumId");
+        String subjectId = req.getParameter("subjectId");
+        String userId = req.getParameter("userId");
+        String assignmentType = req.getParameter("assignmentType"); // "Designer" | "Reviewer"
+        User admin = getLoggedUser(req);
+
+        if (subjectId != null && userId != null && assignmentType != null) {
+            String syllabusId = syllabusDAO.getActiveSyllabusIdBySubject(subjectId);
+            if (syllabusId == null) {
+                // Subject chua co Syllabus (truong hop hiem) -> tao 1 syllabus rong truoc khi gan
+                Subject subj = subjectDAO.getSubjectById(subjectId);
+                syllabusId = syllabusDAO.createEmptySyllabus(subjectId, subj != null ? subj.getSubjectName() : subjectId);
+            }
+            if (syllabusId != null) {
+                designDAO.assignUser(syllabusId, userId, assignmentType, admin.getUserId());
+            }
+        }
+        res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=assigned");
+    }
     
     // Kiểm tra logic nội bộ xem User có quyền Edit Curriculum này không
     private boolean isAllowedToEdit(User user, String curriculumId) {
         if (user == null) return false;
         String roleName = user.getRole() != null ? user.getRole().getRoleName() : "";
-        
-        // Admin thì luôn được sửa mọi thứ
-        boolean isAdmin = "Admin".equalsIgnoreCase(roleName) || user.hasRole("Admin");
-        if (isAdmin) return true;
-        
-        // Designer thì PHẢI được Assign mới được sửa
-        boolean isDesigner = "Designer".equalsIgnoreCase(roleName) || user.hasRole("Designer") || user.isDesigner();
-        if (isDesigner) {
-            return curriculumDAO.checkAssignment(curriculumId, user.getUserId(), "Designer");
-        }
-        return false;
+
+        // Chỉ Admin được sửa cấu trúc Curriculum (PO/PLO/Subject-linking/Submit).
+        // Designer giờ chỉ thiết kế Subject (qua trang /subject), không sửa Curriculum nữa.
+        return "Admin".equalsIgnoreCase(roleName) || user.hasRole("Admin");
     }
 
     // Hàm gọi để chặn hoặc đá văng ra ngoài nếu cố tình vi phạm

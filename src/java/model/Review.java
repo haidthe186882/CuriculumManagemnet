@@ -4,12 +4,15 @@ import java.util.Date;
 
 public class Review {
     private String reviewId;
-    private String curriculumId;
+    private String syllabusId;
+    private String curriculumId; // giu lai de tuong thich nguoc (khong con cot DB), dung khi can gan ngu canh 1 curriculum cu the
     private String reviewerId;
     private String status;   // Pending / Approved / Rejected
     private String comment;
     private Date reviewDate;
     // joins
+    private String subjectCode;
+    private String subjectName;
     private Curriculum curriculum;
     private User reviewer;
 
@@ -17,6 +20,12 @@ public class Review {
 
     public String getReviewId() { return reviewId; }
     public void setReviewId(String reviewId) { this.reviewId = reviewId; }
+    public String getSyllabusId() { return syllabusId; }
+    public void setSyllabusId(String syllabusId) { this.syllabusId = syllabusId; }
+    public String getSubjectCode() { return subjectCode; }
+    public void setSubjectCode(String subjectCode) { this.subjectCode = subjectCode; }
+    public String getSubjectName() { return subjectName; }
+    public void setSubjectName(String subjectName) { this.subjectName = subjectName; }
     public String getCurriculumId() { return curriculumId; }
     public void setCurriculumId(String curriculumId) { this.curriculumId = curriculumId; }
     public String getReviewerId() { return reviewerId; }

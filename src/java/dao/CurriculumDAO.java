@@ -38,6 +38,14 @@ public class CurriculumDAO {
         } catch (SQLException ignored) {
             ignored.printStackTrace();
         }
+
+        // 3. Is_Public: curriculum chi hien thi cong khai khi da Publish
+        try {
+            c.setIsPublic(rs.getBoolean("Is_Public"));
+        } catch (SQLException ignored) {
+            // DB chua chay patch them cot Is_Public -> coi nhu chua Publish
+            c.setIsPublic(false);
+        }
         
         try {
             c.setCreatedDate(rs.getTimestamp("Created_Date"));
@@ -68,7 +76,7 @@ public class CurriculumDAO {
                 "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
                 + "LEFT JOIN Majors m ON c.Major_ID = m.Major_ID WHERE 1=1");
         
-        // Nếu là khách/học sinh, chỉ xem các bản ghi đã Approved (Status = 1) và đang kích hoạt (Is_Active = 1)
+        // Nếu là khách/học sinh, chỉ xem các Curriculum đã Approved (Status = 1) và đang kích hoạt (Is_Active = 1)
         if (publicOnly) {
             sql.append(" AND c.Status = 1 AND c.Is_Active = 1");
         } else if (status != null && !status.trim().isEmpty()) {
@@ -143,45 +151,14 @@ public class CurriculumDAO {
     }
 
     /**
-     * Lấy danh sách chờ duyệt (Status = 2) cho Reviewer
+     * @deprecated Luong duyet moi la duyet TUNG SUBJECT/SYLLABUS (xem
+     * ReviewDAO#getPendingForReviewer), khong con duyet ca Curriculum mot lan.
+     * Giu lai ham nay (tra ve rong) chi de tranh vo cac cho con goi cu;
+     * KHONG dung cho logic moi.
      */
+    @Deprecated
     public List<Curriculum> getPendingCurriculums(String reviewerId, boolean isAdmin) {
-        List<Curriculum> list = new ArrayList<>();
-        String sql;
-        
-        if (isAdmin) {
-            // Admin thấy toàn bộ các Curriculum đang chờ duyệt (Status = 2)
-            sql = "SELECT * FROM Curriculums WHERE Status = 2"; 
-        } else {
-            // Reviewer chỉ thấy các Curriculum chờ duyệt MÀ mình được phân công
-            sql = "SELECT c.* FROM Curriculums c " +
-                  "JOIN Curriculum_Assignments ca ON c.Curriculum_ID = ca.Curriculum_ID " +
-                  "WHERE c.Status = 2 AND ca.User_ID = ? AND ca.Assignment_Type = 'Reviewer'";
-        }
-
-        try (Connection con = new dal.DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            if (!isAdmin) {
-                ps.setString(1, reviewerId);
-            }
-            
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Curriculum c = new Curriculum();
-                // Map các trường cơ bản hiển thị ngoài list
-                c.setCurriculumId(rs.getString("Curriculum_ID"));
-                c.setCurriculumCode(rs.getString("Curriculum_Code"));
-                c.setCurriculumName(rs.getString("Curriculum_Name"));
-                c.setVersion(rs.getString("Version"));
-                c.setTotalCredits(rs.getInt("Total_Credits"));
-                // (Nếu hàm map cũ của bạn có thêm trường nào thì bạn bổ sung vào đây nhé)
-                list.add(c);
-            }
-        } catch (Exception e) { 
-            e.printStackTrace(); 
-        }
-        return list;
+        return new ArrayList<>();
     }
 
     /**
@@ -286,6 +263,50 @@ public class CurriculumDAO {
         return false;
     }
     
+    /**
+     * Publish / Unpublish 1 Curriculum. Publish (Is_Public=1) chi nen duoc goi
+     * SAU KHI CurriculumServlet da kiem tra tat ca subject deu "hoan thanh"
+     * (xem SubjectDAO#getIncompleteSubjects). Khi publish thanh cong, Status
+     * cung duoc dua ve 1 (Approved) de tuong thich voi cac man hinh cu con
+     * doc cot Status. Unpublish dua Status ve 0 (Draft) va an khoi trang cong khai.
+     */
+    public boolean setPublic(String curriculumId, boolean isPublic) {
+        String sql = "UPDATE Curriculums SET Is_Public = ?, Status = ?, Updated_Date = GETDATE() WHERE Curriculum_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setBoolean(1, isPublic);
+            ps.setInt(2, isPublic ? 1 : 0);
+            ps.setString(3, curriculumId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Danh sach cac Curriculum co dung Subject nay (1 Subject co the dung chung
+     * nhieu Curriculum). Dung cho trang "View mapping of CLOs to PLOs": voi moi
+     * Curriculum co dung mon hoc, hien 1 bang mapping CLO-PLO rieng (vi PLO
+     * thuoc ve tung Curriculum, khac nhau giua cac Curriculum).
+     */
+    public List<Curriculum> getCurriculumsBySubject(String subjectId) {
+        List<Curriculum> list = new ArrayList<>();
+        String sql = "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculums c "
+                   + "LEFT JOIN Majors m ON c.Major_ID = m.Major_ID "
+                   + "JOIN Curriculum_Subjects cs ON c.Curriculum_ID = cs.Curriculum_ID "
+                   + "WHERE cs.Subject_ID = ? ORDER BY c.Curriculum_Code";
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(mapCurriculum(rs));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public boolean checkCurriculumCodeExists(String curriculumCode) {
         String sql = "SELECT 1 FROM Curriculums WHERE Curriculum_Code = ?";
         try (Connection con = new dal.DBContext().getConnection();
@@ -299,57 +320,51 @@ public class CurriculumDAO {
         return false;
     }
     /**
-     * Lưu thông tin phân công (Designer / Reviewer) vào bảng Curriculum_Assignments
+     * Gan nhanh 1 Designer va/hoac 1 Reviewer cho TAT CA subject trong Curriculum
+     * ma con "chua hoan thanh" (Syllabus.Status != Approved). Day la thao tac
+     * bulk tien loi cho Admin, thay the cho viec phai vao tung Subject de gan
+     * rieng le. Ghi vao bang Syllabus_Assignments (khong con Curriculum_Assignments).
      */
     public void assignCurriculumRoles(String curriculumId, String designerId, String reviewerId, String adminId) {
-        String deleteSql = "DELETE FROM Curriculum_Assignments WHERE Curriculum_ID = ?";
-        String insertSql = "INSERT INTO Curriculum_Assignments (Assignment_ID, Curriculum_ID, User_ID, Assignment_Type, Assigned_By, Assigned_Date) VALUES (NEWID(), ?, ?, ?, ?, GETDATE())";
+        String findIncompleteSyllabusesSql =
+                "SELECT sy.Syllabus_ID FROM Curriculum_Subjects cs " +
+                "JOIN Subjects s ON cs.Subject_ID = s.Subject_ID " +
+                "OUTER APPLY (SELECT TOP 1 sy2.Syllabus_ID, sy2.Status FROM Syllabuses sy2 " +
+                "              WHERE sy2.Subject_ID = s.Subject_ID AND sy2.Is_Active = 1 " +
+                "              ORDER BY sy2.Status DESC, sy2.Syllabus_ID) sy " +
+                "WHERE cs.Curriculum_ID = ? AND sy.Syllabus_ID IS NOT NULL AND sy.Status <> 2";
 
-        try (Connection con = new dal.DBContext().getConnection()) {
-            con.setAutoCommit(false);
-            try {
-                // 1. Xóa phân công cũ để tránh rác dữ liệu
-                try (PreparedStatement psDel = con.prepareStatement(deleteSql)) {
-                    psDel.setString(1, curriculumId);
-                    psDel.executeUpdate();
-                }
-                
-                // 2. Thêm Designer mới (nếu Admin có chọn)
-                if (designerId != null && !designerId.trim().isEmpty()) {
-                    try (PreparedStatement psIns = con.prepareStatement(insertSql)) {
-                        psIns.setString(1, curriculumId);
-                        psIns.setString(2, designerId);
-                        psIns.setString(3, "Designer");
-                        psIns.setString(4, adminId);
-                        psIns.executeUpdate();
-                    }
-                }
-                
-                // 3. Thêm Reviewer mới (nếu Admin có chọn)
-                if (reviewerId != null && !reviewerId.trim().isEmpty()) {
-                    try (PreparedStatement psIns = con.prepareStatement(insertSql)) {
-                        psIns.setString(1, curriculumId);
-                        psIns.setString(2, reviewerId);
-                        psIns.setString(3, "Reviewer");
-                        psIns.setString(4, adminId);
-                        psIns.executeUpdate();
-                    }
-                }
-                con.commit();
-            } catch (Exception e) {
-                con.rollback();
-                e.printStackTrace();
-            }
+        java.util.List<String> syllabusIds = new ArrayList<>();
+        try (Connection con = new dal.DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(findIncompleteSyllabusesSql)) {
+            ps.setString(1, curriculumId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) syllabusIds.add(rs.getString(1));
         } catch (Exception e) {
             e.printStackTrace();
+            return;
+        }
+
+        dao.DesignDAO designDAO = new dao.DesignDAO();
+        for (String syllabusId : syllabusIds) {
+            if (designerId != null && !designerId.trim().isEmpty()) {
+                designDAO.assignUser(syllabusId, designerId, "Designer", adminId);
+            }
+            if (reviewerId != null && !reviewerId.trim().isEmpty()) {
+                designDAO.assignUser(syllabusId, reviewerId, "Reviewer", adminId);
+            }
         }
     }
     
     /**
-     * Kiểm tra xem User có được phân công (Assign) vào Curriculum này hay không
+     * Kiểm tra xem User có được phân công (Assign) vào Subject/Syllabus nao do
+     * trong Curriculum nay hay khong (dua qua Syllabus_Assignments moi).
      */
     public boolean checkAssignment(String curriculumId, String userId, String assignmentType) {
-        String sql = "SELECT 1 FROM Curriculum_Assignments WHERE Curriculum_ID = ? AND User_ID = ? AND Assignment_Type = ?";
+        String sql = "SELECT 1 FROM Syllabus_Assignments sa " +
+                     "JOIN Syllabuses sy ON sa.Syllabus_ID = sy.Syllabus_ID " +
+                     "JOIN Curriculum_Subjects cs ON cs.Subject_ID = sy.Subject_ID " +
+                     "WHERE cs.Curriculum_ID = ? AND sa.User_ID = ? AND sa.Assignment_Type = ?";
         try (Connection con = new dal.DBContext().getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, curriculumId);
@@ -361,5 +376,42 @@ public class CurriculumDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    /**
+     * Inserts a new curriculum and returns the generated Curriculum_ID (UUID string).
+     * Used by the Excel import flow to save PLOs and subjects right after creation.
+     */
+    public String addCurriculumAndReturnId(Curriculum c) {
+        String newId = java.util.UUID.randomUUID().toString();
+        String sql = """
+                     INSERT INTO Curriculums (
+                        Curriculum_ID, Major_ID, Created_By, Curriculum_Code,
+                        Curriculum_Name, English_Name, Description, Total_Credits,
+                        Version, Decision_No, Decision_Date, Is_Active, Created_Date
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, GETDATE())
+                     """;
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, newId);
+            ps.setString(2, c.getMajorId());
+            ps.setString(3, c.getCreatedBy());
+            ps.setString(4, c.getCurriculumCode());
+            ps.setString(5, c.getCurriculumName());
+            ps.setString(6, c.getEnglishName());
+            ps.setString(7, c.getDescription());
+            ps.setInt(8, c.getTotalCredits());
+            ps.setString(9, c.getVersion());
+            ps.setString(10, c.getDecisionNo());
+            if (c.getDecisionDate() != null) {
+                ps.setDate(11, new java.sql.Date(c.getDecisionDate().getTime()));
+            } else {
+                ps.setNull(11, Types.DATE);
+            }
+            if (ps.executeUpdate() > 0) return newId;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
