@@ -146,6 +146,27 @@ public class CurriculumDAO {
         return null;
     }
 
+    public List<Curriculum> getCurriculumsBySubject(String subjectId) {
+        List<Curriculum> list = new ArrayList<>();
+        String sql = "SELECT c.*, m.Major_Name, m.Major_Code FROM Curriculum_Subjects cs "
+                + "JOIN Curriculums c ON cs.Curriculum_ID = c.Curriculum_ID "
+                + "LEFT JOIN Majors m ON c.Major_ID = m.Major_ID "
+                + "WHERE cs.Subject_ID = ? "
+                + "ORDER BY c.Curriculum_Code";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, subjectId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapCurriculum(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public List<Curriculum> getAllCurriculums(String keyword, String status) {
         return searchCurriculums(keyword, status, null, false);
     }

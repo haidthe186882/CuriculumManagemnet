@@ -7,7 +7,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PloDAO {
 
@@ -32,6 +34,28 @@ public class PloDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public Map<String, Boolean> getPloCloMappings(String curriculumId, String syllabusId) {
+        Map<String, Boolean> map = new HashMap<>();
+        String sql = "SELECT DISTINCT pcm.PLO_ID, pcm.CLO_ID "
+                + "FROM PLO_CLO_Mappings pcm "
+                + "JOIN PLOs p ON p.PLO_ID = pcm.PLO_ID "
+                + "JOIN CLOs c ON c.CLO_ID = pcm.CLO_ID "
+                + "WHERE p.Curriculum_ID = ? AND c.Syllabus_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumId);
+            ps.setString(2, syllabusId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    map.put(rs.getString("PLO_ID") + "_" + rs.getString("CLO_ID"), true);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 
     /**

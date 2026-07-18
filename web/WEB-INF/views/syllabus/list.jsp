@@ -24,6 +24,9 @@
     <c:if test="${param.msg == 'created'}">
         <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Syllabus created.</div>
     </c:if>
+    <c:if test="${param.msg == 'submitted'}">
+        <div class="alert alert-success-dark mb-3"><i class="bi bi-send-check me-1"></i>Syllabus submitted for review.</div>
+    </c:if>
 
     <div class="card-dark p-3 mb-3">
         <form method="get" action="${pageContext.request.contextPath}/syllabus/list">
@@ -70,7 +73,8 @@
                                     <td>${sy.syllabusName}</td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${sy.status == 'Approved'}"><span class="badge-status badge-approved">${sy.status}</span></c:when>
+                                            <c:when test="${sy.status == 'Published' or sy.status == 'ApprovedForPublish'}"><span class="badge-status badge-approved">${sy.status}</span></c:when>
+                                            <c:when test="${sy.status == 'ChangesRequested'}"><span class="badge-status badge-rejected">${sy.status}</span></c:when>
                                             <c:otherwise><span class="badge-status badge-draft">${sy.status}</span></c:otherwise>
                                         </c:choose>
                                     </td>

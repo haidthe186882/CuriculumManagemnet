@@ -1,6 +1,7 @@
 package model;
 
 import java.util.Date;
+import java.util.List;
 
 public class Review {
     private String reviewId;
@@ -10,11 +11,14 @@ public class Review {
     private String status;   // Pending / Approved / Rejected
     private String comment;
     private Date reviewDate;
+    private double totalScore;
     // joins
     private String subjectCode;
     private String subjectName;
     private Curriculum curriculum;
     private User reviewer;
+    private Syllabus syllabus;
+    private List<SyllabusReviewItem> items;
 
     public Review() {}
 
@@ -36,8 +40,14 @@ public class Review {
     public void setComment(String comment) { this.comment = comment; }
     public Date getReviewDate() { return reviewDate; }
     public void setReviewDate(Date reviewDate) { this.reviewDate = reviewDate; }
+    public double getTotalScore() { return totalScore; }
+    public void setTotalScore(double totalScore) { this.totalScore = totalScore; }
     public Curriculum getCurriculum() { return curriculum; }
     public void setCurriculum(Curriculum curriculum) { this.curriculum = curriculum; }
     public User getReviewer() { return reviewer; }
     public void setReviewer(User reviewer) { this.reviewer = reviewer; }
+    public Syllabus getSyllabus() { return syllabus; }
+    public void setSyllabus(Syllabus syllabus) { this.syllabus = syllabus; }
+    public List<SyllabusReviewItem> getItems() { return items; }
+    public void setItems(List<SyllabusReviewItem> items) { this.items = items; }
 }

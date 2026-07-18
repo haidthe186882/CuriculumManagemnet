@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Syllabus — LTMS</title>
+    <title>${syllabus != null ? 'Edit Syllabus' : 'New Syllabus'} — LTMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,8 +17,8 @@
 <div class="main-content">
     <div class="topbar">
         <div>
-            <div class="page-title">New Syllabus</div>
-            <div class="page-subtitle">Create syllabus for a subject — import from Excel or fill manually</div>
+            <div class="page-title">${syllabus != null ? 'Edit Syllabus' : 'New Syllabus'}</div>
+            <div class="page-subtitle">${syllabus != null ? 'Revise and resubmit the syllabus based on reviewer feedback' : 'Create syllabus for a subject — import from Excel or fill manually'}</div>
         </div>
         <a href="${pageContext.request.contextPath}/syllabus/list" class="btn btn-secondary-custom">
             <i class="bi bi-arrow-left me-1"></i>Back
