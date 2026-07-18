@@ -49,7 +49,7 @@ public class UserDAO {
         } catch (SQLException ignored) {
         }
 
-        // Bắt cờ quyền phụ từ SQL
+        // Determine reviewer/designer flags from DB
         boolean isRev = false;
         boolean isDes = false;
         try {
@@ -60,6 +60,8 @@ public class UserDAO {
             isDes = rs.getBoolean("Is_Designer");
         } catch (SQLException ignored) {
         }
+
+        // Load primary role from DB
         try {
             int primaryRoleId = rs.getInt("Primary_Role_ID");
             String primaryRoleName = rs.getString("Primary_Role_Name");
@@ -67,24 +69,29 @@ public class UserDAO {
                 u.addRole(new Role(primaryRoleId, primaryRoleName));
                 u.setRoleId(primaryRoleId);
 
+                // If primary role IS Reviewer/Designer, the SQL Is_Reviewer/Is_Designer
+                // flags are already true — keep them consistent
                 if ("Reviewer".equalsIgnoreCase(primaryRoleName)) {
-                    isRev = false;
+                    isRev = true;
                 }
                 if ("Designer".equalsIgnoreCase(primaryRoleName)) {
-                    isDes = false;
+                    isDes = true;
                 }
             }
         } catch (SQLException ignored) {
         }
-        if (isRev) {
+
+        // Add non-primary roles to user's role list (avoid duplicates)
+        if (isRev && !u.hasRole("Reviewer")) {
             u.addRole(new Role(0, "Reviewer"));
         }
-        if (isDes) {
+        if (isDes && !u.hasRole("Designer")) {
             u.addRole(new Role(0, "Designer"));
         }
-        // Gán lại cờ đã được lọc cho User
-        u.setReviewer(isRev);
-        u.setDesigner(isDes);
+
+        // Set convenience flags based on actual role membership
+        u.setReviewer(u.hasRole("Reviewer"));
+        u.setDesigner(u.hasRole("Designer"));
 
         return u;
     }
