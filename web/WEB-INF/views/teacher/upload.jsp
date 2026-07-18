@@ -151,7 +151,7 @@
                                 <th>Course</th>
                                 <th>Type</th>
                                 <th>Description</th>
-                                <th>Upload Link</th>
+                                <th>Links / Files</th>
                                 <th>Date</th>
                                 <th>Actions</th>
                             </tr>
@@ -184,11 +184,20 @@
                                             <td class="text-truncate" style="max-width:220px;">${m.description}</td>
                                             <td style="max-width:200px;">
                                                 <c:if test="${not empty m.materialUrl}">
-                                                    <a href="${m.materialUrl}" target="_blank" class="material-link">
-                                                        <i class="bi bi-box-arrow-up-right me-1"></i>${m.materialUrl}
-                                                    </a>
+                                                    <div class="mb-1">
+                                                        <a href="${m.materialUrl}" target="_blank" class="material-link">
+                                                            <i class="bi bi-link-45deg me-1"></i>External Link
+                                                        </a>
+                                                    </div>
                                                 </c:if>
-                                                <c:if test="${empty m.materialUrl}">
+                                                <c:if test="${not empty m.downloadLink}">
+                                                    <div>
+                                                        <a href="${pageContext.request.contextPath}${m.downloadLink}" download class="material-link text-success">
+                                                            <i class="bi bi-file-earmark-arrow-down me-1"></i>Download File
+                                                        </a>
+                                                    </div>
+                                                </c:if>
+                                                <c:if test="${empty m.materialUrl and empty m.downloadLink}">
                                                     <span class="text-muted">—</span>
                                                 </c:if>
                                             </td>
@@ -228,7 +237,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form method="post" action="${pageContext.request.contextPath}/teacher/upload" id="uploadForm">
+                        <form method="post" action="${pageContext.request.contextPath}/teacher/upload" id="uploadForm" enctype="multipart/form-data">
                             <input type="hidden" name="action" value="create"/>
 
                             <!-- File Name -->
@@ -280,15 +289,26 @@
                                           placeholder="Brief description of this material..."></textarea>
                             </div>
 
-                            <!-- Upload Link -->
-                            <div class="mb-3">
-                                <label class="form-label" for="materialUrl">
-                                    <i class="bi bi-link-45deg me-1"></i>Upload Link <span class="text-danger">*</span>
-                                </label>
-                                <input type="url" class="form-control" id="materialUrl" name="materialUrl"
-                                       placeholder="https://drive.google.com/..." required />
-                                <div class="form-text text-muted" style="font-size:0.78rem;">
-                                    Paste the URL to your material (Google Drive, OneDrive, YouTube, etc.)
+                            <!-- Upload Link / File -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="materialUrl">
+                                        <i class="bi bi-link-45deg me-1"></i>External Link
+                                    </label>
+                                    <input type="url" class="form-control" id="materialUrl" name="materialUrl"
+                                           placeholder="https://drive.google.com/..." />
+                                    <div class="form-text text-muted" style="font-size:0.78rem;">
+                                        URL to Google Drive, YouTube, etc.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="uploadFile">
+                                        <i class="bi bi-upload me-1"></i>Upload File
+                                    </label>
+                                    <input type="file" class="form-control" id="uploadFile" name="uploadFile" />
+                                    <div class="form-text text-muted" style="font-size:0.78rem;">
+                                        Max file size: 10MB
+                                    </div>
                                 </div>
                             </div>
 
@@ -317,7 +337,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form method="post" action="${pageContext.request.contextPath}/teacher/upload" id="editForm">
+                        <form method="post" action="${pageContext.request.contextPath}/teacher/upload" id="editForm" enctype="multipart/form-data">
                             <input type="hidden" name="action" value="update"/>
                             <input type="hidden" name="materialId" value="${editMaterial.materialId}"/>
 
@@ -370,15 +390,26 @@
                                 <textarea name="description" id="editDescription" class="form-control form-control-dark" rows="3">${editMaterial.description}</textarea>
                             </div>
 
-                            <!-- Upload Link -->
-                            <div class="mb-3">
-                                <label class="form-label" for="editMaterialUrl">
-                                    <i class="bi bi-link-45deg me-1"></i>Upload Link <span class="text-danger">*</span>
-                                </label>
-                                <input type="url" class="form-control" id="editMaterialUrl" name="materialUrl"
-                                       value="${editMaterial.materialUrl}" required />
-                                <div class="form-text text-muted" style="font-size:0.78rem;">
-                                    Paste the URL to your material (Google Drive, OneDrive, YouTube, etc.)
+                            <!-- Upload Link / File -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="editMaterialUrl">
+                                        <i class="bi bi-link-45deg me-1"></i>External Link
+                                    </label>
+                                    <input type="url" class="form-control" id="editMaterialUrl" name="materialUrl"
+                                           value="${editMaterial.materialUrl}" />
+                                    <div class="form-text text-muted" style="font-size:0.78rem;">
+                                        URL to Google Drive, YouTube, etc.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="editUploadFile">
+                                        <i class="bi bi-upload me-1"></i>Update File (Optional)
+                                    </label>
+                                    <input type="file" class="form-control" id="editUploadFile" name="uploadFile" />
+                                    <div class="form-text text-muted" style="font-size:0.78rem;">
+                                        Current file will be kept if empty
+                                    </div>
                                 </div>
                             </div>
 

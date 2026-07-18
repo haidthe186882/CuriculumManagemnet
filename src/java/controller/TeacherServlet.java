@@ -1,16 +1,22 @@
 package controller;
 
-import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import model.User;
 import model.TeacherMaterial;
 import dao.TeacherMaterialDAO;
 import dao.SyllabusDAO;
+import jakarta.servlet.ServletException;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+        maxFileSize = 1024 * 1024 * 10, // 10MB
+        maxRequestSize = 1024 * 1024 * 50) // 50MB
 @WebServlet(name = "TeacherServlet", urlPatterns = {"/teacher/*"})
 public class TeacherServlet extends HttpServlet {
 
@@ -93,7 +99,7 @@ public class TeacherServlet extends HttpServlet {
     }
 
     // ===== POST handlers =====
-    private void doCreate(HttpServletRequest req, HttpServletResponse resp, User u) throws IOException {
+    private void doCreate(HttpServletRequest req, HttpServletResponse resp, User u) throws ServletException, IOException {
         TeacherMaterial tm = new TeacherMaterial();
         tm.setUserId(u.getUserId());
         tm.setMaterialName(req.getParameter("materialName"));
@@ -101,24 +107,38 @@ public class TeacherServlet extends HttpServlet {
         tm.setMaterialType(req.getParameter("materialType"));
         tm.setDescription(req.getParameter("description"));
         tm.setMaterialUrl(req.getParameter("materialUrl"));
+        tm.setDownloadLink(processUploadFile(req));
+
         boolean ok = materialDAO.addMaterial(tm);
         if (ok) {
             req.getSession().setAttribute("msg", "Material uploaded successfully!");
         } else {
-            req.getSession().setAttribute("msg", "ERROR: Could not upload material. Please try again.");
+            req.getSession().setAttribute("error", "Could not upload material. Please try again.");
         }
         resp.sendRedirect(req.getContextPath() + "/teacher/upload");
     }
 
-    private void doUpdate(HttpServletRequest req, HttpServletResponse resp, User u) throws IOException {
+    private void doUpdate(HttpServletRequest req, HttpServletResponse resp, User u) throws ServletException, IOException {
         TeacherMaterial tm = new TeacherMaterial();
         tm.setUserId(u.getUserId());
         tm.setMaterialId(req.getParameter("materialId"));
-        tm.setMaterialName(req.getParameter("materialName"));
         tm.setSyllabusId(req.getParameter("syllabusId"));
+        tm.setMaterialName(req.getParameter("materialName"));
         tm.setMaterialType(req.getParameter("materialType"));
         tm.setDescription(req.getParameter("description"));
         tm.setMaterialUrl(req.getParameter("materialUrl"));
+
+        // Handle file upload, keep existing if new not provided
+        String newUpload = processUploadFile(req);
+        if (newUpload != null) {
+            tm.setDownloadLink(newUpload);
+        } else {
+            TeacherMaterial existing = materialDAO.getMaterialById(tm.getMaterialId());
+            if (existing != null) {
+                tm.setDownloadLink(existing.getDownloadLink());
+            }
+        }
+
         materialDAO.updateMaterial(tm);
         req.getSession().setAttribute("msg", "Material updated successfully!");
         resp.sendRedirect(req.getContextPath() + "/teacher/upload");
@@ -134,6 +154,25 @@ public class TeacherServlet extends HttpServlet {
     }
 
     // ===== Helper =====
+    private String processUploadFile(HttpServletRequest req) throws ServletException, IOException {
+        Part filePart = req.getPart("uploadFile");
+        if (filePart != null && filePart.getSize() > 0) {
+            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+            if (!fileName.isEmpty()) {
+                String uploadPath = getServletContext().getRealPath("") + File.separator + "uploads" + File.separator
+                        + "teacher_materials";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists())
+                    uploadDir.mkdirs();
+
+                String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
+                filePart.write(uploadPath + File.separator + uniqueFileName);
+                return "/uploads/teacher_materials/" + uniqueFileName;
+            }
+        }
+        return null;
+    }
+
     private User requireTeacher(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("loggedUser") == null) {
