@@ -20,13 +20,7 @@
             <div class="page-title">Syllabus Management</div>
             <div class="page-subtitle">Course syllabuses and learning outcomes</div>
         </div>
-        <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.designer}">
-            <a href="${pageContext.request.contextPath}/syllabus/create" class="btn btn-primary-custom">
-                <i class="bi bi-plus-lg me-1"></i>New Syllabus
-            </a>
-        </c:if>
     </div>
-
     <c:if test="${param.msg == 'created'}">
         <div class="alert alert-success-dark mb-3"><i class="bi bi-check-circle me-1"></i>Syllabus created.</div>
     </c:if>
