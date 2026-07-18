@@ -38,7 +38,13 @@
                 <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                     <i class="bi bi-pencil me-1"></i>Edit
                 </a>
-                
+                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
+                    <input type="hidden" name="action" value="submit">
+                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                    <button type="submit" class="btn btn-primary-custom" onclick="return confirm('Submit for review?')">
+                        <i class="bi bi-send me-1"></i>Submit for Review
+                    </button>
+                </form>
             </c:if>
             <c:if test="${canEdit}">
                 <c:choose>
@@ -184,10 +190,6 @@
                             <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
                         </c:otherwise>
                     </c:choose>
-                            <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
-                               class="btn btn-warning text-dark fw-bold">
-                                <i class="bi bi-collection me-1"></i> View Combos
-                            </a>       
                 </div>
                 <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' and not curriculum.isActive}">
                     <form method="post" action="${pageContext.request.contextPath}/curriculum" class="mb-2">
