@@ -25,7 +25,7 @@ import java.util.List;
  * @author lo pc
  */
 @WebServlet(name = "DesignServlet", urlPatterns = {"/design/*"})
-public class DesginServlet extends HttpServlet {
+public class DesignServlet extends HttpServlet {
 
     private final DesignDAO designDAO = new DesignDAO();
     private final SyllabusDAO syllabusDAO = new SyllabusDAO();
