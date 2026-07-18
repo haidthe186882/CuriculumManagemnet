@@ -3,6 +3,7 @@ package controller;
 import dao.SyllabusDAO;
 import dao.SubjectDAO;
 import dao.CloDAO;
+import dao.DesignDAO;
 import dao.SessionDAO;
 import model.CourseLearningOutcome;
 import model.Session;
@@ -43,6 +44,7 @@ public class SyllabusServlet extends HttpServlet {
     private final SessionDAO  sessionDAO  = new SessionDAO();
     private final dao.CurriculumDAO curriculumDAO = new dao.CurriculumDAO();
     private final dao.PloDAO  ploDAO      = new dao.PloDAO();
+    private final DesignDAO designDAO = new DesignDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
