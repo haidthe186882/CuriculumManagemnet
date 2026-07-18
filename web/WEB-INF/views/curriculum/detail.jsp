@@ -38,13 +38,6 @@
                 <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                     <i class="bi bi-pencil me-1"></i>Edit
                 </a>
-                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
-                    <input type="hidden" name="action" value="submit">
-                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                    <button type="submit" class="btn btn-primary-custom" onclick="return confirm('Submit for review?')">
-                        <i class="bi bi-send me-1"></i>Submit for Review
-                    </button>
-                </form>
             </c:if>
             <c:if test="${canEdit}">
                 <c:choose>
@@ -67,6 +60,11 @@
                         </form>
                     </c:otherwise>
                 </c:choose>
+            </c:if>
+            <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+                <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}" class="btn btn-secondary-custom">
+                    <i class="bi bi-person-plus me-1"></i>Assign
+                </a>
             </c:if>
             <!-- <a href="${pageContext.request.contextPath}/curriculum/po?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                 <i class="bi bi-eye me-1"></i>View PO
@@ -253,13 +251,13 @@
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>PreRequisite</th><th>Syllabus</th><th>Design Status</th>
-                    <c:if test="${canEdit}"><th>Assign</th></c:if>
+                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}"><th>Assign</th></c:if>
                     <c:if test="${canDesign}"><th>Action</th></c:if>
                 </tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="10" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
+                            <tr><td colspan="${8 + (sessionScope.loggedUser.role.roleName == 'Admin' ? 1 : 0) + (canDesign ? 1 : 0)}" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
@@ -302,36 +300,11 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <c:if test="${canEdit}">
-                                        <td style="min-width:240px;">
-                                            <c:if test="${cs.subject.syllabusStatusCode != 2}">
-                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1">
-                                                    <input type="hidden" name="action" value="assignSubject">
-                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
-                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
-                                                        <option value="">-- Designer --</option>
-                                                        <c:forEach var="d" items="${designers}">
-                                                            <option value="${d.userId}">${d.fullName}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                    <input type="hidden" name="assignmentType" value="Designer">
-                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Designer"><i class="bi bi-person-plus"></i></button>
-                                                </form>
-                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1 mt-1">
-                                                    <input type="hidden" name="action" value="assignSubject">
-                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
-                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
-                                                        <option value="">-- Reviewer --</option>
-                                                        <c:forEach var="r" items="${reviewers}">
-                                                            <option value="${r.userId}">${r.fullName}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                    <input type="hidden" name="assignmentType" value="Reviewer">
-                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Reviewer"><i class="bi bi-person-plus"></i></button>
-                                                </form>
-                                            </c:if>
+                                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+                                        <td>
+                                            <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}#subj-${cs.subject.subjectId}" class="btn btn-sm btn-outline-primary" title="Assign Designer/Reviewer for this subject">
+                                                <i class="bi bi-person-plus"></i> Assign
+                                            </a>
                                         </td>
                                     </c:if>
                                     <c:if test="${canDesign}">

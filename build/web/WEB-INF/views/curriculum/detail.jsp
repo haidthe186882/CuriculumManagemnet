@@ -38,7 +38,6 @@
                 <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                     <i class="bi bi-pencil me-1"></i>Edit
                 </a>
-                
             </c:if>
             <c:if test="${canEdit}">
                 <c:choose>
@@ -61,6 +60,11 @@
                         </form>
                     </c:otherwise>
                 </c:choose>
+            </c:if>
+            <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+                <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}" class="btn btn-secondary-custom">
+                    <i class="bi bi-person-plus me-1"></i>Assign
+                </a>
             </c:if>
             <!-- <a href="${pageContext.request.contextPath}/curriculum/po?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                 <i class="bi bi-eye me-1"></i>View PO
@@ -167,13 +171,14 @@
                         <div class="detail-value"><c:if test="${not empty curriculum.decisionDate}"><fmt:formatDate value="${curriculum.decisionDate}" pattern="dd/MM/yyyy"/></c:if></div>
                     </div>
                     <div class="col-12"><div class="detail-label">Description</div>
-                        <div class="detail-value" style="white-space:pre-wrap;">${curriculum.description}</div></div>
+                        <div class="detail-value" style="white-space:pre-wrap;">${curriculum.description}</div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card-dark p-4">
-<!--                <div class="detail-label">isActive</div>-->
+                <div class="detail-label">isActive</div>
                 <div class="mb-3">
                     <c:choose>
                         <c:when test="${curriculum.isActive}">
@@ -183,10 +188,6 @@
                             <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
                         </c:otherwise>
                     </c:choose>
-                            <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
-                               class="btn btn-warning text-dark fw-bold">
-                                <i class="bi bi-collection me-1"></i> View Combos
-                            </a>       
                 </div>
                 <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' and not curriculum.isActive}">
                     <form method="post" action="${pageContext.request.contextPath}/curriculum" class="mb-2">
@@ -250,13 +251,13 @@
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>PreRequisite</th><th>Syllabus</th><th>Design Status</th>
-                    <c:if test="${canEdit}"><th>Assign</th></c:if>
+                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}"><th>Assign</th></c:if>
                     <c:if test="${canDesign}"><th>Action</th></c:if>
                 </tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="10" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
+                            <tr><td colspan="${8 + (sessionScope.loggedUser.role.roleName == 'Admin' ? 1 : 0) + (canDesign ? 1 : 0)}" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
@@ -299,36 +300,11 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <c:if test="${canEdit}">
-                                        <td style="min-width:240px;">
-                                            <c:if test="${cs.subject.syllabusStatusCode != 2}">
-                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1">
-                                                    <input type="hidden" name="action" value="assignSubject">
-                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
-                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
-                                                        <option value="">-- Designer --</option>
-                                                        <c:forEach var="d" items="${designers}">
-                                                            <option value="${d.userId}">${d.fullName}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                    <input type="hidden" name="assignmentType" value="Designer">
-                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Designer"><i class="bi bi-person-plus"></i></button>
-                                                </form>
-                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1 mt-1">
-                                                    <input type="hidden" name="action" value="assignSubject">
-                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
-                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
-                                                        <option value="">-- Reviewer --</option>
-                                                        <c:forEach var="r" items="${reviewers}">
-                                                            <option value="${r.userId}">${r.fullName}</option>
-                                                        </c:forEach>
-                                                    </select>
-                                                    <input type="hidden" name="assignmentType" value="Reviewer">
-                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Reviewer"><i class="bi bi-person-plus"></i></button>
-                                                </form>
-                                            </c:if>
+                                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+                                        <td>
+                                            <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}#subj-${cs.subject.subjectId}" class="btn btn-sm btn-outline-primary" title="Assign Designer/Reviewer for this subject">
+                                                <i class="bi bi-person-plus"></i> Assign
+                                            </a>
                                         </td>
                                     </c:if>
                                     <c:if test="${canDesign}">
@@ -338,10 +314,6 @@
                                                 <input type="hidden" name="action" value="removeSubject">
                                                 <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
                                                 <input type="hidden" name="curriculumSubjectId" value="${cs.curriculumSubjectId}">
-                                                <button type="button" class="btn btn-sm btn-outline-primary me-1" title="Assign Roles" 
-                                                        data-bs-toggle="modal" data-bs-target="#assignModal_${cs.subject.subjectId}"> <%-- Dùng ID môn học để phân biệt modal --%>
-                                                    <i class="bi bi-person-plus"></i> Assign
-                                                </button>
                                                 <button type="submit" class="btn btn-action btn-danger-custom"><i class="bi bi-trash"></i></button>
                                             </form>
                                         </td>
@@ -351,7 +323,7 @@
                         </c:otherwise>
                     </c:choose>
                 </tbody>
-            </table>        
+            </table>
         </div>
     </div>
 
@@ -593,50 +565,6 @@
         </div>
     </c:if>
 </div>
-<%--assign syllabus --%>                            
-<c:if test="${canDesign}">
-    <c:forEach var="cs" items="${subjects}">
-        <div class="modal fade" id="assignModal_${cs.subject.subjectId}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <%-- Thêm bg-light và text-dark để modal có nền trắng, không bị trong suốt --%>
-                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="modal-content bg-light text-dark shadow">
-                    <div class="modal-header border-bottom">
-                        <h5 class="modal-title">Assign Syllabus: <span class="text-primary">${cs.subject.subjectCode}</span></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body text-start">
-                        <input type="hidden" name="action" value="assignSyllabus">
-                        <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                        <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Assign Designer</label>
-                            <select name="designerId" class="form-select border-secondary">
-                                <option value="">-- Select Designer --</option>
-                                <c:forEach var="d" items="${designers}">
-                                    <option value="${d.userId}">${d.fullName} (${d.email})</option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Assign Reviewer</label>
-                            <select name="reviewerId" class="form-select border-secondary">
-                                <option value="">-- Select Reviewer --</option>
-                                <c:forEach var="r" items="${reviewers}">
-                                    <option value="${r.userId}">${r.fullName} (${r.email})</option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-top">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save"></i> Save Assignment</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </c:forEach>
-</c:if>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>

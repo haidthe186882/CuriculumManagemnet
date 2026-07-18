@@ -87,6 +87,37 @@ public class DesignDAO {
         return list;
     }
 
+    /**
+     * Danh sach tat ca assignment (Designer/Reviewer) da duoc gan cho TAT CA
+     * subject/syllabus thuoc 1 Curriculum - dung cho trang "Assign" de Admin
+     * xem lai ai da duoc phan cong truoc khi gan them.
+     */
+    public List<SyllabusAssignment> getAssignmentsByCurriculum(String curriculumId) {
+        List<SyllabusAssignment> list = new ArrayList<>();
+        String sql = BASE_SELECT
+                + "JOIN Curriculum_Subjects cs ON cs.Subject_ID = s.Subject_ID "
+                + "JOIN Users u ON u.User_ID = sa.User_ID "
+                + "WHERE cs.Curriculum_ID = ? "
+                + "ORDER BY s.Subject_Code, sa.Assignment_Type";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, curriculumId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                SyllabusAssignment a = mapAssignment(rs);
+                model.User u = new model.User();
+                u.setUserId(rs.getString("User_ID"));
+                try { u.setFullName(rs.getString("Full_Name")); } catch (SQLException ignored) {}
+                try { u.setEmail(rs.getString("Email")); } catch (SQLException ignored) {}
+                a.setUser(u);
+                list.add(a);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     /** Danh sach nguoi (Designer/Reviewer) da duoc gan cho 1 Syllabus cu the. */
     public List<SyllabusAssignment> getAssignmentsBySyllabus(String syllabusId) {
         List<SyllabusAssignment> list = new ArrayList<>();
