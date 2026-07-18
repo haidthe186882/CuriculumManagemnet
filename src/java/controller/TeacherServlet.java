@@ -7,6 +7,7 @@ import model.User;
 import model.TeacherMaterial;
 import dao.TeacherMaterialDAO;
 import dao.SyllabusDAO;
+import jakarta.servlet.ServletException;
 
 import java.io.File;
 import java.io.IOException;
