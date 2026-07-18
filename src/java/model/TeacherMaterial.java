@@ -15,6 +15,7 @@ public class TeacherMaterial {
     private String materialType;
     private String materialName;
     private String materialUrl;
+    private String downloadLink;
     private String description;
     private boolean isActive;
     private Date createdDate;
@@ -45,6 +46,9 @@ public class TeacherMaterial {
 
     public String getMaterialUrl() { return materialUrl; }
     public void setMaterialUrl(String materialUrl) { this.materialUrl = materialUrl; }
+
+    public String getDownloadLink() { return downloadLink; }
+    public void setDownloadLink(String downloadLink) { this.downloadLink = downloadLink; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
