@@ -52,7 +52,6 @@
                         <th>#</th>
                         <th>Subject Code</th>
                         <th>Subject Name</th>
-                        <th>Curriculum</th>
                         <th>Status</th>
                         <th>Assigned Date</th>
                         <th>Action</th>
@@ -74,7 +73,6 @@
                                     <td class="text-muted">${st.count}</td>
                                     <td><code style="color:#4fc3f7;">${a.subjectCode}</code></td>
                                     <td class="detail-value">${a.subjectName}</td>
-                                    <td class="text-muted">${a.curriculumCode}</td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${a.syllabusStatusCode == 2}">

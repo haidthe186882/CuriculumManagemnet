@@ -154,12 +154,12 @@ public class SyllabusDAO {
     }
 
     public boolean addSyllabus(Syllabus syllabus) {
-        String workflowStatus = normalizeWorkflowStatus(syllabus.getStatus(), STATUS_PENDING_REVIEW);
+        String workflowStatus = normalizeWorkflowStatus(syllabus.getStatus(), STATUS_DRAFT);
         int legacyStatus = mapWorkflowStatusToLegacyCode(workflowStatus);
         String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, "
                 + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
                 + "Decision_No, Approved_Date, Status, Workflow_Status, Is_Active) "
-                + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)";
+                + "VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
         try (Connection con = new DBContext().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, syllabus.getSubjectId());
@@ -186,7 +186,12 @@ public class SyllabusDAO {
     public boolean updateStatus(String syllabusId, String status) {
         String workflowStatus = normalizeWorkflowStatus(status, STATUS_DRAFT);
         int legacyStatus = mapWorkflowStatusToLegacyCode(workflowStatus);
-        boolean active = STATUS_PUBLISHED.equalsIgnoreCase(workflowStatus);
+        // Is_Active nghia la "day la ban ghi Syllabus hien hanh cua Subject" (dung boi
+        // getActiveSyllabusIdBySubject/getSyllabusBySubject...), KHONG PHAI "da Published".
+        // Neu gan theo Published thi ngay sau khi Submit for Review, Syllabus se "bien mat"
+        // khoi moi truy van tim syllabus hien hanh cua subject -> gay ra hang loat loi day
+        // chuyen (assign lai bi tao trung, khong tim thay syllabus...).
+        boolean active = true;
         String sql = "UPDATE Syllabuses SET Status = ?, Workflow_Status = ?, Is_Active = ? WHERE Syllabus_ID = ?";
         try (Connection con = new DBContext().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
@@ -237,7 +242,10 @@ public class SyllabusDAO {
 
     public boolean updateWorkflowStatus(String syllabusId, int statusCode) {
         String workflowStatus = mapLegacyCodeToWorkflowStatus(statusCode);
-        boolean active = STATUS_PUBLISHED.equalsIgnoreCase(workflowStatus);
+        // Xem giai thich trong updateStatus(): Is_Active phai luon la true o day,
+        // khong duoc gan theo Published, neu khong cac truy van tim "syllabus hien
+        // hanh cua subject" se khong thay Syllabus ngay sau khi doi trang thai.
+        boolean active = true;
         String sql = "UPDATE Syllabuses SET Status = ?, Workflow_Status = ?, Is_Active = ? WHERE Syllabus_ID = ?";
         try (Connection con = new DBContext().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
@@ -253,10 +261,17 @@ public class SyllabusDAO {
     }
 
     public boolean updateSyllabusContent(String syllabusId, Syllabus syllabus) {
-        String workflowStatus = STATUS_PENDING_REVIEW;
+        // QUAN TRONG: luu noi dung (tao moi hoac Designer sua lai sau khi bi Reject)
+        // KHONG duoc tu dong chuyen sang PendingReview - phai giu o Draft cho den khi
+        // chinh Designer bam "Submit for Review" (design/list -> submitForReview()).
+        // Neu khong Reviewer se thay Syllabus ngay ca khi Designer chua lam gi ca.
+        String workflowStatus = STATUS_DRAFT;
+        // Is_Active=1 (KHONG phai 0): day la ban ghi Syllabus dang dung cho Subject nay,
+        // can duoc getActiveSyllabusIdBySubject()/getSyllabusBySubject() tim thay - neu de
+        // 0 se bi coi la "khong co syllabus nao" va tao nham 1 Syllabus TRUNG LAP o lan assign/save sau.
         String sql = "UPDATE Syllabuses SET Syllabus_Name=?, English_Name=?, Version=?, Description=?, "
                 + "Time_Allocation=?, Student_Tasks=?, Tools=?, Scoring_Scale=?, Min_Avg_Mark_To_Pass=?, "
-                + "Decision_No=?, Approved_Date=?, Status=?, Workflow_Status=?, Is_Active=0 WHERE Syllabus_ID=?";
+                + "Decision_No=?, Approved_Date=?, Status=?, Workflow_Status=?, Is_Active=1 WHERE Syllabus_ID=?";
         try (Connection con = new DBContext().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, syllabus.getSyllabusName());
@@ -270,7 +285,7 @@ public class SyllabusDAO {
             ps.setDouble(9, syllabus.getMinAvgMarkToPass());
             ps.setString(10, syllabus.getDecisionNo());
             ps.setDate(11, syllabus.getApprovedDate() != null ? new java.sql.Date(syllabus.getApprovedDate().getTime()) : null);
-            ps.setInt(12, Syllabus.STATUS_PENDING_REVIEW);
+            ps.setInt(12, Syllabus.STATUS_DRAFT);
             ps.setString(13, workflowStatus);
             ps.setString(14, syllabusId);
             return ps.executeUpdate() > 0;
@@ -331,12 +346,15 @@ public class SyllabusDAO {
     }
 
     public String addSyllabusAndGetId(Syllabus syllabus) {
-        String workflowStatus = normalizeWorkflowStatus(syllabus.getStatus(), STATUS_PENDING_REVIEW);
+        // Moi tao xong PHAI o trang thai Draft - khong duoc gui thang cho Reviewer.
+        // Chi khi Designer bam "Submit for Review" (xem submitForReview()) thi moi
+        // chuyen sang PendingReview de Reviewer thay duoc.
+        String workflowStatus = normalizeWorkflowStatus(syllabus.getStatus(), STATUS_DRAFT);
         int legacyStatus = mapWorkflowStatusToLegacyCode(workflowStatus);
         String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, "
                 + "Description, Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass, "
                 + "Decision_No, Approved_Date, Status, Workflow_Status, Is_Active) "
-                + "OUTPUT INSERTED.Syllabus_ID VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)";
+                + "OUTPUT INSERTED.Syllabus_ID VALUES (NEWID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
         try (Connection con = new DBContext().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, syllabus.getSubjectId());
@@ -469,11 +487,11 @@ public class SyllabusDAO {
     }
 
     public boolean approveForPublish(String syllabusId) {
-        return updateWorkflowStatus(syllabusId, STATUS_APPROVED_FOR_PUBLISH, false);
+        return updateWorkflowStatus(syllabusId, STATUS_APPROVED_FOR_PUBLISH, true);
     }
 
     public boolean requestChanges(String syllabusId) {
-        return updateWorkflowStatus(syllabusId, STATUS_CHANGES_REQUESTED, false);
+        return updateWorkflowStatus(syllabusId, STATUS_CHANGES_REQUESTED, true);
     }
 
     public boolean publishSyllabus(String syllabusId) {
@@ -661,7 +679,7 @@ public class SyllabusDAO {
 
     private String createPlaceholderSyllabus(String subjectId) {
         String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, Status, Workflow_Status, Is_Active) "
-                + "OUTPUT INSERTED.Syllabus_ID VALUES (NEWID(), ?, ?, ?, ?, 0)";
+                + "OUTPUT INSERTED.Syllabus_ID VALUES (NEWID(), ?, ?, ?, ?, 1)";
         String subjectLabel = "Draft";
         try (Connection con = new DBContext().getConnection()) {
             try (PreparedStatement subjectPs = con.prepareStatement(

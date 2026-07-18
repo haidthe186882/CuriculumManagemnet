@@ -16,6 +16,7 @@ import util.ExcelHelper;
 import util.ExcelHelper.ImportResult;
 import util.ExcelHelper.PloRow;
 import util.ExcelHelper.SubjectRow;
+import util.ExcelHelper.AssignRow;
 import util.PaginationHelper;
 
 import jakarta.servlet.ServletException;
@@ -25,8 +26,10 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @WebServlet(name = "CurriculumServlet", urlPatterns = {"/curriculum/*"})
@@ -71,6 +74,9 @@ public class CurriculumServlet extends HttpServlet {
             case "/po":
                 showPO(req, res);
                 break;
+            case "/assign":
+                showAssign(req, res);
+                break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
@@ -87,6 +93,10 @@ public class CurriculumServlet extends HttpServlet {
 
         if ("/importExcel".equals(pathInfo)) {
             doImportExcel(req, res);
+            return;
+        }
+        if ("/importAssignExcel".equals(pathInfo)) {
+            doImportAssignExcel(req, res);
             return;
         }
 
@@ -223,6 +233,48 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
         req.setAttribute("mappings", poDAO.getPoPloMappings(id));
         forward(req, res, "/WEB-INF/views/curriculum/po.jsp");
+    }
+
+    /**
+     * Trang rieng danh cho Admin phan cong Designer/Reviewer cho 1 Curriculum.
+     * Thay vi mo modal ngay tren trang list, bam "Assign" se chuyen sang
+     * trang nay, co hien thi day du thong tin nhung nguoi da duoc gan truoc do.
+     */
+    private void showAssign(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        if (!requireRole(req, res, "Admin")) return;
+
+        String id = req.getParameter("curriculumId");
+        if (id == null || id.trim().isEmpty()) {
+            id = req.getParameter("id");
+        }
+        Curriculum c = curriculumDAO.getCurriculumById(id);
+        if (c == null) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+
+        req.setAttribute("curriculum", c);
+        req.setAttribute("subjects", subjectDAO.getSubjectsByCurriculum(id));
+        req.setAttribute("assignments", designDAO.getAssignmentsByCurriculum(id));
+        req.setAttribute("designers", userDAO.getUsersByRole("Designer"));
+        req.setAttribute("reviewers", userDAO.getUsersByRole("Reviewer"));
+
+        String msg = req.getParameter("msg");
+        if ("assigned".equals(msg)) {
+            req.setAttribute("successMessage", "Assignment saved.");
+        } else if ("imported".equals(msg)) {
+            String ok = req.getParameter("importOk");
+            String fail = req.getParameter("importFail");
+            req.setAttribute("successMessage", "Import completed: " + ok + " assignment(s) applied"
+                    + (fail != null && !"0".equals(fail) ? ", " + fail + " row(s) skipped." : "."));
+            if (req.getParameter("importErrors") != null) {
+                req.setAttribute("importErrors", req.getParameter("importErrors"));
+            }
+        } else if ("importError".equals(msg)) {
+            req.setAttribute("errorMessage", req.getParameter("importErrors"));
+        }
+        forward(req, res, "/WEB-INF/views/curriculum/assign.jsp");
     }
 
     private void showCreate(HttpServletRequest req, HttpServletResponse res)
@@ -712,7 +764,7 @@ public class CurriculumServlet extends HttpServlet {
         User admin = getLoggedUser(req);
 
         curriculumDAO.assignCurriculumRoles(curriculumId, designerId, reviewerId, admin.getUserId());
-        res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=assigned");
+        res.sendRedirect(req.getContextPath() + "/curriculum/assign?curriculumId=" + curriculumId + "&msg=assigned");
     }
 
     /**
@@ -764,6 +816,7 @@ public class CurriculumServlet extends HttpServlet {
         String subjectId = req.getParameter("subjectId");
         String userId = req.getParameter("userId");
         String assignmentType = req.getParameter("assignmentType"); // "Designer" | "Reviewer"
+        String returnTo = req.getParameter("returnTo");
         User admin = getLoggedUser(req);
 
         if (subjectId != null && userId != null && assignmentType != null) {
@@ -777,7 +830,105 @@ public class CurriculumServlet extends HttpServlet {
                 designDAO.assignUser(syllabusId, userId, assignmentType, admin.getUserId());
             }
         }
-        res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=assigned");
+        if ("assign".equals(returnTo)) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/assign?curriculumId=" + curriculumId + "&msg=assigned");
+        } else {
+            res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=assigned");
+        }
+    }
+
+    /**
+     * Admin import 1 file Excel (Subject Code, Designer Name, Designer Email,
+     * Reviewer Name, Reviewer Email) de gan hang loat Designer/Reviewer cho
+     * cac subject trong 1 Curriculum, thay vi phai chon tung dong tren UI.
+     * Subject duoc doi chieu theo Subject Code (phai thuoc curriculum nay),
+     * nguoi duoc gan duoc doi chieu theo Email (phai la user co that trong he thong).
+     */
+    private void doImportAssignExcel(HttpServletRequest req, HttpServletResponse res)
+            throws IOException, ServletException {
+        if (!requireRole(req, res, "Admin")) return;
+
+        String curriculumId = req.getParameter("curriculumId");
+        if (curriculumId == null || curriculumId.trim().isEmpty()) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+        User admin = getLoggedUser(req);
+
+        // Map Subject_Code (uppercase) -> Subject_ID, gioi han trong pham vi Curriculum nay
+        Map<String, String> codeToSubjectId = new HashMap<>();
+        for (CurriculumSubject cs : subjectDAO.getSubjectsByCurriculum(curriculumId)) {
+            if (cs.getSubject() != null && cs.getSubject().getSubjectCode() != null) {
+                codeToSubjectId.put(cs.getSubject().getSubjectCode().trim().toUpperCase(), cs.getSubject().getSubjectId());
+            }
+        }
+
+        int okCount = 0;
+        List<String> errors = new ArrayList<>();
+
+        try {
+            Part filePart = req.getPart("assignExcelFile");
+            if (filePart == null || filePart.getSize() <= 0) {
+                res.sendRedirect(req.getContextPath() + "/curriculum/assign?curriculumId=" + curriculumId
+                        + "&msg=importError&importErrors=" + java.net.URLEncoder.encode("No file selected.", "UTF-8"));
+                return;
+            }
+
+            List<AssignRow> rows = ExcelHelper.parseAssignExcel(filePart.getInputStream());
+            for (AssignRow row : rows) {
+                String subjectId = codeToSubjectId.get(row.getSubjectCode().trim().toUpperCase());
+                if (subjectId == null) {
+                    errors.add(row.getSubjectCode() + ": subject not found in this curriculum");
+                    continue;
+                }
+
+                String syllabusId = syllabusDAO.getActiveSyllabusIdBySubject(subjectId);
+                if (syllabusId == null) {
+                    Subject subj = subjectDAO.getSubjectById(subjectId);
+                    syllabusId = syllabusDAO.createEmptySyllabus(subjectId, subj != null ? subj.getSubjectName() : subjectId);
+                }
+                if (syllabusId == null) {
+                    errors.add(row.getSubjectCode() + ": could not prepare syllabus");
+                    continue;
+                }
+
+                boolean rowOk = true;
+                if (row.getDesignerEmail() != null && !row.getDesignerEmail().trim().isEmpty()) {
+                    User designer = userDAO.getUserByEmail(row.getDesignerEmail().trim());
+                    if (designer == null) {
+                        errors.add(row.getSubjectCode() + ": designer email not found (" + row.getDesignerEmail() + ")");
+                        rowOk = false;
+                    } else {
+                        designDAO.assignUser(syllabusId, designer.getUserId(), "Designer", admin.getUserId());
+                    }
+                }
+                if (row.getReviewerEmail() != null && !row.getReviewerEmail().trim().isEmpty()) {
+                    User reviewer = userDAO.getUserByEmail(row.getReviewerEmail().trim());
+                    if (reviewer == null) {
+                        errors.add(row.getSubjectCode() + ": reviewer email not found (" + row.getReviewerEmail() + ")");
+                        rowOk = false;
+                    } else {
+                        designDAO.assignUser(syllabusId, reviewer.getUserId(), "Reviewer", admin.getUserId());
+                    }
+                }
+                if (rowOk) okCount++;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            res.sendRedirect(req.getContextPath() + "/curriculum/assign?curriculumId=" + curriculumId
+                    + "&msg=importError&importErrors=" + java.net.URLEncoder.encode("Could not read the Excel file.", "UTF-8"));
+            return;
+        }
+
+        StringBuilder redirect = new StringBuilder(req.getContextPath())
+                .append("/curriculum/assign?curriculumId=").append(curriculumId)
+                .append("&msg=imported&importOk=").append(okCount)
+                .append("&importFail=").append(errors.size());
+        if (!errors.isEmpty()) {
+            String joined = String.join(" | ", errors.subList(0, Math.min(errors.size(), 10)));
+            redirect.append("&importErrors=").append(java.net.URLEncoder.encode(joined, "UTF-8"));
+        }
+        res.sendRedirect(redirect.toString());
     }
     
     // Kiểm tra logic nội bộ xem User có quyền Edit Curriculum này không

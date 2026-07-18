@@ -335,6 +335,12 @@ CREATE TABLE Syllabuses
     -- Reject cua Reviewer se dua Status ve lai 0 de Designer sua.
     Status INT DEFAULT 0,
 
+    -- Workflow_Status: ban string song song voi Status, dung boi luong Review
+    -- kieu rubric (Draft/PendingReview/ChangesRequested/ApprovedForPublish/Published).
+    -- PHAI duoc cap nhat DONG THOI voi Status trong moi cau UPDATE, neu khong
+    -- Reviewer se khong thay Syllabus can duyet (xem SyllabusDAO#getAssignedSubjectsForReviewer).
+    Workflow_Status NVARCHAR(30) NOT NULL DEFAULT 'Draft',
+
     Is_Active BIT DEFAULT 1,
 
     CONSTRAINT FK_Syllabus_Subject
@@ -526,6 +532,24 @@ CREATE TABLE Reviews
     CONSTRAINT FK_Review_User
         FOREIGN KEY(Reviewer_ID)
         REFERENCES Users(User_ID)
+);
+
+-- Review_Details: diem tung tieu chi (rubric) trong 1 Review, dung boi man
+-- hinh Review chi tiet ("submitSyllabusReview" trong ReviewServlet).
+CREATE TABLE Review_Details
+(
+    Review_Detail_ID UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
+    Review_ID UNIQUEIDENTIFIER NOT NULL,
+    Criterion_Key NVARCHAR(50) NOT NULL,
+    Criterion_Name NVARCHAR(255) NOT NULL,
+    Max_Score DECIMAL(5,2) NOT NULL DEFAULT 0,
+    Score DECIMAL(5,2) NOT NULL DEFAULT 0,
+    Comment NVARCHAR(MAX),
+
+    CONSTRAINT FK_ReviewDetails_Review
+        FOREIGN KEY(Review_ID)
+        REFERENCES Reviews(Review_ID)
+        ON DELETE CASCADE
 );
 
 /* =========================================
