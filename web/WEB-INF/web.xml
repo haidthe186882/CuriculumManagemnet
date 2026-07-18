@@ -14,7 +14,7 @@
     </error-page>
     <servlet>
         <servlet-name>DesginServlet</servlet-name>
-        <servlet-class>controller.DesginServlet</servlet-class>
+        <servlet-class>controller.DesignServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>DesginServlet</servlet-name>

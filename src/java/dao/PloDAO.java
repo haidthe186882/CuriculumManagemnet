@@ -83,6 +83,116 @@ public class PloDAO {
     }
 
     /**
+     * Xoa toan bo PLO_CLO_Mappings gan voi cac CLO cua 1 Syllabus. BAT BUOC goi
+     * truoc khi xoa cac CLO do (CloDAO#deleteCLOsBySyllabus), vi PLO_CLO_Mappings
+     * co FK tro toi CLO_ID KHONG co ON DELETE CASCADE -> xoa CLO truoc se bi
+     * loi vi pham khoa ngoai neu con mapping tro toi.
+     */
+    public boolean deleteMappingsBySyllabus(String syllabusId) {
+        String sql = "DELETE FROM PLO_CLO_Mappings WHERE CLO_ID IN (SELECT CLO_ID FROM CLOs WHERE Syllabus_ID = ?)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ps.executeUpdate();
+            return true;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    /**
+     * Xoa PLO_CLO_Mappings cua 1 Syllabus, GIOI HAN trong PLO cua 1 Curriculum cu
+     * the (khac voi deleteMappingsBySyllabus() o tren la xoa toan bo). Dung cho
+     * che do "Mapping-only save" (xem SyllabusServlet#doPost) khi Syllabus DA
+     * Approved va dang duoc mapping bo sung cho 1 Curriculum khac dung chung
+     * Subject - khong duoc dung tay vao mapping cua cac Curriculum khac.
+     */
+    public boolean deleteMappingsBySyllabusAndCurriculum(String syllabusId, String curriculumId) {
+        String sql = "DELETE FROM PLO_CLO_Mappings WHERE " +
+                     "CLO_ID IN (SELECT CLO_ID FROM CLOs WHERE Syllabus_ID = ?) AND " +
+                     "PLO_ID IN (SELECT PLO_ID FROM PLOs WHERE Curriculum_ID = ?)";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ps.setString(2, curriculumId);
+            ps.executeUpdate();
+            return true;
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    /**
+     * Tra ve TOAN BO mapping CLO-PLO hien co cua 1 Syllabus, kem Curriculum_ID
+     * cua PLO va CLO_Code (thay vi CLO_ID, vi CLO_ID se doi moi lan luu lai
+     * Syllabus). Dung de "giu lai" mapping cua cac Curriculum KHONG xuat hien
+     * trong form dang submit (xem SyllabusServlet#doCreate) truoc khi CLOs cu
+     * bi xoa va tao lai voi ID moi.
+     * Moi phan tu tra ve: {PLO_ID, CLO_Code, Curriculum_ID}
+     */
+    public List<String[]> getAllCloCodePloMappings(String syllabusId) {
+        List<String[]> list = new ArrayList<>();
+        String sql = "SELECT m.PLO_ID, c.CLO_Code, p.Curriculum_ID " +
+                     "FROM PLO_CLO_Mappings m " +
+                     "JOIN CLOs c ON m.CLO_ID = c.CLO_ID " +
+                     "JOIN PLOs p ON m.PLO_ID = p.PLO_ID " +
+                     "WHERE c.Syllabus_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new String[]{rs.getString("PLO_ID"), rs.getString("CLO_Code"), rs.getString("Curriculum_ID")});
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /** Ghi 1 cap mapping CLO-PLO. Bo qua neu da co san (tranh loi trung). */
+    public boolean addMapping(String cloId, String ploId) {
+        String checkSql = "SELECT 1 FROM PLO_CLO_Mappings WHERE CLO_ID = ? AND PLO_ID = ?";
+        String insertSql = "INSERT INTO PLO_CLO_Mappings (Mapping_ID, PLO_ID, CLO_ID) VALUES (?, ?, ?)";
+        try (Connection con = new DBContext().getConnection()) {
+            try (PreparedStatement check = con.prepareStatement(checkSql)) {
+                check.setString(1, cloId);
+                check.setString(2, ploId);
+                if (check.executeQuery().next()) return true; // already mapped
+            }
+            try (PreparedStatement ins = con.prepareStatement(insertSql)) {
+                ins.setString(1, java.util.UUID.randomUUID().toString());
+                ins.setString(2, ploId);
+                ins.setString(3, cloId);
+                return ins.executeUpdate() > 0;
+            }
+        } catch (Exception e) { e.printStackTrace(); return false; }
+    }
+
+    /**
+     * Tra ve tap hop cac cap "CLO_ID|PLO_ID" da duoc mapping, gioi han trong
+     * CLO cua 1 Syllabus va PLO cua 1 Curriculum cu the (vi 1 Subject co the
+     * dung chung nhieu Curriculum, moi Curriculum co bo PLO rieng).
+     */
+    public java.util.Set<String> getCheckedCloPloPairs(String syllabusId, String curriculumId) {
+        java.util.Set<String> set = new java.util.HashSet<>();
+        String sql = "SELECT m.CLO_ID, m.PLO_ID FROM PLO_CLO_Mappings m "
+                   + "JOIN CLOs c ON m.CLO_ID = c.CLO_ID "
+                   + "JOIN PLOs p ON m.PLO_ID = p.PLO_ID "
+                   + "WHERE c.Syllabus_ID = ? AND p.Curriculum_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ps.setString(2, curriculumId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    set.add(rs.getString("CLO_ID") + "|" + rs.getString("PLO_ID"));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return set;
+    }
+
+    /**
      * Deletes all PLOs for a curriculum (used during Excel re-import).
      */
     public void deletePLOsByCurriculum(String curriculumId) {
