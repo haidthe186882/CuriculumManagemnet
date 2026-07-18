@@ -71,11 +71,11 @@ VALUES (@Major_ID, 'SE', N'Kỹ thuật phần mềm', N'Ngành đào tạo Kỹ
 /* ============ CURRICULUMS ============ */
 INSERT INTO Curriculums
 (Curriculum_ID, Major_ID, Curriculum_Code, Curriculum_Name, English_Name, Description,
- Total_Credits, Version, Decision_No, Decision_Date, Created_By, Is_Active, Status)
+ Total_Credits, Version, Decision_No, Decision_Date, Created_By, Is_Active, Status, Is_Public)
 VALUES
 (@Curriculum_ID, @Major_ID, 'SE_K18', N'Chương trình đào tạo Kỹ thuật phần mềm K18',
  'Software Engineering Curriculum K18', N'Khung chương trình đào tạo ngành Kỹ thuật phần mềm khóa 18',
- 140, 'v1.0', 'QD-2024-001', '2024-06-01', @Designer_ID, 1, 1);
+ 140, 'v1.0', 'QD-2024-001', '2024-06-01', @Designer_ID, 1, 1, 1);
 
 /* ============ SUBJECTS ============ */
 INSERT INTO Subjects (Subject_ID, Major_ID, Subject_Code, Subject_Name, English_Name, Credits, Description, Is_Active)
@@ -131,12 +131,12 @@ VALUES
 INSERT INTO Syllabuses
 (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, Description,
  Time_Allocation, Student_Tasks, Tools, Scoring_Scale, Min_Avg_Mark_To_Pass,
- Decision_No, Approved_Date, Is_Active)
+ Decision_No, Approved_Date, Status, Is_Active)
 VALUES
 (@Syllabus_PRO192, @Subject_PRO192, N'Đề cương Lập trình căn bản', 'Programming Fundamentals Syllabus',
  'v1.0', N'Đề cương chi tiết môn Lập trình căn bản', N'30 tiết lý thuyết, 15 tiết thực hành',
  N'Làm bài tập, đồ án nhỏ', N'Visual Studio Code, .NET SDK', '10', 5.0,
- 'QD-2024-015', '2024-06-10', 1);
+ 'QD-2024-015', '2024-06-10', 2, 1);
 
 /* ============ CLOs ============ */
 INSERT INTO CLOs (CLO_ID, Syllabus_ID, CLO_Code, Description)

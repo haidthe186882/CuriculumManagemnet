@@ -27,6 +27,11 @@ public class AdminServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         if (!requireAdmin(req, res)) return;
+        String action = req.getParameter("action");
+        if ("downloadTemplate".equals(action)) {
+            doDownloadTemplate(req, res);
+            return; // Dừng lại sau khi tải file
+        }
         String pathInfo = req.getPathInfo();
         if (pathInfo == null) pathInfo = "/home";
         switch (pathInfo) {
@@ -256,6 +261,32 @@ public class AdminServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             res.sendRedirect(req.getContextPath() + "/admin/users?msg=importFail");
+        }
+    }
+    
+    private void doDownloadTemplate(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        // Trỏ đến đường dẫn thực tế chứa file Excel mẫu trong dự án
+        String filePath = getServletContext().getRealPath("/static/templates/user_import_template.xlsx");
+        java.io.File downloadFile = new java.io.File(filePath);
+
+        if (!downloadFile.exists()) {
+            res.sendRedirect(req.getContextPath() + "/admin/users?msg=FileNotFound");
+            return;
+        }
+
+        // Thiết lập response header để ép trình duyệt tải file về
+        res.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=\"user_import_template.xlsx\"");
+        res.setContentLength((int) downloadFile.length());
+
+        // Đọc file từ server và ghi ra luồng tải của máy khách
+        try (java.io.FileInputStream inStream = new java.io.FileInputStream(downloadFile); java.io.OutputStream outStream = res.getOutputStream()) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead = -1;
+            while ((bytesRead = inStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, bytesRead);
+            }
         }
     }
 }

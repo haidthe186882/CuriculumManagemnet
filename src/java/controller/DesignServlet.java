@@ -7,7 +7,7 @@ package controller;
 
 import dao.DesignDAO;
 import dao.SyllabusDAO;
-import model.CurriculumAssignments;
+import model.SyllabusAssignment;
 import model.User;
 
 import jakarta.servlet.ServletException;
@@ -18,21 +18,18 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * Man hinh "Design list": Designer xem cac Subject/Syllabus duoc Admin phan
+ * cong cho minh (qua bang Syllabus_Assignments), roi bam "Submit for Review"
+ * khi thiet ke xong de chuyen qua cho Reviewer duyet.
  *
  * @author lo pc
  */
 @WebServlet(name = "DesignServlet", urlPatterns = {"/design/*"})
-public class DesginServlet extends HttpServlet {
+public class DesignServlet extends HttpServlet {
 
-    private final DesignDAO desginDAO = new DesignDAO();
+    private final DesignDAO designDAO = new DesignDAO();
+    private final SyllabusDAO syllabusDAO = new SyllabusDAO();
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
@@ -43,13 +40,16 @@ public class DesginServlet extends HttpServlet {
             case "/list":
                 showList(request, response);
                 break;
+            case "/submit":
+                doSubmitForReview(request, response);
+                break;
             default:
                 response.sendRedirect(request.getContextPath() + "/design/list");
         }
     }
 
     /**
-     * Hien thi danh sach curriculum ma Designer dang nhap duoc phan cong.
+     * Hien thi danh sach Subject/Syllabus ma Designer dang nhap duoc phan cong.
      */
     private void showList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -59,13 +59,31 @@ public class DesginServlet extends HttpServlet {
         }
 
         String keyword = request.getParameter("keyword");
-        dao.SyllabusDAO syllabusDAO = new dao.SyllabusDAO(); 
-        List<model.CurriculumSubject> assignedSubjects = syllabusDAO.getAssignedSubjectsForDesigner(loggedUser.getUserId(), keyword);
+        List<SyllabusAssignment> assignments =
+                designDAO.getAssignmentsByDesigner(loggedUser.getUserId(), keyword);
 
-
-        request.setAttribute("assignedSubjects", assignedSubjects);
+        request.setAttribute("assignments", assignments);
         request.setAttribute("keyword", keyword);
         request.getRequestDispatcher("/WEB-INF/views/design/list.jsp").forward(request, response);
+    }
+
+    /**
+     * Designer bam "Submit for Review" tren 1 Syllabus: Draft(0) -> PendingReview(1).
+     * Chi cho phep neu chinh Designer nay (hoac Admin) da duoc gan vao Syllabus do.
+     */
+    private void doSubmitForReview(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        User loggedUser = requireDesigner(request, response);
+        if (loggedUser == null) return;
+
+        String syllabusId = request.getParameter("syllabusId");
+        String primaryRole = loggedUser.getRole() != null ? loggedUser.getRole().getRoleName() : "";
+        boolean isAdmin = "Admin".equalsIgnoreCase(primaryRole) || loggedUser.hasRole("Admin");
+
+        if (syllabusId != null && (isAdmin
+                || designDAO.isAssignedToSyllabus(loggedUser.getUserId(), syllabusId, "Designer"))) {
+            syllabusDAO.submitForReview(syllabusId);
+        }
+        response.sendRedirect(request.getContextPath() + "/design/list?msg=submitted");
     }
 
     /**
@@ -79,20 +97,15 @@ public class DesginServlet extends HttpServlet {
             return null;
         }
         User user = (User) session.getAttribute("loggedUser");
-//        String role = user.getRole() != null ? user.getRole().getRoleName() : "";
-//        if (!"Designer".equals(role) && !"Admin".equals(role)) {
-//            response.sendRedirect(request.getContextPath() + "/curriculum/list");
-//            return null;
-//        }
         String primaryRole = user.getRole() != null ? user.getRole().getRoleName() : "";
-        
+
         // 1. Quét quyền Designer (Chính, List, Cờ phụ)
         boolean isDesigner = "Designer".equalsIgnoreCase(primaryRole) || user.hasRole("Designer") || user.isDesigner();
-        
+
         // 2. Quét quyền Admin
         boolean isAdmin = "Admin".equalsIgnoreCase(primaryRole) || user.hasRole("Admin");
 
-        // Nếu KHÔNG có bất kỳ quyền nào trong 3 nhóm trên thì mới chặn
+        // Nếu KHÔNG có bất kỳ quyền nào trong 2 nhóm trên thì mới chặn
         if (!isDesigner && !isAdmin) {
             response.sendRedirect(request.getContextPath() + "/curriculum/list");
             return null;
@@ -101,38 +114,20 @@ public class DesginServlet extends HttpServlet {
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
 
-    /**
-     * Returns a short description of the servlet.
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
-        return "Hien thi danh sach Curriculum duoc phan cong cho Designer";
+        return "Hien thi danh sach Subject/Syllabus duoc phan cong cho Designer va cho submit review";
     }// </editor-fold>
 }
