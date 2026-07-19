@@ -63,11 +63,6 @@
                     <div class="page-title">User Management</div>
                     <div class="page-subtitle">Manage system users and roles</div>
                 </div>
-                <div class="mb-3">
-                    <a href="${pageContext.request.contextPath}/admin/home" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Back To Admin Dashboard
-                    </a>
-                </div>
             </div>
                     <c:if test="${not empty param.msg}">
 
@@ -122,7 +117,7 @@
                             </div>
                         </form>
                     </div>
-                      <div class="mb-3 d-flex justify-content-end align-items-center gap-2">
+                      <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
                         
                         <button type="button" id="btnBulkAction" class="btn btn-warning text-dark fw-bold" disabled data-bs-toggle="modal" data-bs-target="#bulkRoleModal">
                             <i class="bi bi-people-fill me-1"></i> Change Role for Selected (<span class="selected-count">0</span>)
@@ -138,10 +133,10 @@
                         </form>
                         
                     </div>                 
-                    <div class="card-dark">
+                    <div class="card shadow-sm border-0 rounded-3">
                         <div class="table-responsive">
-                            <table class="table table-dark-custom mb-0 align-middle">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-secondary">
                                     <tr>
                                         <th style="width: 40px;"><input class="form-check-input border-secondary" type="checkbox" id="selectAllUsers"></th>
                                         <th>Name</th>
@@ -154,7 +149,7 @@
                                 <tbody>
                                     <c:forEach var="u" items="${users}">
                                         <tr>
-                                            <td><input class="form-check-input border-secondary user-checkbox" type="checkbox" value="${u.userId}"></td>
+                                            <td><input class="form-check-input border-secondary user-checkbox" type="checkbox" value="${u.userId}" data-status="${u.status}"></td>
                                             <td class="detail-value">${u.fullName}</td>
                                             <td class="text-muted">${u.email}</td>
                                             <td>
@@ -203,23 +198,47 @@
                                 </tbody>
                             </table>
                         </div>
+                        <%-- BẮT ĐẦU: ĐOẠN CODE THÊM HIỂN THỊ SHOWING --%>
+                        <c:if test="${not empty users}">
+                            <div class="p-3 border-top text-secondary small d-flex justify-content-between align-items-center">
+                                <div>
+                                    <c:choose>
+                                        <c:when test="${not empty totalUsers && not empty currentPage && not empty totalPages}">
+                                            Showing <strong class="text-dark">${(currentPage - 1) * pageSize + 1}-${(currentPage - 1) * pageSize + users.size()}</strong> 
+                                            of <strong class="text-dark">${totalUsers}</strong> (page ${currentPage}/${totalPages})
+                                        </c:when>
+                                        <c:otherwise>
+                                            Showing <strong class="text-dark">1-${users.size()}</strong> 
+                                            of <strong class="text-dark">${users.size()}</strong> (page 1/1)
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </c:if>
+                        <%-- KẾT THÚC: ĐOẠN CODE THÊM HIỂN THỊ SHOWING --%>
                     </div>
                 </div>
 
                 <div class="col-lg-4">
-                    <div class="card-dark p-4">
-                        <h6 class="mb-3">Import Users (Excel)</h6>
-                        <form method="post" action="${pageContext.request.contextPath}/admin/users" enctype="multipart/form-data" class="mb-4">
-                            <input type="hidden" name="action" value="importUsersExcel" />
-                            <div class="mb-2">
-                                <input type="file" name="file" class="form-control form-control-dark w-100" accept=".xlsx,.xls,.csv" required>
-                            </div>
-                            <a href="${pageContext.request.contextPath}/admin?action=downloadTemplate" download="user_import_template.xlsx">
-                                <i class="bi bi-file-earmark-excel text-success me-1"></i> Download user_import_template.xlsx
-                            </a>
-                            <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-upload me-1"></i>Import Excel</button>
-                        </form>         
-                                <h6 class="mb-3">Add New User</h6>
+                    <!-- Card 1: Import Users -->
+                    <div class="card shadow-sm border-0 mb-4 rounded-3">
+                        <div class="card-body p-4">
+                            <h6 class="card-title fw-bold mb-3"><i class="bi bi-file-earmark-excel text-success me-2"></i>Import Users (Excel)</h6>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/users" enctype="multipart/form-data">
+                                <input type="hidden" name="action" value="importUsersExcel" />
+                                <input type="file" name="file" class="form-control mb-2" accept=".xlsx,.xls,.csv" required>
+                                <a href="${pageContext.request.contextPath}/admin?action=downloadTemplate" class="text-decoration-none small d-block mb-3">
+                                    <i class="bi bi-download me-1"></i> Download Template
+                                </a>
+                                <button type="submit" class="btn btn-primary-custom w-100 rounded-2"><i class="bi bi-upload me-1"></i>Import Excel</button>
+                            </form>         
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Add New User -->
+                    <div class="card shadow-sm border-0 rounded-3">
+                        <div class="card-body p-4">
+                            <h6 class="card-title fw-bold mb-3"><i class="bi bi-person-plus text-primary me-2"></i>Add New User</h6>
                                 <%-- Gắn trực tiếp onsubmit để chặn gửi form nếu 2 mật khẩu không khớp nhau --%>
                                 <form method="post" action="${pageContext.request.contextPath}/admin/users" onsubmit="return validateAddUserForm()">
                                     <input type="hidden" name="action" value="add">
@@ -516,57 +535,84 @@
                 // ==========================================
                 // 3. LOGIC CHO BULK ACTIONS (CHỌN CHECKBOX ĐỒNG BỘ)
                 // ==========================================
+                const tableBody = document.querySelector("table tbody");
                 const selectAllCb = document.getElementById("selectAllUsers");
-                const userCbs = document.querySelectorAll(".user-checkbox");
-                const btnBulkAction = document.getElementById("btnBulkAction");
                 const btnBulkDeactivate = document.getElementById("btnBulkDeactivate");
-                const selectedCountTexts = document.querySelectorAll(".selected-count");
                 const hiddenContainer = document.getElementById("hiddenUserIdsContainer");
                 const hiddenDeactivateContainer = document.getElementById("hiddenDeactivateIdsContainer");
+                const bulkForm = document.getElementById("bulkDeactivateForm");
 
-                function updateSelectedCount() {
-                    const checkedBoxes = document.querySelectorAll(".user-checkbox:checked");
-                    const count = checkedBoxes.length;
-                    
-                    selectedCountTexts.forEach(el => el.textContent = count);
-                    
-                    if(btnBulkAction) btnBulkAction.disabled = (count === 0);
-                    if(btnBulkDeactivate) btnBulkDeactivate.disabled = (count === 0);
-                    
-                    if(hiddenContainer) hiddenContainer.innerHTML = '';
-                    if(hiddenDeactivateContainer) hiddenDeactivateContainer.innerHTML = '';
-                    
-                    checkedBoxes.forEach(cb => {
-                        if(hiddenContainer) {
-                            const input = document.createElement("input");
-                            input.type = "hidden";
-                            input.name = "userIds";
-                            input.value = cb.value;
-                            hiddenContainer.appendChild(input);
-                        }
-                        if(hiddenDeactivateContainer) {
-                            const input = document.createElement("input");
-                            input.type = "hidden";
-                            input.name = "userIds";
-                            input.value = cb.value;
-                            hiddenDeactivateContainer.appendChild(input);
-                        }
-                    });
-                }
-
+                // Sự kiện khi click vào Select All (Header)
                 if(selectAllCb) {
                     selectAllCb.addEventListener("change", function() {
-                        userCbs.forEach(cb => cb.checked = selectAllCb.checked);
-                        updateSelectedCount();
+                        const isChecked = this.checked;
+                        document.querySelectorAll(".user-checkbox").forEach(cb => cb.checked = isChecked);
+                        updateLogic();
                     });
                 }
 
-                userCbs.forEach(cb => {
-                    cb.addEventListener("change", function() {
-                        if (!this.checked && selectAllCb) selectAllCb.checked = false;
-                        updateSelectedCount();
+                // Sự kiện khi click vào bất kỳ checkbox nào trong tbody (Ủy quyền sự kiện)
+                if(tableBody) {
+                    tableBody.addEventListener("change", function(e) {
+                        if (e.target.classList.contains("user-checkbox")) {
+                            // Kiểm tra xem đã chọn hết chưa để tick cái selectAll ở trên
+                            const allChecked = document.querySelectorAll(".user-checkbox").length === document.querySelectorAll(".user-checkbox:checked").length;
+                            if(selectAllCb) selectAllCb.checked = allChecked;
+                            updateLogic();
+                        }
                     });
-                });
+                }
+
+                function updateLogic() {
+                    const checkedBoxes = document.querySelectorAll(".user-checkbox:checked");
+                    const count = checkedBoxes.length;
+                    document.querySelectorAll(".selected-count").forEach(el => el.textContent = count);
+
+                    // Cập nhật form ẩn
+                    if(btnBulkAction) btnBulkAction.disabled = (count === 0);
+                    if(hiddenContainer) hiddenContainer.innerHTML = '';
+                    if(hiddenDeactivateContainer) hiddenDeactivateContainer.innerHTML = '';
+
+                    let activeCount = 0; let inactiveCount = 0;
+
+                    checkedBoxes.forEach(cb => {
+                        // Đẩy ID vào form
+                        [hiddenContainer, hiddenDeactivateContainer].forEach(cont => {
+                            if(cont) {
+                                const input = document.createElement("input");
+                                input.type = "hidden"; input.name = "userIds"; input.value = cb.value;
+                                cont.appendChild(input);
+                            }
+                        });
+                        // Đếm trạng thái
+                        cb.getAttribute("data-status") === 'Active' ? activeCount++ : inactiveCount++;
+                    });
+
+                    // Điều khiển nút bấm
+                    if (bulkForm && btnBulkDeactivate) {
+                        const actionInput = bulkForm.querySelector("input[name='action']");
+                        btnBulkDeactivate.disabled = (count === 0);
+
+                        if (count > 0) {
+                            if (inactiveCount > 0 && activeCount === 0) {
+                                btnBulkDeactivate.className = "btn btn-success btn-sm fw-bold rounded-2 text-white";
+                                btnBulkDeactivate.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Activate (' + count + ')';
+                                actionInput.value = "bulkActivate";
+                            } else if (activeCount > 0 && inactiveCount === 0) {
+                                btnBulkDeactivate.className = "btn btn-danger btn-sm fw-bold rounded-2 text-white";
+                                btnBulkDeactivate.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Deactivate (' + count + ')';
+                                actionInput.value = "bulkDeactivate";
+                            } else {
+                                btnBulkDeactivate.className = "btn btn-dark btn-sm fw-bold rounded-2 text-white";
+                                btnBulkDeactivate.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Toggle Status (' + count + ')';
+                                actionInput.value = "bulkToggleStatus";
+                            }
+                        } else {
+                            btnBulkDeactivate.className = "btn btn-outline-secondary btn-sm fw-bold rounded-2";
+                            btnBulkDeactivate.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Deactivate (0)';
+                        }
+                    }
+                }
 
                 // ==========================================
                 // 4. ẨN/HIỆN QUYỀN TRONG MODAL BULK UPDATE
@@ -587,36 +633,36 @@
 
             });
             // Hàm xử lý ẩn/hiện mật khẩu trực tiếp, không lo lỗi cướp quyền click của ô input
-function toggleSinglePassword(inputId, iconElement) {
-    var inputField = document.getElementById(inputId);
-    if (!inputField) return;
-    
-    if (inputField.type === "password") {
-        inputField.type = "text";
-        iconElement.classList.remove("bi-eye");
-        iconElement.classList.add("bi-eye-slash");
-    } else {
-        inputField.type = "password";
-        iconElement.classList.remove("bi-eye-slash");
-        iconElement.classList.add("bi-eye");
-    }
-}
+        function toggleSinglePassword(inputId, iconElement) {
+            var inputField = document.getElementById(inputId);
+            if (!inputField) return;
 
-// Hàm kiểm tra tính trùng khớp mật khẩu khi Admin ấn nút submit
-function validateAddUserForm() {
-    var pwd = document.getElementById('addPassword').value;
-    var confirmPwd = document.getElementById('addConfirmPassword').value;
-    var errorMsg = document.getElementById('passwordMatchError');
-    
-    // Nếu mật khẩu gõ vào không khớp với mật khẩu xác nhận
-    if (pwd !== confirmPwd) {
-        errorMsg.style.display = 'block'; // Hiển thị thông báo chữ đỏ
-        return false; // Ngăn chặn form gửi dữ liệu lên Server
-    }
-    
-    errorMsg.style.display = 'none';
-    return true; // Cho phép gửi form thành công
-}
+            if (inputField.type === "password") {
+                inputField.type = "text";
+                iconElement.classList.remove("bi-eye");
+                iconElement.classList.add("bi-eye-slash");
+            } else {
+                inputField.type = "password";
+                iconElement.classList.remove("bi-eye-slash");
+                iconElement.classList.add("bi-eye");
+            }
+        }
+
+        // Hàm kiểm tra tính trùng khớp mật khẩu khi Admin ấn nút submit
+        function validateAddUserForm() {
+            var pwd = document.getElementById('addPassword').value;
+            var confirmPwd = document.getElementById('addConfirmPassword').value;
+            var errorMsg = document.getElementById('passwordMatchError');
+
+            // Nếu mật khẩu gõ vào không khớp với mật khẩu xác nhận
+            if (pwd !== confirmPwd) {
+                errorMsg.style.display = 'block'; // Hiển thị thông báo chữ đỏ
+                return false; // Ngăn chặn form gửi dữ liệu lên Server
+            }
+
+            errorMsg.style.display = 'none';
+            return true; // Cho phép gửi form thành công
+        }
         </script>
     </body>
 </html>

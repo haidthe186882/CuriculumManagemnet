@@ -21,13 +21,6 @@
             <div class="page-title">Syllabuses Review</div>
             <div class="page-subtitle">Pending approvals and review history</div>
         </div>
-        <div class="mb-3">
-            <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
-                <a href="${pageContext.request.contextPath}/admin/home" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Back To Admin Dashboard
-                </a>
-            </c:if>
-        </div>
     </div>
 
     <c:if test="${param.msg == 'approved'}">
