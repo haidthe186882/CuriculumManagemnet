@@ -236,6 +236,41 @@ public class SyllabusDAO {
         return list;
     }
 
+    public List<SyllabusMaterial> getDownloadableMaterialsBySyllabusId(String syllabusId) {
+        List<SyllabusMaterial> list = new ArrayList<>();
+        // Lấy các file do Admin/Designer upload (Uploaded_By IS NULL) và có link download thực sự
+        String sql = "SELECT * FROM Materials WHERE Syllabus_ID = ? AND Download_Link IS NOT NULL AND Download_Link <> '' AND Uploaded_By IS NULL ORDER BY Is_Main_Material DESC";
+        try (Connection con = new DBContext().getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                SyllabusMaterial m = new SyllabusMaterial();
+                m.setMaterialId(rs.getString("Material_ID"));
+                m.setSyllabusId(rs.getString("Syllabus_ID"));
+                m.setMaterialDescription(rs.getString("Material_Description"));
+                m.setAuthor(rs.getString("Author"));
+                m.setPublisher(rs.getString("Publisher"));
+                m.setPublishedDate(rs.getDate("Published_Date"));
+                m.setEdition(rs.getString("Edition"));
+                m.setIsbn(rs.getString("ISBN"));
+                m.setMainMaterial(rs.getBoolean("Is_Main_Material"));
+                m.setHardCopy(rs.getBoolean("Is_Hard_Copy"));
+                m.setOnline(rs.getBoolean("Is_Online"));
+                m.setLink(rs.getString("Link"));
+                m.setNotes(rs.getString("Notes"));
+                try {
+                    m.setFilePath(rs.getString("Download_Link"));
+                } catch (SQLException ignored) {
+                }
+                list.add(m);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     /** Insert syllabus and return the generated Syllabus_ID */
     public String addSyllabusAndGetId(Syllabus s) {
         String sql = "INSERT INTO Syllabuses (Syllabus_ID, Subject_ID, Syllabus_Name, English_Name, Version, "
