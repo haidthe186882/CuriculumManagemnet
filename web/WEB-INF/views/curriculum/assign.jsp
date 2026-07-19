@@ -19,6 +19,27 @@
                 color:#111827;
                 font-weight:500;
             }
+            .assignee-row{
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:6px;
+                margin-bottom:4px;
+            }
+            .btn-remove-assign{
+                background:none;
+                border:none;
+                color:#dc2626;
+                font-size:1rem;
+                line-height:1;
+                padding:0 2px;
+                cursor:pointer;
+                opacity:.7;
+                transition:opacity .12s;
+            }
+            .btn-remove-assign:hover{
+                opacity:1;
+            }
             .not-assigned{
                 color:var(--muted);
                 font-size:.82rem;
@@ -166,7 +187,17 @@
                                                         <c:forEach var="a" items="${assignments}">
                                                             <c:if test="${a.subjectId == cs.subject.subjectId and a.assignmentType == 'Designer'}">
                                                                 <c:set var="hasDesigner" value="true"/>
-                                                                <span class="assignee-email">${a.user.email}</span>
+                                                                <div class="assignee-row">
+                                                                    <span class="assignee-email">${a.user.email}</span>
+                                                                    <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
+                                                                        <input type="hidden" name="action" value="unassign">
+                                                                        <input type="hidden" name="assignmentId" value="${a.assignmentId}">
+                                                                        <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                                        <button type="submit" class="btn-remove-assign" title="Remove designer" onclick="return confirm('Remove this assignment?');">
+                                                                            <i class="bi bi-x-circle"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </c:if>
                                                         </c:forEach>
                                                         <c:if test="${!hasDesigner}"><span class="not-assigned">Not assigned</span></c:if>
@@ -176,7 +207,17 @@
                                                         <c:forEach var="a" items="${assignments}">
                                                             <c:if test="${a.subjectId == cs.subject.subjectId and a.assignmentType == 'Reviewer'}">
                                                                 <c:set var="hasReviewer" value="true"/>
-                                                                <span class="assignee-email">${a.user.email}</span>
+                                                                <div class="assignee-row">
+                                                                    <span class="assignee-email">${a.user.email}</span>
+                                                                    <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
+                                                                        <input type="hidden" name="action" value="unassign">
+                                                                        <input type="hidden" name="assignmentId" value="${a.assignmentId}">
+                                                                        <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                                        <button type="submit" class="btn-remove-assign" title="Remove reviewer" onclick="return confirm('Remove this assignment?');">
+                                                                            <i class="bi bi-x-circle"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </c:if>
                                                         </c:forEach>
                                                         <c:if test="${!hasReviewer}"><span class="not-assigned">Not assigned</span></c:if>
