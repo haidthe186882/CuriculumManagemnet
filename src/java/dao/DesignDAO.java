@@ -53,7 +53,8 @@ public class DesignDAO {
     /**
      * Danh sach subject/syllabus duoc phan cong cho 1 Designer, kem ten
      * Curriculum dau tien co chua subject do (1 subject co the dung chung
-     * nhieu curriculum nen chi lay 1 de hien thi ngu canh).
+     * nhieu curriculum nen chi lay 1 de hien thi ngu canh - dung OUTER APPLY
+     * TOP 1 de KHONG bi nhan dong khi 1 subject thuoc nhieu curriculum).
      */
     public List<SyllabusAssignment> getAssignmentsByDesigner(String userId, String keyword) {
         return getAssignmentsByUserAndType(userId, "Designer", keyword);
@@ -65,10 +66,20 @@ public class DesignDAO {
 
     private List<SyllabusAssignment> getAssignmentsByUserAndType(String userId, String type, String keyword) {
         List<SyllabusAssignment> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder(BASE_SELECT
-                + "LEFT JOIN Curriculum_Subjects cs ON cs.Subject_ID = s.Subject_ID "
-                + "LEFT JOIN Curriculums c ON c.Curriculum_ID = cs.Curriculum_ID "
-                + "WHERE sa.Assignment_Type = ? AND sa.User_ID = ?");
+        // Luu y: KHONG dung BASE_SELECT + LEFT JOIN Curriculum_Subjects/Curriculums truc tiep,
+        // vi 1 subject co the thuoc NHIEU curriculum -> se nhan ra nhieu dong trung lap cho
+        // cung 1 assignment. Dung OUTER APPLY TOP 1 de chi lay dung 1 curriculum dai dien.
+        StringBuilder sql = new StringBuilder(
+                "SELECT sa.*, sy.Subject_ID, sy.Status AS Syllabus_Status, sy.Workflow_Status, "
+              + "s.Subject_Code, s.Subject_Name, "
+              + "c.Curriculum_ID, c.Curriculum_Code, c.Curriculum_Name "
+              + "FROM Syllabus_Assignments sa "
+              + "JOIN Syllabuses sy ON sa.Syllabus_ID = sy.Syllabus_ID "
+              + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+              + "OUTER APPLY (SELECT TOP 1 cur.Curriculum_ID, cur.Curriculum_Code, cur.Curriculum_Name "
+              + "FROM Curriculum_Subjects cs JOIN Curriculums cur ON cur.Curriculum_ID = cs.Curriculum_ID "
+              + "WHERE cs.Subject_ID = s.Subject_ID ORDER BY cur.Curriculum_Code) c "
+              + "WHERE sa.Assignment_Type = ? AND sa.User_ID = ?");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (s.Subject_Name LIKE ? OR s.Subject_Code LIKE ?)");
         }
