@@ -17,7 +17,7 @@ import java.util.List;
 public class DesignDAO {
 
     private static final String BASE_SELECT =
-            "SELECT sa.*, sy.Subject_ID, sy.Status AS Syllabus_Status, "
+            "SELECT sa.*, sy.Subject_ID, sy.Status AS Syllabus_Status, sy.Workflow_Status, "
           + "s.Subject_Code, s.Subject_Name "
           + "FROM Syllabus_Assignments sa "
           + "JOIN Syllabuses sy ON sa.Syllabus_ID = sy.Syllabus_ID "
@@ -39,6 +39,9 @@ public class DesignDAO {
         a.setSyllabusStatusCode(statusCode);
         a.setSyllabusStatusLabel(statusCode == Syllabus.STATUS_APPROVED ? "Approved"
                 : statusCode == Syllabus.STATUS_PENDING_REVIEW ? "Pending Review" : "Draft");
+        try {
+            a.setSyllabusStatus(rs.getString("Workflow_Status"));
+        } catch (SQLException ignored) {}
         try {
             a.setCurriculumId(rs.getString("Curriculum_ID"));
             a.setCurriculumCode(rs.getString("Curriculum_Code"));

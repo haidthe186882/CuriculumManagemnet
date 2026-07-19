@@ -33,6 +33,9 @@ public class ReviewServlet extends HttpServlet {
             case "/list":
                 showList(req, res);
                 break;
+            case "/form":
+                showReviewForm(req, res);
+                break;
             case "/detail":
                 showDetail(req, res);
                 break;
@@ -101,6 +104,49 @@ public class ReviewServlet extends HttpServlet {
             return false;
         }
         return true;
+    }
+
+    private void showReviewForm(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("loggedUser") == null) {
+            res.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+        User user = (User) session.getAttribute("loggedUser");
+
+        String syllabusId = req.getParameter("syllabusId");
+        if (syllabusId == null || syllabusId.trim().isEmpty()) {
+            res.sendRedirect(req.getContextPath() + "/review/list?msg=missingSyllabus");
+            return;
+        }
+
+        boolean isAdmin = user.hasRole("Admin");
+        boolean isReviewer = user.hasRole("Reviewer") && syllabusDAO.isUserAssignedAsReviewer(syllabusId, user.getUserId());
+        boolean isDesigner = user.hasRole("Designer") && syllabusDAO.isUserAssignedAsDesigner(syllabusId, user.getUserId());
+
+        // Admin, assigned reviewer, or assigned designer (read-only for feedback)
+        if (!isAdmin && !isReviewer && !isDesigner) {
+            if (user.hasRole("Designer")) {
+                res.sendRedirect(req.getContextPath() + "/design/list?msg=forbidden");
+            } else {
+                res.sendRedirect(req.getContextPath() + "/review/list?msg=forbidden");
+            }
+            return;
+        }
+
+        model.Syllabus syllabus = syllabusDAO.getSyllabusById(syllabusId);
+        if (syllabus == null) {
+            res.sendRedirect(req.getContextPath() + "/review/list?msg=notFound");
+            return;
+        }
+
+        req.setAttribute("syllabus", syllabus);
+        req.setAttribute("criteria", SyllabusReviewRubric.getCriteria());
+        req.setAttribute("previousReviews", reviewDAO.getReviewsBySyllabus(syllabusId));
+        // Designer can only view feedback, not submit
+        req.setAttribute("readOnly", isDesigner && !isAdmin && !isReviewer);
+        req.getRequestDispatcher("/WEB-INF/views/review/review-form.jsp").forward(req, res);
     }
 
     private void showDetail(HttpServletRequest req, HttpServletResponse res)
