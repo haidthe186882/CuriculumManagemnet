@@ -6,6 +6,7 @@ import model.Subject;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.CallableStatement;
 
 public class ComboDAO extends DBContext {
 
@@ -82,4 +83,19 @@ public class ComboDAO extends DBContext {
         }
         return list;
     }
+    
+    public void generateDefaultCombos(String curriculumId, String majorId) {
+    String sql = "{CALL sp_GenerateDefaultCombos(?, ?)}";
+    try (Connection con = getConnection(); 
+         CallableStatement cs = con.prepareCall(sql)) {
+        
+        cs.setString(1, curriculumId);
+        cs.setString(2, majorId);
+        cs.executeUpdate();
+        
+    } catch (Exception e) {
+        System.out.println("Lỗi khi sinh Combo mặc định: " + e.getMessage());
+        e.printStackTrace();
+    }
+  }
 }
