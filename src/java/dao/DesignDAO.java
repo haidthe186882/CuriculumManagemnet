@@ -94,7 +94,12 @@ public class DesignDAO {
      */
     public List<SyllabusAssignment> getAssignmentsByCurriculum(String curriculumId) {
         List<SyllabusAssignment> list = new ArrayList<>();
-        String sql = BASE_SELECT
+        String sql = "SELECT sa.*, sy.Subject_ID, sy.Status AS Syllabus_Status, "
+                + "s.Subject_Code, s.Subject_Name, "
+                + "u.Full_Name AS Assignee_Full_Name, u.Email AS Assignee_Email "
+                + "FROM Syllabus_Assignments sa "
+                + "JOIN Syllabuses sy ON sa.Syllabus_ID = sy.Syllabus_ID "
+                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
                 + "JOIN Curriculum_Subjects cs ON cs.Subject_ID = s.Subject_ID "
                 + "JOIN Users u ON u.User_ID = sa.User_ID "
                 + "WHERE cs.Curriculum_ID = ? "
@@ -107,8 +112,8 @@ public class DesignDAO {
                 SyllabusAssignment a = mapAssignment(rs);
                 model.User u = new model.User();
                 u.setUserId(rs.getString("User_ID"));
-                try { u.setFullName(rs.getString("Full_Name")); } catch (SQLException ignored) {}
-                try { u.setEmail(rs.getString("Email")); } catch (SQLException ignored) {}
+                u.setFullName(rs.getString("Assignee_Full_Name"));
+                u.setEmail(rs.getString("Assignee_Email"));
                 a.setUser(u);
                 list.add(a);
             }

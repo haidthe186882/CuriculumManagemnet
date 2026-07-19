@@ -13,28 +13,11 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <%@ include file="/WEB-INF/views/common/styles.jsp" %>
         <style>
-            .assignee{
-                display:flex;
-                align-items:flex-start;
-                gap:6px;
-                margin-bottom:6px;
-            }
-            .assignee i{
-                color:var(--accent);
-                font-size:.95rem;
-                margin-top:2px;
-            }
-            .assignee-name{
-                font-weight:600;
-                color:#111827;
-                font-size:.85rem;
-                line-height:1.2;
-            }
             .assignee-email{
-                display:block;
-                font-size:.74rem;
-                color:var(--muted);
-                line-height:1.3;
+                display:inline-block;
+                font-size:.82rem;
+                color:#111827;
+                font-weight:500;
             }
             .not-assigned{
                 color:var(--muted);
@@ -183,13 +166,7 @@
                                                         <c:forEach var="a" items="${assignments}">
                                                             <c:if test="${a.subjectId == cs.subject.subjectId and a.assignmentType == 'Designer'}">
                                                                 <c:set var="hasDesigner" value="true"/>
-                                                                <div class="assignee">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                    <div>
-                                                                        <span class="assignee-name">${a.user.fullName}</span>
-                                                                        <span class="assignee-email">${a.user.email}</span>
-                                                                    </div>
-                                                                </div>
+                                                                <span class="assignee-email">${a.user.email}</span>
                                                             </c:if>
                                                         </c:forEach>
                                                         <c:if test="${!hasDesigner}"><span class="not-assigned">Not assigned</span></c:if>
@@ -199,13 +176,7 @@
                                                         <c:forEach var="a" items="${assignments}">
                                                             <c:if test="${a.subjectId == cs.subject.subjectId and a.assignmentType == 'Reviewer'}">
                                                                 <c:set var="hasReviewer" value="true"/>
-                                                                <div class="assignee">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                    <div>
-                                                                        <span class="assignee-name">${a.user.fullName}</span>
-                                                                        <span class="assignee-email">${a.user.email}</span>
-                                                                    </div>
-                                                                </div>
+                                                                <span class="assignee-email">${a.user.email}</span>
                                                             </c:if>
                                                         </c:forEach>
                                                         <c:if test="${!hasReviewer}"><span class="not-assigned">Not assigned</span></c:if>
