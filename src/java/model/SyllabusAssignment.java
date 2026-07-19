@@ -26,6 +26,7 @@ public class SyllabusAssignment {
     private String subjectName;
     private int syllabusStatusCode;
     private String syllabusStatusLabel;
+    private String syllabusStatus;   // Workflow_Status (Draft/PendingReview/ChangesRequested/ApprovedForPublish/Published)
 
     private String curriculumId;
     private String curriculumCode;
@@ -69,6 +70,9 @@ public class SyllabusAssignment {
 
     public String getSyllabusStatusLabel() { return syllabusStatusLabel; }
     public void setSyllabusStatusLabel(String syllabusStatusLabel) { this.syllabusStatusLabel = syllabusStatusLabel; }
+
+    public String getSyllabusStatus() { return syllabusStatus; }
+    public void setSyllabusStatus(String syllabusStatus) { this.syllabusStatus = syllabusStatus; }
 
     public String getCurriculumId() { return curriculumId; }
     public void setCurriculumId(String curriculumId) { this.curriculumId = curriculumId; }

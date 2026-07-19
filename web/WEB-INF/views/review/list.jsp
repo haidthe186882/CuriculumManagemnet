@@ -46,22 +46,30 @@
         </div>
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
-                <thead><tr><th>Code</th><th>Name</th><th>Curriculum</th><th>Semester</th><th>Workflow</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Code</th><th>Name</th><th>Curriculum</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty pendingSyllabuses}">
-                            <tr><td colspan="6" class="text-center py-4 text-muted">No pending Syllabuses.</td></tr>
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No pending Syllabuses.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${pendingSyllabuses}">
                                 <tr>
-                                    <td><code class="text-primary">${cs.subject.subjectCode}</code></td>
-                                    <td>${cs.subject.subjectName}</td>
-                                    <td>${cs.curriculum.curriculumCode}</td>
-                                    <td>${cs.semesterNo}</td>
-                                    <td><span class="badge-status badge-draft">${cs.syllabusStatus}</span></td>
+                                    <td><code class="text-primary">${cs.subject != null ? cs.subject.subjectCode : 'N/A'}</code></td>
+                                    <td>${cs.subject != null ? cs.subject.subjectName : 'Unknown Subject'}</td>
+                                    <td>${cs.curriculum != null ? cs.curriculum.curriculumCode : 'N/A'}</td>
                                     <td>
-                                        <a href="${pageContext.request.contextPath}/syllabus/detail?id=${cs.syllabusId}" class="btn btn-action btn-view">
+                                        <c:choose>
+                                            <c:when test="${cs.syllabusStatus eq 'PendingReview'}"><span class="badge bg-warning text-dark">Pending</span></c:when>
+                                            <c:when test="${cs.syllabusStatus eq 'Draft'}"><span class="badge bg-secondary">Draft</span></c:when>
+                                            <c:when test="${cs.syllabusStatus eq 'ApprovedForPublish'}"><span class="badge bg-success">Ready</span></c:when>
+                                            <c:when test="${cs.syllabusStatus eq 'ChangesRequested'}"><span class="badge bg-danger">Revise</span></c:when>
+                                            <c:when test="${cs.syllabusStatus eq 'Published'}"><span class="badge bg-primary">Published</span></c:when>
+                                            <c:otherwise><span class="badge bg-secondary">${cs.syllabusStatus}</span></c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <a href="${pageContext.request.contextPath}/review/form?syllabusId=${cs.syllabusId}" class="btn btn-sm btn-outline-light">
                                             <i class="bi bi-eye me-1"></i>Review
                                         </a>
                                     </td>
@@ -85,14 +93,22 @@
                     <tbody>
                         <c:forEach var="sy" items="${readyToPublish}">
                             <tr>
-                                <td><code class="text-primary">${sy.subject.subjectCode}</code></td>
+                                <td><code class="text-primary">${sy.subject != null ? sy.subject.subjectCode : 'N/A'}</code></td>
                                 <td>${sy.syllabusName}</td>
                                 <td>${sy.version}</td>
-                                <td><span class="badge-status badge-approved">${sy.status}</span></td>
+                                <td><span class="badge bg-success">${sy.status}</span></td>
                                 <td>
-                                    <a href="${pageContext.request.contextPath}/syllabus/detail?id=${sy.syllabusId}" class="btn btn-action btn-view">
-                                        <i class="bi bi-box-arrow-up-right me-1"></i>Open
-                                    </a>
+                                    <div class="d-flex gap-1">
+                                        <a href="${pageContext.request.contextPath}/syllabus/detail?id=${sy.syllabusId}" class="btn btn-sm btn-outline-light">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i>Open
+                                        </a>
+                                        <form method="post" action="${pageContext.request.contextPath}/review/publish" style="display:inline;">
+                                            <input type="hidden" name="syllabusId" value="${sy.syllabusId}">
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Publish this syllabus?')">
+                                                <i class="bi bi-cloud-check me-1"></i>Publish
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -135,8 +151,8 @@
                                     <td><fmt:formatNumber value="${rv.totalScore}" minFractionDigits="1" maxFractionDigits="1"/></td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${rv.status == 'Approved'}"><span class="badge-status badge-approved">${rv.status}</span></c:when>
-                                            <c:otherwise><span class="badge-status badge-rejected">${rv.status}</span></c:otherwise>
+                                            <c:when test="${rv.status == 'Approved'}"><span class="badge bg-success">Approved</span></c:when>
+                                            <c:otherwise><span class="badge bg-danger">Rejected</span></c:otherwise>
                                         </c:choose>
                                     </td>
                                     <td>${rv.comment}</td>

@@ -75,11 +75,14 @@
                                     <td class="detail-value">${a.subjectName}</td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${a.syllabusStatusCode == 2}">
+                                            <c:when test="${a.syllabusStatus eq 'ApprovedForPublish' or a.syllabusStatus eq 'Published'}">
                                                 <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Approved</span>
                                             </c:when>
-                                            <c:when test="${a.syllabusStatusCode == 1}">
+                                            <c:when test="${a.syllabusStatus eq 'PendingReview'}">
                                                 <span class="badge-status badge-rejected"><i class="bi bi-hourglass me-1"></i>Pending Review</span>
+                                            </c:when>
+                                            <c:when test="${a.syllabusStatus eq 'ChangesRequested'}">
+                                                <span class="badge-status badge-rejected"><i class="bi bi-arrow-repeat me-1"></i>Changes Requested</span>
                                             </c:when>
                                             <c:otherwise>
                                                 <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Draft</span>
@@ -91,13 +94,18 @@
                                         <a href="${pageContext.request.contextPath}/subject/detail?id=${a.subjectId}" class="btn btn-action btn-view">
                                             <i class="bi bi-eye me-1"></i>Open
                                         </a>
-                                        <c:if test="${a.syllabusStatusCode == 0}">
+                                        <c:if test="${a.syllabusStatus eq 'Draft' or empty a.syllabusStatus}">
                                             <form method="post" action="${pageContext.request.contextPath}/design/submit" class="d-inline">
                                                 <input type="hidden" name="syllabusId" value="${a.syllabusId}">
                                                 <button type="submit" class="btn btn-action btn-approve">
                                                     <i class="bi bi-send-check me-1"></i>Submit for Review
                                                 </button>
                                             </form>
+                                        </c:if>
+                                        <c:if test="${a.syllabusStatus eq 'ChangesRequested'}">
+                                            <a href="${pageContext.request.contextPath}/review/form?syllabusId=${a.syllabusId}" class="btn btn-action btn-view" style="background-color:#f59e0b; color:#000; border-color:#f59e0b;">
+                                                <i class="bi bi-chat-left-text me-1"></i>View Feedback
+                                            </a>
                                         </c:if>
                                     </td>
                                 </tr>
