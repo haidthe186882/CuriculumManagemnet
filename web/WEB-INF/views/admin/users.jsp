@@ -158,10 +158,17 @@
                                             <td class="detail-value">${u.fullName}</td>
                                             <td class="text-muted">${u.email}</td>
                                             <td>
+                                                <%-- Role chính --%>
                                                 <span class="badge bg-secondary mb-1">${u.role.roleName}</span><br>
-                                                <c:if test="${u.reviewer}"><span class="badge bg-info text-dark">Reviewer</span></c:if>
-                                                <c:if test="${u.designer}"><span class="badge bg-warning text-dark">Designer</span></c:if>
-                                                </td>
+
+                                                <%-- Role phụ: Chỉ hiện khi thực sự là quyền kiêm nhiệm bổ sung --%>
+                                                <c:if test="${u.reviewer && u.role.roleName != 'Reviewer'}">
+                                                    <span class="badge bg-info text-dark mb-1">Reviewer</span><br>
+                                                </c:if>
+                                                <c:if test="${u.designer && u.role.roleName != 'Designer'}">
+                                                    <span class="badge bg-warning text-dark">Designer</span>
+                                                </c:if>
+                                            </td>
                                                 <td>
                                                     <span class="badge ${u.status == 'Active' ? 'bg-success' : 'bg-danger'}">${u.status}</span>
                                             </td>
@@ -285,13 +292,30 @@
                                 <tr><th class="text-secondary">Full Name:</th><td>${u.fullName}</td></tr>
                                 <tr><th class="text-secondary">Email:</th><td>${u.email}</td></tr>
                                 <tr><th class="text-secondary">Primary Role:</th><td><span class="badge bg-primary">${u.role.roleName}</span></td></tr>
-                                <tr><th class="text-secondary">Additional Roles:</th>
+                                <tr>
+                                    <th class="text-secondary">Additional Roles:</th>
                                     <td>
-                                        <c:if test="${u.reviewer}"><span class="badge bg-info text-dark me-1">Reviewer</span></c:if>
-                                        <c:if test="${u.designer}"><span class="badge bg-warning text-dark">Designer</span></c:if>
-                                        <c:if test="${!u.reviewer && !u.designer}">None</c:if>
-                                        </td>
-                                    </tr>
+                                        <%-- Khai báo một biến tạm để kiểm tra xem thực sự có role phụ nào không --%>
+                                        <c:set var="hasAdditional" value="false" />
+
+                                        <%-- Chỉ hiện Reviewer nếu cờ reviewer = true VÀ role chính KHÔNG PHẢI là Reviewer --%>
+                                        <c:if test="${u.reviewer && u.role.roleName != 'Reviewer'}">
+                                            <span class="badge bg-info text-dark me-1">Reviewer</span>
+                                            <c:set var="hasAdditional" value="true" />
+                                        </c:if>
+
+                                        <%-- Chỉ hiện Designer nếu cờ designer = true VÀ role chính KHÔNG PHẢI là Designer --%>
+                                        <c:if test="${u.designer && u.role.roleName != 'Designer'}">
+                                            <span class="badge bg-warning text-dark">Designer</span>
+                                            <c:set var="hasAdditional" value="true" />
+                                        </c:if>
+
+                                        <%-- Nếu không có role phụ nào thực sự thỏa mãn thì hiện None --%>
+                                        <c:if test="${!hasAdditional}">
+                                            <span class="text-muted">None</span>
+                                        </c:if>
+                                    </td>
+                                </tr>
                                     <tr><th class="text-secondary">Status:</th>
                                         <td><span class="badge ${u.status == 'Active' ? 'bg-success' : 'bg-danger'}">${u.status}</span></td>
                                 </tr>
@@ -330,14 +354,10 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label text-light small">Current Primary Role</label>
-                                   <select name="roleId" class="form-select bg-dark text-white border-secondary w-100 edit-role-select" data-userid="${u.userId}" required>
-                                        <c:forEach var="r" items="${roles}">
-                                            <option value="${r.roleId}" data-name="${r.roleName}" ${r.roleId == u.role.roleId ? 'selected' : ''}>
-                                                ${r.roleName}
-                                            </option>
-                                        </c:forEach>
-                                    </select>
+                                    <label class="form-label text-light small">Primary Role (Read-only)</label>
+                                    <input type="text" class="form-control bg-dark text-secondary border-secondary w-100" value="${u.role.roleName}" readonly>
+                                    <%-- Giữ lại input ẩn này để gửi roleId về Backend, tránh lỗi mất dữ liệu --%>
+                                    <input type="hidden" name="roleId" value="${u.role.roleId}">
                                 </div>
 
                                 <!--                        <div class="d-flex gap-4">
@@ -351,30 +371,51 @@
                                                             </div>
                                                         </div>-->
 
-                                <c:choose>
-                                    <c:when test="${u.role.roleName == 'Student'}">
-                                        <div class="alert alert-warning p-2 mt-2 mb-0 small border-warning text-warning bg-transparent">
-                                            <i class="bi bi-info-circle me-1"></i> Student account can not assign Reviewer or Designer.
-                                        </div>
-                                    </c:when>
-                                    <c:when test="${u.role.roleName == 'Reviewer' || u.role.roleName == 'Designer'}">
-                                        <div class="alert alert-info p-2 mt-2 mb-0 small border-info text-info bg-transparent">
-                                            <i class="bi bi-shield-check me-1"></i> Primary Role <strong>${u.role.roleName}</strong>, No need addition role.
-                                        </div>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <div class="d-flex gap-4 mt-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input border-secondary" type="checkbox" id="editReviewer_${u.userId}" name="isReviewer" ${u.reviewer ? 'checked' : ''}>
-                                                <label class="form-check-label text-light" for="editReviewer_${u.userId}">Reviewer</label>
+                               <div class="mb-3">
+                                    <label class="form-label text-light small">Additional Roles</label>
+                                    <c:choose>
+                                        <c:when test="${u.role.roleName == 'Student'}">
+                                            <div class="alert alert-warning p-2 mt-1 mb-0 small border-warning text-warning bg-transparent">
+                                                <i class="bi bi-info-circle me-1"></i> Student account cannot be assigned Reviewer or Designer.
                                             </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input border-secondary" type="checkbox" id="editDesigner_${u.userId}" name="isDesigner" ${u.designer ? 'checked' : ''}>
-                                                <label class="form-check-label text-light" for="editDesigner_${u.userId}">Designer</label>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="d-flex gap-4 mt-1">
+                                                <%-- Checkbox Reviewer --%>
+                                                <div class="form-check">
+                                                    <%-- Nếu Role chính đã là Reviewer thì check sẵn và khóa lại không cho bỏ check --%>
+                                                    <input class="form-check-input border-secondary" type="checkbox" id="editReviewer_${u.userId}" name="isReviewer" 
+                                                        ${u.reviewer || u.role.roleName == 'Reviewer' ? 'checked' : ''} 
+                                                        ${u.role.roleName == 'Reviewer' ? 'disabled' : ''}>
+                                                    <label class="form-check-label text-light" for="editReviewer_${u.userId}">Reviewer</label>
+                                                    <%-- Mẹo: Nếu checkbox bị disabled, trình duyệt sẽ không gửi dữ liệu. Ta dùng input ẩn để gửi bù --%>
+                                                    <c:if test="${u.role.roleName == 'Reviewer'}">
+                                                        <input type="hidden" name="isReviewer" value="on">
+                                                    </c:if>
+                                                </div>
+                                                
+                                                <%-- Checkbox Designer --%>
+                                                <div class="form-check">
+                                                    <%-- Nếu Role chính đã là Designer thì check sẵn và khóa lại --%>
+                                                    <input class="form-check-input border-secondary" type="checkbox" id="editDesigner_${u.userId}" name="isDesigner" 
+                                                        ${u.designer || u.role.roleName == 'Designer' ? 'checked' : ''} 
+                                                        ${u.role.roleName == 'Designer' ? 'disabled' : ''}>
+                                                    <label class="form-check-label text-light" for="editDesigner_${u.userId}">Designer</label>
+                                                    <c:if test="${u.role.roleName == 'Designer'}">
+                                                        <input type="hidden" name="isDesigner" value="on">
+                                                    </c:if>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </c:otherwise>
-                                </c:choose>
+                                            
+                                            <%-- Lời nhắc nhỏ gọn cho Admin hiểu --%>
+                                            <c:if test="${u.role.roleName == 'Reviewer' || u.role.roleName == 'Designer'}">
+                                                <div class="text-info small mt-2">
+                                                    <i class="bi bi-shield-check"></i> <strong>${u.role.roleName}</strong> is granted by default based on primary role.
+                                                </div>
+                                            </c:if>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
                             </div>
                             <div class="modal-footer border-secondary">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -544,7 +585,7 @@
                     });
                 }
 
-            }); 
+            });
             // Hàm xử lý ẩn/hiện mật khẩu trực tiếp, không lo lỗi cướp quyền click của ô input
 function toggleSinglePassword(inputId, iconElement) {
     var inputField = document.getElementById(inputId);
