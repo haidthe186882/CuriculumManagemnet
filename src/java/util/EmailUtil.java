@@ -14,7 +14,8 @@ public class EmailUtil {
 
     // ===== REPLACE THESE WITH YOUR REAL CREDENTIALS =====
     private static final String SENDER_EMAIL = "maiduyan2005@gmail.com";
-    private static final String APP_PASSWORD = "ivvk skek jris nyba";
+    private static final String APP_PASSWORD = "yaif atrs egvq mwej";
+
     // ====================================================
 
     private static final String SMTP_HOST = "smtp.gmail.com";
@@ -24,7 +25,7 @@ public class EmailUtil {
      * Sends a 6-digit OTP code to the specified email address.
      *
      * @param toEmail recipient email address
-     * @param otp the 6-digit OTP string
+     * @param otp     the 6-digit OTP string
      *
      */
     public static void sendOTP(String toEmail, String otp) throws MessagingException {
