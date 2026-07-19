@@ -27,6 +27,11 @@ public class AdminServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
         if (!requireAdmin(req, res)) return;
+        String action = req.getParameter("action");
+        if ("downloadTemplate".equals(action)) {
+            doDownloadTemplate(req, res);
+            return; // Dừng lại sau khi tải file
+        }
         String pathInfo = req.getPathInfo();
         if (pathInfo == null) pathInfo = "/home";
         switch (pathInfo) {
@@ -59,6 +64,12 @@ public class AdminServlet extends HttpServlet {
                 break;
             case "bulkDeactivate":
                 doBulkDeactivate(req, res);
+                break;
+            case "bulkActivate":
+                doBulkActivate(req, res);
+                break;
+            case "bulkToggleStatus":
+                doBulkToggleStatus(req, res);
                 break;
             case "importUsersExcel":
                 doImportUsersExcel(req, res);
@@ -178,7 +189,40 @@ public class AdminServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/admin/users");
         }
     }
+    
+    private void doBulkActivate(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        String[] userIds = req.getParameterValues("userIds");
+        if (userIds != null && userIds.length > 0) {
+            // Tận dụng luôn hàm updateStatus có sẵn để đổi sang Active
+            for (String id : userIds) {
+                userDAO.updateStatus(id, "Active");
+            }
+            res.sendRedirect(req.getContextPath() + "/admin/users?msg=updated");
+        } else {
+            res.sendRedirect(req.getContextPath() + "/admin/users");
+        }
+    }
 
+    private void doBulkToggleStatus(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        String[] userIds = req.getParameterValues("userIds");
+        if (userIds != null && userIds.length > 0) {
+            // Gọi tạm danh sách để so sánh trạng thái hiện tại (đảo ngược lại)
+            List<User> allUsers = userDAO.getAllUsers(null, null, null); 
+            for (String id : userIds) {
+                for (User u : allUsers) {
+                    if (u.getUserId().equals(id)) {
+                        String newStatus = "Active".equals(u.getStatus()) ? "Inactive" : "Active";
+                        userDAO.updateStatus(id, newStatus);
+                        break;
+                    }
+                }
+            }
+            res.sendRedirect(req.getContextPath() + "/admin/users?msg=updated");
+        } else {
+            res.sendRedirect(req.getContextPath() + "/admin/users");
+        }
+    }
+    
     private void doImportUsersExcel(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String msg;
         int imported = 0;
@@ -256,6 +300,32 @@ public class AdminServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             res.sendRedirect(req.getContextPath() + "/admin/users?msg=importFail");
+        }
+    }
+    
+    private void doDownloadTemplate(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        // Trỏ đến đường dẫn thực tế chứa file Excel mẫu trong dự án
+        String filePath = getServletContext().getRealPath("/static/templates/user_import_template.xlsx");
+        java.io.File downloadFile = new java.io.File(filePath);
+
+        if (!downloadFile.exists()) {
+            res.sendRedirect(req.getContextPath() + "/admin/users?msg=FileNotFound");
+            return;
+        }
+
+        // Thiết lập response header để ép trình duyệt tải file về
+        res.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", "attachment; filename=\"user_import_template.xlsx\"");
+        res.setContentLength((int) downloadFile.length());
+
+        // Đọc file từ server và ghi ra luồng tải của máy khách
+        try (java.io.FileInputStream inStream = new java.io.FileInputStream(downloadFile); java.io.OutputStream outStream = res.getOutputStream()) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead = -1;
+            while ((bytesRead = inStream.read(buffer)) != -1) {
+                outStream.write(buffer, 0, bytesRead);
+            }
         }
     }
 }

@@ -40,6 +40,20 @@ public class SessionDAO {
         return list;
     }
 
+    /** Xoa toan bo Session cua 1 Syllabus, dung khi Designer luu lai noi dung (tranh trung lap). */
+    public boolean deleteSessionsBySyllabus(String syllabusId) {
+        String sql = "DELETE FROM Sessions WHERE Syllabus_ID = ?";
+        try (Connection con = new DBContext().getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ps.executeUpdate();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /** Insert a single session */
     public boolean addSession(Session session) {
         String sql = "INSERT INTO Sessions (Session_ID, Syllabus_ID, Session_No, Topic, Learning_Teaching_Type, LO, ITU, Student_Materials, Student_Tasks, URLs) "
@@ -68,16 +82,5 @@ public class SessionDAO {
             if (addSession(session)) count++;
         }
         return count;
-    }
-
-    /** Delete Sessions by syllabus (for UPSERT) */
-    public boolean deleteSessionsBySyllabus(String syllabusId) {
-        String sql = "DELETE FROM Sessions WHERE Syllabus_ID = ?";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, syllabusId);
-            return ps.executeUpdate() >= 0;
-        } catch (Exception e) { e.printStackTrace(); }
-        return false;
     }
 }

@@ -63,11 +63,6 @@
                     <div class="page-title">User Management</div>
                     <div class="page-subtitle">Manage system users and roles</div>
                 </div>
-                <div class="mb-3">
-                    <a href="${pageContext.request.contextPath}/admin/home" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left"></i> Back To Admin Dashboard
-                    </a>
-                </div>
             </div>
                     <c:if test="${not empty param.msg}">
 
@@ -122,7 +117,7 @@
                             </div>
                         </form>
                     </div>
-                      <div class="mb-3 d-flex justify-content-end align-items-center gap-2">
+                      <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
                         
                         <button type="button" id="btnBulkAction" class="btn btn-warning text-dark fw-bold" disabled data-bs-toggle="modal" data-bs-target="#bulkRoleModal">
                             <i class="bi bi-people-fill me-1"></i> Change Role for Selected (<span class="selected-count">0</span>)
@@ -138,10 +133,10 @@
                         </form>
                         
                     </div>                 
-                    <div class="card-dark">
+                    <div class="card shadow-sm border-0 rounded-3">
                         <div class="table-responsive">
-                            <table class="table table-dark-custom mb-0 align-middle">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-secondary">
                                     <tr>
                                         <th style="width: 40px;"><input class="form-check-input border-secondary" type="checkbox" id="selectAllUsers"></th>
                                         <th>Name</th>
@@ -154,14 +149,21 @@
                                 <tbody>
                                     <c:forEach var="u" items="${users}">
                                         <tr>
-                                            <td><input class="form-check-input border-secondary user-checkbox" type="checkbox" value="${u.userId}"></td>
+                                            <td><input class="form-check-input border-secondary user-checkbox" type="checkbox" value="${u.userId}" data-status="${u.status}"></td>
                                             <td class="detail-value">${u.fullName}</td>
                                             <td class="text-muted">${u.email}</td>
                                             <td>
+                                                <%-- Role chính --%>
                                                 <span class="badge bg-secondary mb-1">${u.role.roleName}</span><br>
-                                                <c:if test="${u.reviewer}"><span class="badge bg-info text-dark">Reviewer</span></c:if>
-                                                <c:if test="${u.designer}"><span class="badge bg-warning text-dark">Designer</span></c:if>
-                                                </td>
+
+                                                <%-- Role phụ: Chỉ hiện khi thực sự là quyền kiêm nhiệm bổ sung --%>
+                                                <c:if test="${u.reviewer && u.role.roleName != 'Reviewer'}">
+                                                    <span class="badge bg-info text-dark mb-1">Reviewer</span><br>
+                                                </c:if>
+                                                <c:if test="${u.designer && u.role.roleName != 'Designer'}">
+                                                    <span class="badge bg-warning text-dark">Designer</span>
+                                                </c:if>
+                                            </td>
                                                 <td>
                                                     <span class="badge ${u.status == 'Active' ? 'bg-success' : 'bg-danger'}">${u.status}</span>
                                             </td>
@@ -196,23 +198,47 @@
                                 </tbody>
                             </table>
                         </div>
+                        <%-- BẮT ĐẦU: ĐOẠN CODE THÊM HIỂN THỊ SHOWING --%>
+                        <c:if test="${not empty users}">
+                            <div class="p-3 border-top text-secondary small d-flex justify-content-between align-items-center">
+                                <div>
+                                    <c:choose>
+                                        <c:when test="${not empty totalUsers && not empty currentPage && not empty totalPages}">
+                                            Showing <strong class="text-dark">${(currentPage - 1) * pageSize + 1}-${(currentPage - 1) * pageSize + users.size()}</strong> 
+                                            of <strong class="text-dark">${totalUsers}</strong> (page ${currentPage}/${totalPages})
+                                        </c:when>
+                                        <c:otherwise>
+                                            Showing <strong class="text-dark">1-${users.size()}</strong> 
+                                            of <strong class="text-dark">${users.size()}</strong> (page 1/1)
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </c:if>
+                        <%-- KẾT THÚC: ĐOẠN CODE THÊM HIỂN THỊ SHOWING --%>
                     </div>
                 </div>
 
                 <div class="col-lg-4">
-                    <div class="card-dark p-4">
-                        <h6 class="mb-3">Import Users (Excel)</h6>
-                        <form method="post" action="${pageContext.request.contextPath}/admin/users" enctype="multipart/form-data" class="mb-4">
-                            <input type="hidden" name="action" value="importUsersExcel" />
-                            <div class="mb-2">
-                                <input type="file" name="file" class="form-control form-control-dark w-100" accept=".xlsx,.xls,.csv" required>
-                            </div>
-                            <div class="text-muted small mb-3">
-                                Template: <a href="${pageContext.request.contextPath}/static/templates/user_import_template.README.txt" target="_blank">user_import_template.xlsx (see README)</a>
-                            </div>
-                            <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-upload me-1"></i>Import Excel</button>
-                        </form>         
-                                <h6 class="mb-3">Add New User</h6>
+                    <!-- Card 1: Import Users -->
+                    <div class="card shadow-sm border-0 mb-4 rounded-3">
+                        <div class="card-body p-4">
+                            <h6 class="card-title fw-bold mb-3"><i class="bi bi-file-earmark-excel text-success me-2"></i>Import Users (Excel)</h6>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/users" enctype="multipart/form-data">
+                                <input type="hidden" name="action" value="importUsersExcel" />
+                                <input type="file" name="file" class="form-control mb-2" accept=".xlsx,.xls,.csv" required>
+                                <a href="${pageContext.request.contextPath}/admin?action=downloadTemplate" class="text-decoration-none small d-block mb-3">
+                                    <i class="bi bi-download me-1"></i> Download Template
+                                </a>
+                                <button type="submit" class="btn btn-primary-custom w-100 rounded-2"><i class="bi bi-upload me-1"></i>Import Excel</button>
+                            </form>         
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Add New User -->
+                    <div class="card shadow-sm border-0 rounded-3">
+                        <div class="card-body p-4">
+                            <h6 class="card-title fw-bold mb-3"><i class="bi bi-person-plus text-primary me-2"></i>Add New User</h6>
                                 <%-- Gắn trực tiếp onsubmit để chặn gửi form nếu 2 mật khẩu không khớp nhau --%>
                                 <form method="post" action="${pageContext.request.contextPath}/admin/users" onsubmit="return validateAddUserForm()">
                                     <input type="hidden" name="action" value="add">
@@ -285,13 +311,30 @@
                                 <tr><th class="text-secondary">Full Name:</th><td>${u.fullName}</td></tr>
                                 <tr><th class="text-secondary">Email:</th><td>${u.email}</td></tr>
                                 <tr><th class="text-secondary">Primary Role:</th><td><span class="badge bg-primary">${u.role.roleName}</span></td></tr>
-                                <tr><th class="text-secondary">Additional Roles:</th>
+                                <tr>
+                                    <th class="text-secondary">Additional Roles:</th>
                                     <td>
-                                        <c:if test="${u.reviewer}"><span class="badge bg-info text-dark me-1">Reviewer</span></c:if>
-                                        <c:if test="${u.designer}"><span class="badge bg-warning text-dark">Designer</span></c:if>
-                                        <c:if test="${!u.reviewer && !u.designer}">None</c:if>
-                                        </td>
-                                    </tr>
+                                        <%-- Khai báo một biến tạm để kiểm tra xem thực sự có role phụ nào không --%>
+                                        <c:set var="hasAdditional" value="false" />
+
+                                        <%-- Chỉ hiện Reviewer nếu cờ reviewer = true VÀ role chính KHÔNG PHẢI là Reviewer --%>
+                                        <c:if test="${u.reviewer && u.role.roleName != 'Reviewer'}">
+                                            <span class="badge bg-info text-dark me-1">Reviewer</span>
+                                            <c:set var="hasAdditional" value="true" />
+                                        </c:if>
+
+                                        <%-- Chỉ hiện Designer nếu cờ designer = true VÀ role chính KHÔNG PHẢI là Designer --%>
+                                        <c:if test="${u.designer && u.role.roleName != 'Designer'}">
+                                            <span class="badge bg-warning text-dark">Designer</span>
+                                            <c:set var="hasAdditional" value="true" />
+                                        </c:if>
+
+                                        <%-- Nếu không có role phụ nào thực sự thỏa mãn thì hiện None --%>
+                                        <c:if test="${!hasAdditional}">
+                                            <span class="text-muted">None</span>
+                                        </c:if>
+                                    </td>
+                                </tr>
                                     <tr><th class="text-secondary">Status:</th>
                                         <td><span class="badge ${u.status == 'Active' ? 'bg-success' : 'bg-danger'}">${u.status}</span></td>
                                 </tr>
@@ -330,14 +373,10 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label text-light small">Current Primary Role</label>
-                                   <select name="roleId" class="form-select bg-dark text-white border-secondary w-100 edit-role-select" data-userid="${u.userId}" required>
-                                        <c:forEach var="r" items="${roles}">
-                                            <option value="${r.roleId}" data-name="${r.roleName}" ${r.roleId == u.role.roleId ? 'selected' : ''}>
-                                                ${r.roleName}
-                                            </option>
-                                        </c:forEach>
-                                    </select>
+                                    <label class="form-label text-light small">Primary Role (Read-only)</label>
+                                    <input type="text" class="form-control bg-dark text-secondary border-secondary w-100" value="${u.role.roleName}" readonly>
+                                    <%-- Giữ lại input ẩn này để gửi roleId về Backend, tránh lỗi mất dữ liệu --%>
+                                    <input type="hidden" name="roleId" value="${u.role.roleId}">
                                 </div>
 
                                 <!--                        <div class="d-flex gap-4">
@@ -351,30 +390,51 @@
                                                             </div>
                                                         </div>-->
 
-                                <c:choose>
-                                    <c:when test="${u.role.roleName == 'Student'}">
-                                        <div class="alert alert-warning p-2 mt-2 mb-0 small border-warning text-warning bg-transparent">
-                                            <i class="bi bi-info-circle me-1"></i> Student account can not assign Reviewer or Designer.
-                                        </div>
-                                    </c:when>
-                                    <c:when test="${u.role.roleName == 'Reviewer' || u.role.roleName == 'Designer'}">
-                                        <div class="alert alert-info p-2 mt-2 mb-0 small border-info text-info bg-transparent">
-                                            <i class="bi bi-shield-check me-1"></i> Primary Role <strong>${u.role.roleName}</strong>, No need addition role.
-                                        </div>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <div class="d-flex gap-4 mt-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input border-secondary" type="checkbox" id="editReviewer_${u.userId}" name="isReviewer" ${u.reviewer ? 'checked' : ''}>
-                                                <label class="form-check-label text-light" for="editReviewer_${u.userId}">Reviewer</label>
+                               <div class="mb-3">
+                                    <label class="form-label text-light small">Additional Roles</label>
+                                    <c:choose>
+                                        <c:when test="${u.role.roleName == 'Student'}">
+                                            <div class="alert alert-warning p-2 mt-1 mb-0 small border-warning text-warning bg-transparent">
+                                                <i class="bi bi-info-circle me-1"></i> Student account cannot be assigned Reviewer or Designer.
                                             </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input border-secondary" type="checkbox" id="editDesigner_${u.userId}" name="isDesigner" ${u.designer ? 'checked' : ''}>
-                                                <label class="form-check-label text-light" for="editDesigner_${u.userId}">Designer</label>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="d-flex gap-4 mt-1">
+                                                <%-- Checkbox Reviewer --%>
+                                                <div class="form-check">
+                                                    <%-- Nếu Role chính đã là Reviewer thì check sẵn và khóa lại không cho bỏ check --%>
+                                                    <input class="form-check-input border-secondary" type="checkbox" id="editReviewer_${u.userId}" name="isReviewer" 
+                                                        ${u.reviewer || u.role.roleName == 'Reviewer' ? 'checked' : ''} 
+                                                        ${u.role.roleName == 'Reviewer' ? 'disabled' : ''}>
+                                                    <label class="form-check-label text-light" for="editReviewer_${u.userId}">Reviewer</label>
+                                                    <%-- Mẹo: Nếu checkbox bị disabled, trình duyệt sẽ không gửi dữ liệu. Ta dùng input ẩn để gửi bù --%>
+                                                    <c:if test="${u.role.roleName == 'Reviewer'}">
+                                                        <input type="hidden" name="isReviewer" value="on">
+                                                    </c:if>
+                                                </div>
+                                                
+                                                <%-- Checkbox Designer --%>
+                                                <div class="form-check">
+                                                    <%-- Nếu Role chính đã là Designer thì check sẵn và khóa lại --%>
+                                                    <input class="form-check-input border-secondary" type="checkbox" id="editDesigner_${u.userId}" name="isDesigner" 
+                                                        ${u.designer || u.role.roleName == 'Designer' ? 'checked' : ''} 
+                                                        ${u.role.roleName == 'Designer' ? 'disabled' : ''}>
+                                                    <label class="form-check-label text-light" for="editDesigner_${u.userId}">Designer</label>
+                                                    <c:if test="${u.role.roleName == 'Designer'}">
+                                                        <input type="hidden" name="isDesigner" value="on">
+                                                    </c:if>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </c:otherwise>
-                                </c:choose>
+                                            
+                                            <%-- Lời nhắc nhỏ gọn cho Admin hiểu --%>
+                                            <c:if test="${u.role.roleName == 'Reviewer' || u.role.roleName == 'Designer'}">
+                                                <div class="text-info small mt-2">
+                                                    <i class="bi bi-shield-check"></i> <strong>${u.role.roleName}</strong> is granted by default based on primary role.
+                                                </div>
+                                            </c:if>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
                             </div>
                             <div class="modal-footer border-secondary">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -475,57 +535,84 @@
                 // ==========================================
                 // 3. LOGIC CHO BULK ACTIONS (CHỌN CHECKBOX ĐỒNG BỘ)
                 // ==========================================
+                const tableBody = document.querySelector("table tbody");
                 const selectAllCb = document.getElementById("selectAllUsers");
-                const userCbs = document.querySelectorAll(".user-checkbox");
-                const btnBulkAction = document.getElementById("btnBulkAction");
                 const btnBulkDeactivate = document.getElementById("btnBulkDeactivate");
-                const selectedCountTexts = document.querySelectorAll(".selected-count");
                 const hiddenContainer = document.getElementById("hiddenUserIdsContainer");
                 const hiddenDeactivateContainer = document.getElementById("hiddenDeactivateIdsContainer");
+                const bulkForm = document.getElementById("bulkDeactivateForm");
 
-                function updateSelectedCount() {
-                    const checkedBoxes = document.querySelectorAll(".user-checkbox:checked");
-                    const count = checkedBoxes.length;
-                    
-                    selectedCountTexts.forEach(el => el.textContent = count);
-                    
-                    if(btnBulkAction) btnBulkAction.disabled = (count === 0);
-                    if(btnBulkDeactivate) btnBulkDeactivate.disabled = (count === 0);
-                    
-                    if(hiddenContainer) hiddenContainer.innerHTML = '';
-                    if(hiddenDeactivateContainer) hiddenDeactivateContainer.innerHTML = '';
-                    
-                    checkedBoxes.forEach(cb => {
-                        if(hiddenContainer) {
-                            const input = document.createElement("input");
-                            input.type = "hidden";
-                            input.name = "userIds";
-                            input.value = cb.value;
-                            hiddenContainer.appendChild(input);
-                        }
-                        if(hiddenDeactivateContainer) {
-                            const input = document.createElement("input");
-                            input.type = "hidden";
-                            input.name = "userIds";
-                            input.value = cb.value;
-                            hiddenDeactivateContainer.appendChild(input);
-                        }
-                    });
-                }
-
+                // Sự kiện khi click vào Select All (Header)
                 if(selectAllCb) {
                     selectAllCb.addEventListener("change", function() {
-                        userCbs.forEach(cb => cb.checked = selectAllCb.checked);
-                        updateSelectedCount();
+                        const isChecked = this.checked;
+                        document.querySelectorAll(".user-checkbox").forEach(cb => cb.checked = isChecked);
+                        updateLogic();
                     });
                 }
 
-                userCbs.forEach(cb => {
-                    cb.addEventListener("change", function() {
-                        if (!this.checked && selectAllCb) selectAllCb.checked = false;
-                        updateSelectedCount();
+                // Sự kiện khi click vào bất kỳ checkbox nào trong tbody (Ủy quyền sự kiện)
+                if(tableBody) {
+                    tableBody.addEventListener("change", function(e) {
+                        if (e.target.classList.contains("user-checkbox")) {
+                            // Kiểm tra xem đã chọn hết chưa để tick cái selectAll ở trên
+                            const allChecked = document.querySelectorAll(".user-checkbox").length === document.querySelectorAll(".user-checkbox:checked").length;
+                            if(selectAllCb) selectAllCb.checked = allChecked;
+                            updateLogic();
+                        }
                     });
-                });
+                }
+
+                function updateLogic() {
+                    const checkedBoxes = document.querySelectorAll(".user-checkbox:checked");
+                    const count = checkedBoxes.length;
+                    document.querySelectorAll(".selected-count").forEach(el => el.textContent = count);
+
+                    // Cập nhật form ẩn
+                    if(btnBulkAction) btnBulkAction.disabled = (count === 0);
+                    if(hiddenContainer) hiddenContainer.innerHTML = '';
+                    if(hiddenDeactivateContainer) hiddenDeactivateContainer.innerHTML = '';
+
+                    let activeCount = 0; let inactiveCount = 0;
+
+                    checkedBoxes.forEach(cb => {
+                        // Đẩy ID vào form
+                        [hiddenContainer, hiddenDeactivateContainer].forEach(cont => {
+                            if(cont) {
+                                const input = document.createElement("input");
+                                input.type = "hidden"; input.name = "userIds"; input.value = cb.value;
+                                cont.appendChild(input);
+                            }
+                        });
+                        // Đếm trạng thái
+                        cb.getAttribute("data-status") === 'Active' ? activeCount++ : inactiveCount++;
+                    });
+
+                    // Điều khiển nút bấm
+                    if (bulkForm && btnBulkDeactivate) {
+                        const actionInput = bulkForm.querySelector("input[name='action']");
+                        btnBulkDeactivate.disabled = (count === 0);
+
+                        if (count > 0) {
+                            if (inactiveCount > 0 && activeCount === 0) {
+                                btnBulkDeactivate.className = "btn btn-success btn-sm fw-bold rounded-2 text-white";
+                                btnBulkDeactivate.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Activate (' + count + ')';
+                                actionInput.value = "bulkActivate";
+                            } else if (activeCount > 0 && inactiveCount === 0) {
+                                btnBulkDeactivate.className = "btn btn-danger btn-sm fw-bold rounded-2 text-white";
+                                btnBulkDeactivate.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Deactivate (' + count + ')';
+                                actionInput.value = "bulkDeactivate";
+                            } else {
+                                btnBulkDeactivate.className = "btn btn-dark btn-sm fw-bold rounded-2 text-white";
+                                btnBulkDeactivate.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Toggle Status (' + count + ')';
+                                actionInput.value = "bulkToggleStatus";
+                            }
+                        } else {
+                            btnBulkDeactivate.className = "btn btn-outline-secondary btn-sm fw-bold rounded-2";
+                            btnBulkDeactivate.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Deactivate (0)';
+                        }
+                    }
+                }
 
                 // ==========================================
                 // 4. ẨN/HIỆN QUYỀN TRONG MODAL BULK UPDATE
@@ -544,38 +631,38 @@
                     });
                 }
 
-            }); 
+            });
             // Hàm xử lý ẩn/hiện mật khẩu trực tiếp, không lo lỗi cướp quyền click của ô input
-function toggleSinglePassword(inputId, iconElement) {
-    var inputField = document.getElementById(inputId);
-    if (!inputField) return;
-    
-    if (inputField.type === "password") {
-        inputField.type = "text";
-        iconElement.classList.remove("bi-eye");
-        iconElement.classList.add("bi-eye-slash");
-    } else {
-        inputField.type = "password";
-        iconElement.classList.remove("bi-eye-slash");
-        iconElement.classList.add("bi-eye");
-    }
-}
+        function toggleSinglePassword(inputId, iconElement) {
+            var inputField = document.getElementById(inputId);
+            if (!inputField) return;
 
-// Hàm kiểm tra tính trùng khớp mật khẩu khi Admin ấn nút submit
-function validateAddUserForm() {
-    var pwd = document.getElementById('addPassword').value;
-    var confirmPwd = document.getElementById('addConfirmPassword').value;
-    var errorMsg = document.getElementById('passwordMatchError');
-    
-    // Nếu mật khẩu gõ vào không khớp với mật khẩu xác nhận
-    if (pwd !== confirmPwd) {
-        errorMsg.style.display = 'block'; // Hiển thị thông báo chữ đỏ
-        return false; // Ngăn chặn form gửi dữ liệu lên Server
-    }
-    
-    errorMsg.style.display = 'none';
-    return true; // Cho phép gửi form thành công
-}
+            if (inputField.type === "password") {
+                inputField.type = "text";
+                iconElement.classList.remove("bi-eye");
+                iconElement.classList.add("bi-eye-slash");
+            } else {
+                inputField.type = "password";
+                iconElement.classList.remove("bi-eye-slash");
+                iconElement.classList.add("bi-eye");
+            }
+        }
+
+        // Hàm kiểm tra tính trùng khớp mật khẩu khi Admin ấn nút submit
+        function validateAddUserForm() {
+            var pwd = document.getElementById('addPassword').value;
+            var confirmPwd = document.getElementById('addConfirmPassword').value;
+            var errorMsg = document.getElementById('passwordMatchError');
+
+            // Nếu mật khẩu gõ vào không khớp với mật khẩu xác nhận
+            if (pwd !== confirmPwd) {
+                errorMsg.style.display = 'block'; // Hiển thị thông báo chữ đỏ
+                return false; // Ngăn chặn form gửi dữ liệu lên Server
+            }
+
+            errorMsg.style.display = 'none';
+            return true; // Cho phép gửi form thành công
+        }
         </script>
     </body>
 </html>

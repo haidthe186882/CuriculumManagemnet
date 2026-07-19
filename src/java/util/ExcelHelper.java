@@ -263,6 +263,54 @@ public class ExcelHelper {
         return list;
     }
 
+    /**
+     * 1 dong trong file Excel "Assign Designer/Reviewer": Subject Code, Designer
+     * Name, Designer Email, Reviewer Name, Reviewer Email. Name cac cot chi de
+     * doi chieu cho de nhin - viec gan nguoi dua vao Email (phai khop voi 1
+     * User dang co Role Designer/Reviewer trong he thong).
+     */
+    public static class AssignRow {
+        public String subjectCode;
+        public String designerName;
+        public String designerEmail;
+        public String reviewerName;
+        public String reviewerEmail;
+        public String getSubjectCode() { return subjectCode; }
+        public String getDesignerName() { return designerName; }
+        public String getDesignerEmail() { return designerEmail; }
+        public String getReviewerName() { return reviewerName; }
+        public String getReviewerEmail() { return reviewerEmail; }
+    }
+
+    /**
+     * Doc file Excel phan cong Designer/Reviewer theo mau:
+     * col0 = Subject Code, col1 = Designer Name, col2 = Designer Email,
+     * col3 = Reviewer Name, col4 = Reviewer Email. Dong 0 la header, bo qua
+     * cac dong trong (khong co Subject Code).
+     */
+    public static List<AssignRow> parseAssignExcel(InputStream is) throws Exception {
+        List<AssignRow> rows = new ArrayList<>();
+        try (Workbook wb = WorkbookFactory.create(is)) {
+            Sheet sheet = wb.getNumberOfSheets() > 0 ? wb.getSheetAt(0) : null;
+            if (sheet == null) return rows;
+            int last = sheet.getLastRowNum();
+            for (int i = 1; i <= last; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                String code = strCell(row, 0);
+                if (code == null || code.trim().isEmpty()) continue;
+                AssignRow ar = new AssignRow();
+                ar.subjectCode = code.trim();
+                ar.designerName = strCell(row, 1);
+                ar.designerEmail = strCell(row, 2);
+                ar.reviewerName = strCell(row, 3);
+                ar.reviewerEmail = strCell(row, 4);
+                rows.add(ar);
+            }
+        }
+        return rows;
+    }
+
     // ── Cell helpers ──────────────────────────────────────────────────────────
 
     private static String strCell(Sheet sheet, int rowIdx, int colIdx) {

@@ -12,6 +12,11 @@
             <i class="bi bi-file-earmark-text"></i> Syllabuses
         </a>
 
+        <a class="nav-link ${activeMenu == 'prerequisite' ? 'active' : ''}"
+            href="${pageContext.request.contextPath}/subject/prerequisites">
+            <i class="bi bi-diagram-3"></i> Subject Prerequisites
+        </a>
+
         <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.designer}">
             <div class="nav-section">Design</div>
             <a class="nav-link ${activeMenu == 'design' ? 'active' : ''}"

@@ -150,6 +150,13 @@
                         </tbody>
                     </table>
                 </div>
+                <c:if test="${not empty clos}">
+                    <div class="p-3 border-top">
+                        <a href="${pageContext.request.contextPath}/syllabus/clo-mapping?id=${syllabus.syllabusId}">
+                            <i class="bi bi-diagram-3 me-1"></i>View mapping of CLOs to PLOs
+                        </a>
+                    </div>
+                </c:if>
             </div>
 
             <!-- Sessions Table Card -->

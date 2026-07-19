@@ -13,9 +13,29 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <%@ include file="/WEB-INF/views/common/styles.jsp" %>
         <style>
-            .import-btn{background:#fff;border:1px solid var(--border);border-radius:10px;color:#374151;padding:0.68rem 1.1rem;font-weight:600;font-size:0.9rem;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:all .12s;cursor:pointer;}
-            .import-btn:hover{background:#f9fafb;border-color:#d1d5db;color:#111827;}
-            .import-btn .bi-file-earmark-excel{color:#16a34a;}
+            .import-btn{
+                background:#fff;
+                border:1px solid var(--border);
+                border-radius:10px;
+                color:#374151;
+                padding:0.68rem 1.1rem;
+                font-weight:600;
+                font-size:0.9rem;
+                display:inline-flex;
+                align-items:center;
+                gap:6px;
+                text-decoration:none;
+                transition:all .12s;
+                cursor:pointer;
+            }
+            .import-btn:hover{
+                background:#f9fafb;
+                border-color:#d1d5db;
+                color:#111827;
+            }
+            .import-btn .bi-file-earmark-excel{
+                color:#16a34a;
+            }
         </style>
     </head>
     <body>
@@ -124,7 +144,7 @@
                                 <c:otherwise>
                                     <c:forEach var="c" items="${curriculums}" varStatus="st">
                                         <tr class="curriculum-row" data-detail-url="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" style="cursor:pointer;">
-                                            <td class="text-muted">${st.count}</td>
+                                            <td class="text-muted">${(currentPage - 1) * pageSize + st.count}</td>
                                             <td><code style="color:var(--accent);background:rgba(255,106,0,0.06);padding:2px 8px;border-radius:4px;">${c.curriculumCode}</code></td>
                                             <td>
                                                 <div class="detail-value">${c.curriculumName}</div>
@@ -134,14 +154,35 @@
                                             <td><span class="detail-value">${c.totalCredits}</span> <span class="text-muted" style="font-size:.8rem;">cr</span></td>
                                             <td class="text-muted">${c.version}</td>
                                             <td>
-                                                <c:choose>
-                                                    <c:when test="${c.isActive}">
-                                                        <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Active</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
-                                                    </c:otherwise>
-                                                </c:choose>
+                                                <div class="mb-1">
+                                                    <c:choose>
+                                                        <c:when test="${c.isActive}">
+                                                            <span class="badge-status badge-approved">
+                                                                <i class="bi bi-check-circle me-1"></i>Active
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge-status badge-draft">
+                                                                <i class="bi bi-pencil me-1"></i>Inactive
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </div>
+
+                                                <div>
+                                                    <c:choose>
+                                                        <c:when test="${c.isPublic}">
+                                                            <span class="badge-status badge-approved">
+                                                                <i class="bi bi-globe2 me-1"></i>Published
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge-status badge-draft">
+                                                                <i class="bi bi-lock me-1"></i>Not Published
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </div>
                                             </td>
                                             <td class="text-muted">
                                                 <c:if test="${not empty c.decisionDate}">
@@ -154,51 +195,11 @@
                                                         <i class="bi bi-eye"></i> View
                                                     </a>
                                                     <c:if test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
-                                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignModal_${c.curriculumId}">
+                                                        <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${c.curriculumId}" class="btn btn-sm btn-outline-primary">
                                                             <i class="bi bi-person-plus"></i> Assign
-                                                        </button>
+                                                        </a>
                                                     </c:if>
                                                 </div>
-
-                                                <c:if test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
-                                                    <div class="modal fade text-start" id="assignModal_${c.curriculumId}" tabindex="-1" aria-hidden="true">
-                                                        <div class="modal-dialog modal-dialog-centered">
-                                                            <form action="${pageContext.request.contextPath}/curriculum" method="POST" class="modal-content bg-white border-0 shadow">
-                                                                <input type="hidden" name="action" value="assign">
-                                                                <input type="hidden" name="curriculumId" value="${c.curriculumId}">
-                                                                <div class="modal-header border-bottom">
-                                                                    <h5 class="modal-title text-dark">Assign Staff</h5>
-                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                                </div>
-                                                                <div class="modal-body text-dark">
-                                                                    <p class="small text-muted mb-3">Assign Designer and Reviewer for <strong>${c.curriculumCode}</strong>.</p>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label small fw-bold">Select Designer</label>
-                                                                        <select name="designerId" class="form-select border-secondary">
-                                                                            <option value="">-- Leave Blank / None --</option>
-                                                                            <c:forEach var="d" items="${designers}">
-                                                                                <option value="${d.userId}">${d.fullName} (${d.email})</option>
-                                                                            </c:forEach>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label small fw-bold">Select Reviewer</label>
-                                                                        <select name="reviewerId" class="form-select border-secondary">
-                                                                            <option value="">-- Leave Blank / None --</option>
-                                                                            <c:forEach var="r" items="${reviewers}">
-                                                                                <option value="${r.userId}">${r.fullName} (${r.email})</option>
-                                                                            </c:forEach>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="modal-footer border-top bg-light">
-                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                                    <button type="submit" class="btn btn-primary">Save Assignments</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </c:if>
                                             </td>
                                         </tr>
                                     </c:forEach>
@@ -207,6 +208,7 @@
                         </tbody>
                     </table>
                 </div>
+                <%@ include file="/WEB-INF/views/common/pagination.jsp" %>
             </div>
         </div>
 
@@ -215,45 +217,62 @@
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                // Clickable rows
-                document.querySelectorAll('.curriculum-row').forEach(row => {
-                    row.addEventListener('click', function (e) {
-                        if (e.target.closest('a, button, input, select, form, .modal')) return;
-                        const url = this.getAttribute('data-detail-url');
-                        if (url) window.location.href = url;
-                    });
-                    row.addEventListener('mouseenter', function () { this.style.backgroundColor = 'rgba(255,106,0,0.05)'; });
-                    row.addEventListener('mouseleave', function () { this.style.backgroundColor = ''; });
-                });
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        // Clickable rows
+                                        document.querySelectorAll('.curriculum-row').forEach(row => {
+                                            row.addEventListener('click', function (e) {
+                                                if (e.target.closest('a, button, input, select, form, .modal'))
+                                                    return;
+                                                const url = this.getAttribute('data-detail-url');
+                                                if (url)
+                                                    window.location.href = url;
+                                            });
+                                            row.addEventListener('mouseenter', function () {
+                                                this.style.backgroundColor = 'rgba(255,106,0,0.05)';
+                                            });
+                                            row.addEventListener('mouseleave', function () {
+                                                this.style.backgroundColor = '';
+                                            });
+                                        });
 
-                // Sortable headers
-                const sortableHeaders = document.querySelectorAll('th.sortable');
-                let currentSort = { column: null, direction: 'asc' };
-                sortableHeaders.forEach(header => {
-                    header.style.cursor = 'pointer';
-                    header.style.userSelect = 'none';
-                    header.addEventListener('click', function () {
-                        const col = this.getAttribute('data-sort');
-                        const tbody = document.querySelector('tbody');
-                        const rows = Array.from(tbody.querySelectorAll('tr.curriculum-row'));
-                        if (currentSort.column === col) {
-                            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-                        } else { currentSort.column = col; currentSort.direction = 'asc'; }
-                        sortableHeaders.forEach(h => { const i = h.querySelector('i'); if (i) i.className = 'bi bi-arrow-down-up'; });
-                        const icon = this.querySelector('i');
-                        if (icon) icon.className = currentSort.direction === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
-                        const colIdx = { code:1, name:2, major:3, credits:4, version:5, status:6 };
-                        rows.sort((a, b) => {
-                            let av = a.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
-                            let bv = b.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
-                            if (col === 'credits') { av = parseFloat(av)||0; bv = parseFloat(bv)||0; }
-                            return currentSort.direction === 'asc' ? (av > bv ? 1 : av < bv ? -1 : 0) : (av < bv ? 1 : av > bv ? -1 : 0);
-                        });
-                        rows.forEach(r => tbody.appendChild(r));
-                    });
-                });
-            });
+                                        // Sortable headers
+                                        const sortableHeaders = document.querySelectorAll('th.sortable');
+                                        let currentSort = {column: null, direction: 'asc'};
+                                        sortableHeaders.forEach(header => {
+                                            header.style.cursor = 'pointer';
+                                            header.style.userSelect = 'none';
+                                            header.addEventListener('click', function () {
+                                                const col = this.getAttribute('data-sort');
+                                                const tbody = document.querySelector('tbody');
+                                                const rows = Array.from(tbody.querySelectorAll('tr.curriculum-row'));
+                                                if (currentSort.column === col) {
+                                                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                                                } else {
+                                                    currentSort.column = col;
+                                                    currentSort.direction = 'asc';
+                                                }
+                                                sortableHeaders.forEach(h => {
+                                                    const i = h.querySelector('i');
+                                                    if (i)
+                                                        i.className = 'bi bi-arrow-down-up';
+                                                });
+                                                const icon = this.querySelector('i');
+                                                if (icon)
+                                                    icon.className = currentSort.direction === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+                                                const colIdx = {code: 1, name: 2, major: 3, credits: 4, version: 5, status: 6};
+                                                rows.sort((a, b) => {
+                                                    let av = a.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
+                                                    let bv = b.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
+                                                    if (col === 'credits') {
+                                                        av = parseFloat(av) || 0;
+                                                        bv = parseFloat(bv) || 0;
+                                                    }
+                                                    return currentSort.direction === 'asc' ? (av > bv ? 1 : av < bv ? -1 : 0) : (av < bv ? 1 : av > bv ? -1 : 0);
+                                                });
+                                                rows.forEach(r => tbody.appendChild(r));
+                                            });
+                                        });
+                                    });
         </script>
     </body>
 </html>
