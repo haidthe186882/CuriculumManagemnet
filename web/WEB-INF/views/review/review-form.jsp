@@ -54,7 +54,7 @@
                 </div>
             </div>
             <div class="col-12">
-                <a href="${pageContext.request.contextPath}/syllabus/detail?id=${syllabus.syllabusId}" target="_blank" class="btn btn-sm btn-outline-light">
+                <a href="${pageContext.request.contextPath}/syllabus/detail?id=${syllabus.syllabusId}" target="_blank" class="btn btn-sm btn-action btn-view">
                     <i class="bi bi-box-arrow-up-right me-1"></i>View Full Syllabus Details
                 </a>
             </div>
@@ -66,9 +66,9 @@
         <div class="p-3 border-bottom">
             <h6 class="mb-0"><i class="bi bi-clipboard-check me-2" style="color:#fbbf24;"></i>Review Rubric (Total: 100 points)</h6>
         </div>
+        <c:set var="latestReview" value="${(not empty previousReviews) ? previousReviews[0] : null}"/>
         <form method="post" action="${pageContext.request.contextPath}/review/submit" id="reviewForm">
             <input type="hidden" name="syllabusId" value="${syllabus.syllabusId}">
-            <input type="hidden" name="decision" id="decisionInput">
 
             <div class="table-responsive">
                 <table class="table table-dark-custom mb-0" id="rubricTable">
@@ -84,6 +84,14 @@
                     </thead>
                     <tbody>
                         <c:forEach var="crit" items="${criteria}" varStatus="st">
+                            <c:set var="prevItem" value="${null}"/>
+                            <c:if test="${not empty latestReview and not empty latestReview.items}">
+                                <c:forEach var="item" items="${latestReview.items}">
+                                    <c:if test="${item.criterionKey eq crit.key}">
+                                        <c:set var="prevItem" value="${item}"/>
+                                    </c:if>
+                                </c:forEach>
+                            </c:if>
                             <tr>
                                 <td style="vertical-align: middle;">${st.count}</td>
                                 <td style="vertical-align: middle;">
@@ -98,12 +106,15 @@
                                 </td>
                                 <td style="vertical-align: middle;">
                                     <input type="number" name="criterionScore" class="form-control rubric-score"
-                                           min="0" max="${crit.maxScore}" step="0.5" value="0"
+                                           min="0" max="${crit.maxScore}" step="0.5"
+                                           value="${not empty prevItem ? prevItem.score : '0'}"
                                            style="width:80px; text-align:center;" required ${readOnly ? 'readonly' : ''}>
                                 </td>
                                 <td style="vertical-align: middle;">
                                     <input type="text" name="criterionComment" class="form-control"
-                                           placeholder="Optional comment" value="" style="min-width:150px;" ${readOnly ? 'readonly' : ''}>
+                                           placeholder="Optional comment"
+                                           value="${not empty prevItem ? prevItem.comment : ''}"
+                                           style="min-width:150px;" ${readOnly ? 'readonly' : ''}>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -127,7 +138,7 @@
                     <i class="bi bi-chat-left-text me-1"></i>Overall Comment
                 </label>
                 <textarea name="overallComment" id="overallComment" class="form-control" rows="3"
-                          placeholder="Provide your overall assessment of this syllabus..." ${readOnly ? 'readonly' : ''}></textarea>
+                          placeholder="Provide your overall assessment of this syllabus..." ${readOnly ? 'readonly' : ''}>${not empty latestReview ? latestReview.comment : ''}</textarea>
             </div>
 
             <!-- Action Buttons -->
@@ -137,12 +148,13 @@
                     <i class="bi bi-exclamation-triangle me-1"></i>
                     <span id="formErrorMessage"></span>
                 </div>
+                <div id="scoreHint" class="text-warning" style="font-size:0.85rem;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Score ≥ 90 → auto-approve for publishing. Score < 90 → send back to Designer for revision.
+                </div>
                 <div class="d-flex gap-2 ms-auto">
-                    <button type="button" class="btn btn-danger btn-lg px-4" onclick="submitReview('reject')">
-                        <i class="bi bi-x-circle me-1"></i>Reject
-                    </button>
-                    <button type="button" class="btn btn-success btn-lg px-4" onclick="submitReview('approve')">
-                        <i class="bi bi-check-circle me-1"></i>Approve
+                    <button type="button" class="btn btn-primary btn-lg px-4" onclick="submitReview()">
+                        <i class="bi bi-send-check me-1"></i>Submit Review
                     </button>
                 </div>
             </div>
@@ -210,7 +222,7 @@
         document.getElementById('totalScoreDisplay').textContent = total.toFixed(1);
     }
 
-    function submitReview(decision) {
+    function submitReview() {
         var scores = document.querySelectorAll('.rubric-score');
         var allFilled = true;
         scores.forEach(function(input) {
@@ -227,7 +239,6 @@
         }
 
         document.getElementById('formError').style.display = 'none';
-        document.getElementById('decisionInput').value = decision;
         document.getElementById('reviewForm').submit();
     }
 

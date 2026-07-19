@@ -69,7 +69,7 @@
                                         </c:choose>
                                     </td>
                                     <td>
-                                        <a href="${pageContext.request.contextPath}/review/form?syllabusId=${cs.syllabusId}" class="btn btn-sm btn-outline-light">
+                                        <a href="${pageContext.request.contextPath}/review/form?syllabusId=${cs.syllabusId}" class="btn btn-sm btn-action btn-view">
                                             <i class="bi bi-eye me-1"></i>Review
                                         </a>
                                     </td>
@@ -99,7 +99,7 @@
                                 <td><span class="badge bg-success">${sy.status}</span></td>
                                 <td>
                                     <div class="d-flex gap-1">
-                                        <a href="${pageContext.request.contextPath}/syllabus/detail?id=${sy.syllabusId}" class="btn btn-sm btn-outline-light">
+                                        <a href="${pageContext.request.contextPath}/syllabus/detail?id=${sy.syllabusId}" class="btn btn-sm btn-action btn-view">
                                             <i class="bi bi-box-arrow-up-right me-1"></i>Open
                                         </a>
                                         <form method="post" action="${pageContext.request.contextPath}/review/publish" style="display:inline;">
