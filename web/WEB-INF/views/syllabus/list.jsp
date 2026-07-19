@@ -52,7 +52,6 @@
             <table class="table table-dark-custom mb-0">
                 <thead>
                     <tr>
-                        <th style="cursor: default; user-select: none;">Syllabus ID</th>
                         <th style="cursor: default; user-select: none;">Subject Code</th>
                         <th style="cursor: default; user-select: none;">Subject Name</th>
                         <th style="cursor: default; user-select: none;">Syllabus Name</th>
@@ -62,12 +61,11 @@
                 <tbody>
                     <c:choose>
                         <c:when test="${empty syllabuses}">
-                            <tr><td colspan="5" class="text-center py-5 text-muted">No syllabuses found.</td></tr>
+                            <tr><td colspan="4" class="text-center py-5 text-muted">No syllabuses found.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="sy" items="${syllabuses}" varStatus="st">
                                 <tr class="syllabus-row" data-detail-url="${pageContext.request.contextPath}/syllabus/detail?id=${sy.syllabusId}" style="cursor: pointer;">
-                                    <td><span class="text-muted" style="font-size:0.8rem;">${sy.syllabusId}</span></td>
                                     <td><code style="color:var(--accent);">${sy.subject.subjectCode}</code></td>
                                     <td>${sy.subject.subjectName}</td>
                                     <td>${sy.syllabusName}</td>

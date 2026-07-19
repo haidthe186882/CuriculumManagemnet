@@ -119,22 +119,20 @@
                 <thead>
                     <tr>
                         <th style="width: 5%; cursor: default; user-select: none;"></th>
-                        <th style="width: 25%; cursor: default; user-select: none;">Syllabus ID</th>
-                        <th style="width: 15%; cursor: default; user-select: none;">Subject Code</th>
-                        <th style="width: 25%; cursor: default; user-select: none;">Syllabus Name</th>
-                        <th style="width: 30%; cursor: default; user-select: none;">All subjects learn after</th>
+                        <th style="width: 20%; cursor: default; user-select: none;">Subject Code</th>
+                        <th style="width: 35%; cursor: default; user-select: none;">Syllabus Name</th>
+                        <th style="width: 40%; cursor: default; user-select: none;">All subjects learn after</th>
                     </tr>
                 </thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty syllabuses}">
-                            <tr><td colspan="5" class="text-center py-5 text-muted">No active syllabuses found.</td></tr>
+                            <tr><td colspan="4" class="text-center py-5 text-muted">No active syllabuses found.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="sy" items="${syllabuses}" varStatus="st">
                                 <tr>
                                     <td>${(currentPage - 1) * pageSize + st.count}</td>
-                                    <td><span class="text-muted" style="font-size:0.8rem;">${sy.syllabusId}</span></td>
                                     <td><code style="color:var(--accent);">${sy.subject.subjectCode}</code></td>
                                     <td class="align-middle">${sy.syllabusName}</td>
                                     <td class="align-middle">
