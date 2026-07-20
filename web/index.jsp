@@ -201,11 +201,8 @@
 			<span>LTMS SYSTEM</span>
 		</div>
 
-		<!-- Main Heading & Subtitle -->
-		<h1 class="hero-title">Welcome to LTMS</h1>
-		<p class="hero-subtitle">
-			Learning & Teaching Management System for Curriculums, Syllabuses & Prerequisites
-		</p>
+		<!-- Main Heading -->
+		<h1 class="hero-title" style="margin-bottom: 2.25rem;">Welcome to LTMS</h1>
 
 		<!-- Primary Action Buttons -->
 		<div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
