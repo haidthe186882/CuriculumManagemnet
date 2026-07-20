@@ -85,73 +85,31 @@
                                 <span class="input-group-text bg-white border-start-0" style="border-color:var(--border);">
                                     <i class="bi bi-search" style="color:var(--muted);"></i>
                                 </span>
-                                    <i class="bi bi-plus-lg me-1"></i> New Curriculum
-                                </a>
-                            </c:if>
+                            </div>
                         </div>
-
-                        <!-- Alert -->
-                        <c:if test="${param.msg == 'created'}">
-                            <div class="alert alert-success-dark d-flex align-items-center gap-2 mb-3">
-                                <i class="bi bi-check-circle-fill"></i> Curriculum created successfully.
+                        <div class="col-md-3">
+                            <select name="majorId" class="form-select form-select-dark w-100" onchange="this.form.submit()">
+                                <option value="">All Programs</option>
+                                <c:forEach var="m" items="${majors}">
+                                    <option value="${m.majorId}" ${selectedMajorId == m.majorId ? 'selected' : ''}>${m.majorName}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <c:if test="${isStaff}">
+                            <div class="col-md-3">
+                                <select name="status" class="form-select form-select-dark w-100" onchange="this.form.submit()">
+                                    <option value="">All Status</option>
+                                    <option value="Draft"    ${selectedStatus=='Draft'    ? 'selected' : ''}>Draft</option>
+                                    <option value="Pending"  ${selectedStatus=='Pending'  ? 'selected' : ''}>Pending Review</option>
+                                    <option value="Approved" ${selectedStatus=='Approved' ? 'selected' : ''}>Approved</option>
+                                    <option value="Archived" ${selectedStatus=='Archived' ? 'selected' : ''}>Archived</option>
+                                </select>
                             </div>
                         </c:if>
-                        <c:if test="${param.msg == 'submitted'}">
-                            <div class="alert alert-success-dark d-flex align-items-center gap-2 mb-3">
-                                <i class="bi bi-send-check"></i> Curriculum submitted for review.
-                            </div>
-                        </c:if>
-
-                        <!-- Stats - Hidden per request -->
-                        <div class="row g-3 mb-4 d-none">
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number">${totalCount}</div>
-                                    <div class="stat-label"><i class="bi bi-book me-1"></i>Total Curriculum</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" style="color:#34d399;">
-                                        <c:set var="approvedCount" value="0" />
-                                        <c:forEach var="c" items="${curriculums}">
-                                            <c:if test="${c.isActive}">
-                                                <c:set var="approvedCount" value="${approvedCount + 1}" />
-                                            </c:if>
-                                        </c:forEach>
-                                        ${approvedCount}
-                                    </div>
-                                    <div class="stat-label"><i class="bi bi-check-circle me-1"></i>Approved</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" style="color:#fbbf24;">
-                                        <c:set var="pendingCount" value="0" />
-                                        <c:forEach var="c" items="${curriculums}">
-                                            <c:if test="${not c.isActive}">
-                                                <c:set var="pendingCount" value="${pendingCount + 1}" />
-                                            </c:if>
-                                        </c:forEach>
-                                        ${pendingCount}
-                                    </div>
-                                    <div class="stat-label"><i class="bi bi-hourglass me-1"></i>Pending Review</div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="stat-card">
-                                    <div class="stat-number" style="color:#94a3b8;">
-                                        <c:set var="draftCount" value="0" />
-                                        <c:forEach var="c" items="${curriculums}">
-                                            <c:if test="${not c.isActive}">
-                                                <c:set var="draftCount" value="${draftCount + 1}" />
-                                            </c:if>
-                                        </c:forEach>
-                                        ${draftCount}
-                                    </div>
-                                    <div class="stat-label"><i class="bi bi-pencil-square me-1"></i>Draft</div>
-                                </div>
-                            </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary-custom w-100">
+                                <i class="bi bi-search me-1"></i>Search
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -295,129 +253,16 @@
                                                 rows.sort((a, b) => {
                                                     let av = a.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
                                                     let bv = b.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
-            document.addEventListener('DOMContentLoaded', function () {
-                // Clickable rows
-                document.querySelectorAll('.curriculum-row').forEach(row => {
-                    row.addEventListener('click', function (e) {
-                        if (e.target.closest('a, button, input, select, form, .modal'))
-                            return;
-                        const url = this.getAttribute('data-detail-url');
-                        if (url)
-                            window.location.href = url;
-                    });
-                });
-            });
+                                                    if (col === 'credits') {
+                                                        av = parseFloat(av) || 0;
+                                                        bv = parseFloat(bv) || 0;
+                                                    }
+                                                    return currentSort.direction === 'asc' ? (av > bv ? 1 : av < bv ? -1 : 0) : (av < bv ? 1 : av > bv ? -1 : 0);
+                                                });
+                                                rows.forEach(r => tbody.appendChild(r));
+                                            });
+                                        });
+                                    });
         </script>
     </body>
-                                                                <a href="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}"
-                                                                    class="btn btn-sm btn-outline-warning">
-                                                                    <i class="bi bi-eye"></i> View
-                                                                </a>
-
-                                                                <c:if
-                                                                    test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-primary"
-                                                                        data-bs-toggle="modal"
-                                                                        data-bs-target="#assignModal_${c.curriculumId}">
-                                                                        <i class="bi bi-person-plus"></i> Assign
-                                                                    </button>
-                                                                </c:if>
-                                                            </div>
-
-                                                            <c:if
-                                                                test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
-                                                                <div class="modal fade text-start"
-                                                                    id="assignModal_${c.curriculumId}" tabindex="-1"
-                                                                    aria-hidden="true">
-                                                                    <div class="modal-dialog modal-dialog-centered">
-                                                                        <form
-                                                                            action="${pageContext.request.contextPath}/curriculum"
-                                                                            method="POST"
-                                                                            class="modal-content bg-white border-0 shadow">
-                                                                            <input type="hidden" name="action"
-                                                                                value="assign">
-                                                                            <input type="hidden" name="curriculumId"
-                                                                                value="${c.curriculumId}">
-
-                                                                            <div class="modal-header border-bottom">
-                                                                                <h5 class="modal-title text-dark">Assign
-                                                                                    Staff</h5>
-                                                                                <button type="button" class="btn-close"
-                                                                                    data-bs-dismiss="modal"></button>
-                                                                            </div>
-
-                                                                            <div class="modal-body text-dark">
-                                                                                <p class="small text-muted mb-3">Phân
-                                                                                    công Designer và Reviewer cho chương
-                                                                                    trình
-                                                                                    <strong>${c.curriculumCode}</strong>.
-                                                                                </p>
-
-                                                                                <div class="mb-3">
-                                                                                    <label
-                                                                                        class="form-label small fw-bold">Select
-                                                                                        Designer</label>
-                                                                                    <select name="designerId"
-                                                                                        class="form-select border-secondary">
-                                                                                        <option value="">-- Leave Blank
-                                                                                            / None --</option>
-                                                                                        <c:forEach var="d"
-                                                                                            items="${designers}">
-                                                                                            <option value="${d.userId}">
-                                                                                                ${d.fullName}
-                                                                                                (${d.email})</option>
-                                                                                        </c:forEach>
-                                                                                    </select>
-                                                                                </div>
-
-                                                                                <div class="mb-3">
-                                                                                    <label
-                                                                                        class="form-label small fw-bold">Select
-                                                                                        Reviewer</label>
-                                                                                    <select name="reviewerId"
-                                                                                        class="form-select border-secondary">
-                                                                                        <option value="">-- Leave Blank
-                                                                                            / None --</option>
-                                                                                        <c:forEach var="r"
-                                                                                            items="${reviewers}">
-                                                                                            <option value="${r.userId}">
-                                                                                                ${r.fullName}
-                                                                                                (${r.email})</option>
-                                                                                        </c:forEach>
-                                                                                    </select>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div
-                                                                                class="modal-footer border-top bg-light">
-                                                                                <button type="button"
-                                                                                    class="btn btn-secondary"
-                                                                                    data-bs-dismiss="modal">Cancel</button>
-                                                                                <button type="submit"
-                                                                                    class="btn btn-primary">Save
-                                                                                    Assignments</button>
-                                                                            </div>
-                                                                            //
-                                                                        </form>
-                                                                    </div>
-                                                                </div>
-                                                            </c:if>
-                                                        </td>
-                                                    </tr>
-                                                </c:forEach>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </tbody>
-                                </table>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-            </body>
-
-            </html>
+</html>
