@@ -281,6 +281,20 @@
                                     </td>
                                     <td>
                                         <c:choose>
+                                            <c:when test="${empty cs.subject.prerequisites}">
+                                                <span class="text-muted" style="font-size:0.8rem; font-style:italic;">None</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:forEach var="req" items="${cs.subject.prerequisites}">
+                                                    <span class="badge bg-secondary me-1" style="font-size: 0.75rem;" title="${req.subjectName}">
+                                                        ${req.subjectCode}
+                                                    </span>
+                                                </c:forEach>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
                                             <c:when test="${not empty cs.subject.syllabusId}">
                                                 <a href="${pageContext.request.contextPath}/syllabus/detail?id=${cs.subject.syllabusId}" class="btn btn-sm btn-outline-info text-decoration-none py-1 px-2" style="font-size: 0.78rem;">
                                                     <i class="bi bi-file-earmark-text me-1"></i>View Syllabus
