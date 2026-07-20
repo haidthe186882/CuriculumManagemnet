@@ -410,10 +410,12 @@ public class CurriculumServlet extends HttpServlet {
         // Chỉ Admin được tạo Curriculum mới — Designer chỉ thiết kế Subject.
         if (!requireRole(req, res, "Admin"))
             return;
+        
         User user = getLoggedUser(req);
         Curriculum c = buildFromRequest(req);
         c.setCreatedBy(user.getUserId());
 
+        // 1. Kiểm tra mã Curriculum có bị trống hoặc trùng lặp không
         if (c.getCurriculumCode() == null || c.getCurriculumCode().trim().isEmpty()
                 || curriculumDAO.checkCurriculumCodeExists(c.getCurriculumCode().trim())) {
             req.setAttribute("errorMessage", "Could not create curriculum. The Curriculum Code \""
@@ -425,10 +427,11 @@ public class CurriculumServlet extends HttpServlet {
             return;
         }
 
+        // 2. Thêm Curriculum vào database và lấy ID thật
         String newId = curriculumDAO.addCurriculumAndReturnId(c);
 
         if (newId == null) {
-            // Thực sự lưu thất bại (lỗi DB/ràng buộc) — báo lỗi rõ ràng, KHÔNG redirect "created" giả.
+            // Thực sự lưu thất bại (lỗi DB/ràng buộc) — báo lỗi rõ ràng
             req.setAttribute("errorMessage", "Could not create curriculum. Please check the required fields and try again.");
             req.setAttribute("curriculum", c);
             req.setAttribute("majors", majorDAO.getAllMajors());
@@ -437,22 +440,20 @@ public class CurriculumServlet extends HttpServlet {
             return;
         }
 
+        // 3. Xử lý dữ liệu đang chờ từ việc Import Excel (nếu có)
         HttpSession session = req.getSession(false);
         if (session != null) {
             List<PloRow> pendingPlos = (List<PloRow>) session.getAttribute("pendingImportPlos");
             List<util.ExcelHelper.PoRow> pendingPos = (List<util.ExcelHelper.PoRow>) session.getAttribute("pendingImportPos");
             List<String[]> pendingMappings = (List<String[]>) session.getAttribute("pendingImportMappings");
             List<SubjectRow> pendingSubjects = (List<SubjectRow>) session.getAttribute("pendingImportSubjects");
+            
             if (pendingPlos != null) {
-                for (PloRow pr : pendingPlos) {
-                    ploDAO.addPLO(newId, pr.ploCode, pr.description);
-                }
+                for (PloRow pr : pendingPlos) ploDAO.addPLO(newId, pr.ploCode, pr.description);
                 session.removeAttribute("pendingImportPlos");
             }
             if (pendingPos != null) {
-                for (util.ExcelHelper.PoRow pr : pendingPos) {
-                    poDAO.addPO(newId, pr.poCode, pr.description);
-                }
+                for (util.ExcelHelper.PoRow pr : pendingPos) poDAO.addPO(newId, pr.poCode, pr.description);
                 session.removeAttribute("pendingImportPos");
             }
             if (pendingMappings != null) {
@@ -465,9 +466,15 @@ public class CurriculumServlet extends HttpServlet {
             }
         }
 
-        // Curriculum moi tao: chi Admin/Designer/Reviewer thay (Is_Active=1),
-        // CHUA Publish (Is_Public=0). Admin phai gan Designer+Reviewer cho tung
-        // subject moi, cho thiet ke + duyet xong het thi moi bam "Publish" duoc.
+        // =========================================================================
+        // 4. ĐOẠN CODE TỰ ĐỘNG SINH COMBO
+        // Gọi hàm tự động sinh Combo ngay sau khi mọi thứ đã được tạo thành công
+        // =========================================================================
+        dao.ComboDAO comboDAO = new dao.ComboDAO();
+        comboDAO.generateDefaultCombos(newId, c.getMajorId());
+
+
+        // 5. Redirect duy nhất 1 lần về trang danh sách (Hoàn tất)
         res.sendRedirect(req.getContextPath() + "/curriculum/list?msg=created");
     }
 

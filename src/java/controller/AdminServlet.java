@@ -65,6 +65,12 @@ public class AdminServlet extends HttpServlet {
             case "bulkDeactivate":
                 doBulkDeactivate(req, res);
                 break;
+            case "bulkActivate":
+                doBulkActivate(req, res);
+                break;
+            case "bulkToggleStatus":
+                doBulkToggleStatus(req, res);
+                break;
             case "importUsersExcel":
                 doImportUsersExcel(req, res);
                 break;
@@ -183,7 +189,40 @@ public class AdminServlet extends HttpServlet {
             res.sendRedirect(req.getContextPath() + "/admin/users");
         }
     }
+    
+    private void doBulkActivate(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        String[] userIds = req.getParameterValues("userIds");
+        if (userIds != null && userIds.length > 0) {
+            // Tận dụng luôn hàm updateStatus có sẵn để đổi sang Active
+            for (String id : userIds) {
+                userDAO.updateStatus(id, "Active");
+            }
+            res.sendRedirect(req.getContextPath() + "/admin/users?msg=updated");
+        } else {
+            res.sendRedirect(req.getContextPath() + "/admin/users");
+        }
+    }
 
+    private void doBulkToggleStatus(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        String[] userIds = req.getParameterValues("userIds");
+        if (userIds != null && userIds.length > 0) {
+            // Gọi tạm danh sách để so sánh trạng thái hiện tại (đảo ngược lại)
+            List<User> allUsers = userDAO.getAllUsers(null, null, null); 
+            for (String id : userIds) {
+                for (User u : allUsers) {
+                    if (u.getUserId().equals(id)) {
+                        String newStatus = "Active".equals(u.getStatus()) ? "Inactive" : "Active";
+                        userDAO.updateStatus(id, newStatus);
+                        break;
+                    }
+                }
+            }
+            res.sendRedirect(req.getContextPath() + "/admin/users?msg=updated");
+        } else {
+            res.sendRedirect(req.getContextPath() + "/admin/users");
+        }
+    }
+    
     private void doImportUsersExcel(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String msg;
         int imported = 0;
