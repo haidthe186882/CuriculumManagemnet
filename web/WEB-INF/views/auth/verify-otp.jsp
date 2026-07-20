@@ -11,12 +11,13 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             :root{
-                --card-radius:14px;
-                --accent:#0b1020
+                --card-radius:24px;
+                --primary-orange:#f95d00;
+                --hover-orange:#ea5200;
             }
             *{
                 box-sizing:border-box;
-                font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial
+                font-family:'Inter',system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial
             }
             body{
                 min-height:100vh;
@@ -24,18 +25,19 @@
                 align-items:center;
                 justify-content:center;
                 margin:0;
-                background:linear-gradient(180deg,#eef6ff 0%,#f3f8ff 100%)
+                background:#f0f4f9;
             }
             .page-wrap{
                 width:100%;
                 max-width:520px;
-                padding:40px
+                padding:24px
             }
             .card-box{
                 background:#fff;
                 border-radius:var(--card-radius);
-                padding:36px 36px 28px;
-                box-shadow:0 10px 30px rgba(15,23,42,.08);
+                padding:36px 36px 30px;
+                box-shadow:0 15px 45px rgba(15,23,42,0.06), 0 0 1px rgba(0,0,0,0.08);
+                border:1px solid #e2e8f0;
                 animation:fadeUp .5s ease-out
             }
             @keyframes fadeUp{
@@ -52,24 +54,25 @@
                 width:72px;
                 height:72px;
                 border-radius:50%;
-                background:#0b1020;
+                background:linear-gradient(135deg, #f97316, #ea580c);
                 display:flex;
                 align-items:center;
                 justify-content:center;
                 margin:0 auto;
                 color:#fff;
-                font-size:28px
+                font-size:30px;
+                box-shadow:0 8px 20px rgba(249, 93, 0, 0.25);
             }
             .brand-title{
                 font-size:22px;
-                font-weight:600;
+                font-weight:800;
                 text-align:center;
-                margin-top:14px;
-                color:#0b1020
+                margin-top:16px;
+                color:#0f172a
             }
             .brand-sub{
                 font-size:14px;
-                color:#6b7280;
+                color:#64748b;
                 text-align:center;
                 margin-bottom:24px
             }
@@ -87,18 +90,20 @@
                 text-align:center;
                 font-size:24px;
                 font-weight:700;
-                border:2px solid #e6eef8;
+                border:2px solid #e2e8f0;
                 border-radius:12px;
-                background:#fbfdff;
-                color:#0b1020;
+                background:#f8fafc;
+                color:#0f172a;
                 outline:none;
                 transition:all .2s;
-                caret-color:#3b82f6
+                caret-color:var(--primary-orange)
             }
             .otp-input:focus{
-                border-color:#3b82f6;
-                box-shadow:0 0 0 3px rgba(59,130,246,.15)
+                border-color:var(--primary-orange);
+                box-shadow:0 0 0 3px rgba(249,93,0,.15);
+                background:#fff
             }
+            
             .otp-input.filled{
                 border-color:#10b981;
                 background:#f0fdf4
