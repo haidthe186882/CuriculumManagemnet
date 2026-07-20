@@ -149,6 +149,9 @@ public class CurriculumServlet extends HttpServlet {
             case "assignSubject":
                 doAssignSubject(req, res);
                 break;
+            case "unassign":
+                doUnassign(req, res);
+                break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
@@ -842,6 +845,21 @@ public class CurriculumServlet extends HttpServlet {
         } else {
             res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=assigned");
         }
+    }
+
+    /**
+     * Admin go bo 1 assignment (Designer hoac Reviewer) da gan cho 1 subject,
+     * dung tu nut "Remove" ben canh email nguoi duoc gan tren trang Assign.
+     */
+    private void doUnassign(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
+        if (!requireRole(req, res, "Admin")) return;
+
+        String assignmentId = req.getParameter("assignmentId");
+        String curriculumId = req.getParameter("curriculumId");
+        if (assignmentId != null && !assignmentId.trim().isEmpty()) {
+            designDAO.removeAssignment(assignmentId);
+        }
+        res.sendRedirect(req.getContextPath() + "/curriculum/assign?curriculumId=" + curriculumId + "&msg=assigned");
     }
 
     /**

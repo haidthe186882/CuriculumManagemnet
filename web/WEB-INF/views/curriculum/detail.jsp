@@ -61,7 +61,7 @@
                     </c:otherwise>
                 </c:choose>
             </c:if>
-            <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+            <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin' and not curriculum.isPublic}">
                 <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                     <i class="bi bi-person-plus me-1"></i>Assign
                 </a>
@@ -255,7 +255,7 @@
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>PreRequisite</th><th>Syllabus</th><th>Design Status</th>
-                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}"><th>Assign</th></c:if>
+                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin' and not curriculum.isPublic}"><th>Assign</th></c:if>
                     <c:if test="${canDesign}"><th>Action</th></c:if>
                 </tr></thead>
                 <tbody>
@@ -304,7 +304,7 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+                                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin' and not curriculum.isPublic}">
                                         <td>
                                             <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}#subj-${cs.subject.subjectId}" class="btn btn-sm btn-outline-primary" title="Assign Designer/Reviewer for this subject">
                                                 <i class="bi bi-person-plus"></i> Assign
