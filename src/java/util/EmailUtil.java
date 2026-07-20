@@ -14,7 +14,7 @@ public class EmailUtil {
 
     // ===== REPLACE THESE WITH YOUR REAL CREDENTIALS =====
     private static final String SENDER_EMAIL = "maiduyan2005@gmail.com";
-    private static final String APP_PASSWORD = "ivvk skek jris nyba";
+    private static final String APP_PASSWORD = "yaif atrs egvq mwej";
     // ====================================================
 
     private static final String SMTP_HOST = "smtp.gmail.com";
