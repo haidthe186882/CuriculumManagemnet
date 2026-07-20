@@ -358,7 +358,11 @@ public class SubjectDAO {
                 try { s.setSyllabusStatusCode(rs.getInt("Syllabus_Status")); } catch (SQLException ignored) {}
                 try { s.setNeedsPloMapping(rs.getInt("Needs_Plo_Mapping") == 1); } catch (SQLException ignored) {}
                 list.add(s);
-=======
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
     public List<Subject> getAllSubjectsWithPrerequisites() {
         List<Subject> list = new ArrayList<>();
         String sql = "SELECT s.Subject_ID, s.Subject_Code, s.Subject_Name, s.Credits, s.Description, " +
