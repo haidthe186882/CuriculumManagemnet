@@ -127,9 +127,9 @@ public class SubjectDAO {
                 cs.setSemesterNo(rs.getInt("Semester_No"));
                 cs.setMandatory(rs.getBoolean("Is_Mandatory"));
                 Subject s = mapSubject(rs);
+                try { s.setSyllabusId(rs.getString("Syllabus_ID")); } catch (SQLException ignored) {}
                 try { s.setSyllabusStatusCode(rs.getInt("Syllabus_Status")); } catch (SQLException ignored) {}
                 try { s.setPrerequisiteCodes(rs.getString("Prerequisite_Codes")); } catch (SQLException ignored) {}
-                s.setPrerequisites(getPrerequisitesForSubject(s.getSubjectId()));
                 cs.setSubject(s);
                 list.add(cs);
             }
@@ -358,43 +358,6 @@ public class SubjectDAO {
                 try { s.setSyllabusStatusCode(rs.getInt("Syllabus_Status")); } catch (SQLException ignored) {}
                 try { s.setNeedsPloMapping(rs.getInt("Needs_Plo_Mapping") == 1); } catch (SQLException ignored) {}
                 list.add(s);
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return list;
-    }
-
-    public List<Subject> getAllSubjectsWithPrerequisites() {
-        List<Subject> list = new ArrayList<>();
-        String sql = "SELECT s.Subject_ID, s.Subject_Code, s.Subject_Name, s.Credits, s.Description, " +
-                     "req.Subject_ID AS Req_ID, req.Subject_Code AS Req_Code, req.Subject_Name AS Req_Name " +
-                     "FROM Subjects s " +
-                     "LEFT JOIN Subject_Prerequisites sp ON s.Subject_ID = sp.Subject_ID " +
-                     "LEFT JOIN Subjects req ON sp.Required_Subject_ID = req.Subject_ID " +
-                     "WHERE s.Is_Active = 1 " +
-                     "ORDER BY s.Subject_Code";
-        try (Connection con = new DBContext().getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            Subject current = null;
-            while (rs.next()) {
-                String subId = rs.getString("Subject_ID");
-                if (current == null || !current.getSubjectId().equals(subId)) {
-                    current = new Subject();
-                    current.setSubjectId(subId);
-                    current.setSubjectCode(rs.getString("Subject_Code"));
-                    current.setSubjectName(rs.getString("Subject_Name"));
-                    current.setCredits(rs.getInt("Credits"));
-                    current.setDescription(rs.getString("Description"));
-                    list.add(current);
-                }
-                String reqId = rs.getString("Req_ID");
-                if (reqId != null) {
-                    Subject req = new Subject();
-                    req.setSubjectId(reqId);
-                    req.setSubjectCode(rs.getString("Req_Code"));
-                    req.setSubjectName(rs.getString("Req_Name"));
-                    current.getPrerequisites().add(req);
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();

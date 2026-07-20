@@ -62,7 +62,6 @@
         </div>
     </div>
 
-    <!-- Add Prerequisite Form (Designer / Admin only) -->
     <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.designer}">
         <div class="card-dark p-4 mb-4">
             <h5 class="mb-3" style="font-weight: 600; color: #1f2937;"><i class="bi bi-link-45deg text-primary me-2"></i>Add Prerequisite Link</h5>
@@ -95,7 +94,6 @@
         </div>
     </c:if>
 
-    <!-- Search Form -->
     <div class="card-dark p-3 mb-3">
         <form method="get" action="${pageContext.request.contextPath}/subject/prerequisites">
             <div class="row g-2">
@@ -115,7 +113,6 @@
         </form>
     </div>
 
-    <!-- Table of Subjects & Prerequisites -->
     <div class="card-dark">
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">

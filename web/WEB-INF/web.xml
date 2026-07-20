@@ -12,6 +12,14 @@
         <error-code>404</error-code>
         <location>/WEB-INF/views/error/404.jsp</location>
     </error-page>
+    <servlet>
+        <servlet-name>DesginServlet</servlet-name>
+        <servlet-class>controller.DesignServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DesginServlet</servlet-name>
+        <url-pattern>/design</url-pattern>
+    </servlet-mapping>
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>

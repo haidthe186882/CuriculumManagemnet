@@ -421,44 +421,34 @@ public class SyllabusDAO {
     public List<Syllabus> getSyllabusesWithSubjectsLearnAfter(String keyword) {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT s.Subject_ID, s.Subject_Code, s.Subject_Name, "
-                + "sy.Syllabus_ID, sy.Syllabus_Name, "
+                "SELECT sy.Syllabus_ID, s.Subject_Code, sy.Syllabus_Name, s.Subject_ID, "
                 + "after_sub.Subject_ID AS After_Sub_ID, after_sub.Subject_Code AS After_Sub_Code, after_sub.Subject_Name AS After_Sub_Name "
-                + "FROM Subjects s "
-                + "LEFT JOIN Syllabuses sy ON s.Subject_ID = sy.Subject_ID AND sy.Is_Active = 1 "
+                + "FROM Syllabuses sy "
+                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
                 + "LEFT JOIN Subject_Prerequisites sp ON s.Subject_ID = sp.Required_Subject_ID "
                 + "LEFT JOIN Subjects after_sub ON sp.Subject_ID = after_sub.Subject_ID AND after_sub.Is_Active = 1 "
-                + "WHERE s.Is_Active = 1 ");
+                + "WHERE sy.Is_Active = 1 ");
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append("AND (s.Subject_Code LIKE ? OR s.Subject_Name LIKE ?) ");
+            sql.append("AND s.Subject_Code LIKE ? ");
         }
         sql.append("ORDER BY s.Subject_Code");
         try (Connection con = new DBContext().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql.toString())) {
             if (keyword != null && !keyword.trim().isEmpty()) {
-                String val = "%" + keyword.trim() + "%";
-                ps.setString(1, val);
-                ps.setString(2, val);
+                ps.setString(1, "%" + keyword.trim() + "%");
             }
             try (ResultSet rs = ps.executeQuery()) {
                 Syllabus current = null;
                 while (rs.next()) {
-                    String subId = rs.getString("Subject_ID");
-                    if (current == null || current.getSubject() == null || !current.getSubject().getSubjectId().equals(subId)) {
+                    String syllabusId = rs.getString("Syllabus_ID");
+                    if (current == null || !current.getSyllabusId().equals(syllabusId)) {
                         current = new Syllabus();
-                        String sylId = rs.getString("Syllabus_ID");
-                        current.setSyllabusId(sylId != null ? sylId : "");
-                        
-                        String sylName = rs.getString("Syllabus_Name");
-                        if (sylName == null || sylName.trim().isEmpty()) {
-                            sylName = rs.getString("Subject_Name");
-                        }
-                        current.setSyllabusName(sylName);
+                        current.setSyllabusId(syllabusId);
+                        current.setSyllabusName(rs.getString("Syllabus_Name"));
 
                         Subject subject = new Subject();
-                        subject.setSubjectId(subId);
+                        subject.setSubjectId(rs.getString("Subject_ID"));
                         subject.setSubjectCode(rs.getString("Subject_Code"));
-                        subject.setSubjectName(rs.getString("Subject_Name"));
                         current.setSubject(subject);
 
                         list.add(current);
