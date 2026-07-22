@@ -343,9 +343,8 @@ public class SyllabusDAO {
 
     public List<SyllabusMaterial> getDownloadableMaterialsBySyllabusId(String syllabusId) {
         List<SyllabusMaterial> list = new ArrayList<>();
-        // Lấy các file do Admin/Designer upload (Uploaded_By IS NULL) và có link
-        // download thực sự
-        String sql = "SELECT * FROM Materials WHERE Syllabus_ID = ? AND Download_Link IS NOT NULL AND Download_Link <> '' AND Uploaded_By IS NULL ORDER BY Is_Main_Material DESC";
+        // Get materials with a valid download link (both official and teacher uploaded active materials)
+        String sql = "SELECT * FROM Materials WHERE Syllabus_ID = ? AND Download_Link IS NOT NULL AND LTRIM(RTRIM(Download_Link)) <> '' AND (Is_Active IS NULL OR Is_Active = 1) ORDER BY Is_Main_Material DESC";
         try (Connection con = new DBContext().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, syllabusId);
@@ -377,41 +376,6 @@ public class SyllabusDAO {
         return list;
     }
 
-    public List<SyllabusMaterial> getDownloadableMaterialsBySyllabusId(String syllabusId) {
-        List<SyllabusMaterial> list = new ArrayList<>();
-        // Lấy các file do Admin/Designer upload (Uploaded_By IS NULL) và có link
-        // download thực sự
-        String sql = "SELECT * FROM Materials WHERE Syllabus_ID = ? AND Download_Link IS NOT NULL AND Download_Link <> '' AND Uploaded_By IS NULL ORDER BY Is_Main_Material DESC";
-        try (Connection con = new DBContext().getConnection();
-                PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, syllabusId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                SyllabusMaterial m = new SyllabusMaterial();
-                m.setMaterialId(rs.getString("Material_ID"));
-                m.setSyllabusId(rs.getString("Syllabus_ID"));
-                m.setMaterialDescription(rs.getString("Material_Description"));
-                m.setAuthor(rs.getString("Author"));
-                m.setPublisher(rs.getString("Publisher"));
-                m.setPublishedDate(rs.getDate("Published_Date"));
-                m.setEdition(rs.getString("Edition"));
-                m.setIsbn(rs.getString("ISBN"));
-                m.setMainMaterial(rs.getBoolean("Is_Main_Material"));
-                m.setHardCopy(rs.getBoolean("Is_Hard_Copy"));
-                m.setOnline(rs.getBoolean("Is_Online"));
-                m.setLink(rs.getString("Link"));
-                m.setNotes(rs.getString("Notes"));
-                try {
-                    m.setFilePath(rs.getString("Download_Link"));
-                } catch (SQLException ignored) {
-                }
-                list.add(m);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
 
     public boolean deleteMaterialsBySyllabus(String syllabusId) {
         String sql = "DELETE FROM Materials WHERE Syllabus_ID = ?";
