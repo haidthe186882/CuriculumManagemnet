@@ -7,6 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.CallableStatement;
+import java.util.UUID;
 
 public class ComboDAO extends DBContext {
 
@@ -98,4 +99,54 @@ public class ComboDAO extends DBContext {
         e.printStackTrace();
     }
   }
+    public boolean addCustomCombo(String curriculumId, String comboCode, String comboName, String englishName, String description, String[] subjectIds) {
+        String sqlCombo = "INSERT INTO [dbo].[Combos] (Combo_ID, Curriculum_ID, Combo_Code, Combo_Name, English_Name, Description, Is_Active) VALUES (?, ?, ?, ?, ?, ?, 1)";
+        String sqlComboSubject = "INSERT INTO [dbo].[Combo_Subjects] (Combo_Subject_ID, Combo_ID, Subject_ID, Semester_No) VALUES (?, ?, ?, ?)";
+        
+        try (Connection con = getConnection()) {
+            con.setAutoCommit(false); // Bắt đầu Transaction
+            try {
+                // 1. Tạo Combo
+                String newComboId = UUID.randomUUID().toString();
+                try (PreparedStatement ps = con.prepareStatement(sqlCombo)) {
+                    ps.setString(1, newComboId);
+                    ps.setString(2, curriculumId);
+                    ps.setString(3, comboCode); // Nhớ nhập mã Combo không được trùng với cái đã có nhé!
+                    ps.setString(4, comboName);
+                    ps.setString(5, englishName);
+                    ps.setString(6, description);
+                    ps.executeUpdate();
+                }
+                
+                // 2. Thêm các môn học vào Combo_Subjects
+                if (subjectIds != null && subjectIds.length > 0) {
+                    try (PreparedStatement ps2 = con.prepareStatement(sqlComboSubject)) {
+                        for (String subjectId : subjectIds) {
+                            ps2.setString(1, UUID.randomUUID().toString());
+                            ps2.setString(2, newComboId);
+                            ps2.setString(3, subjectId);
+                            // FIX LỖI: Gán cứng học kỳ là 1 thay vì để NULL để tránh DB báo lỗi
+                            ps2.setInt(4, 1); 
+                            ps2.addBatch();
+                        }
+                        ps2.executeBatch();
+                    }
+                }
+                
+                con.commit(); // Hoàn tất Transaction
+                return true;
+                
+            } catch (Exception e) {
+                con.rollback(); // Rollback không lưu gì cả nếu có bất kỳ lỗi nào
+                System.out.println("========== LỖI SQL KHI ADD COMBO ==========");
+                e.printStackTrace(); // Dòng này sẽ in chữ đỏ ra Console để bắt bệnh
+                System.out.println("===========================================");
+            } finally {
+                con.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
