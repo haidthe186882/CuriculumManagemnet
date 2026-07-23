@@ -62,38 +62,6 @@
         </div>
     </div>
 
-    <c:if test="${sessionScope.loggedUser.role.roleName == 'Designer' or sessionScope.loggedUser.role.roleName == 'Admin' or sessionScope.loggedUser.designer}">
-        <div class="card-dark p-4 mb-4">
-            <h5 class="mb-3" style="font-weight: 600; color: #1f2937;"><i class="bi bi-link-45deg text-primary me-2"></i>Add Prerequisite Link</h5>
-            <form method="post" action="${pageContext.request.contextPath}/subject/prerequisites">
-                <input type="hidden" name="action" value="addPrereq">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-5">
-                        <label class="detail-label">Select Subject</label>
-                        <select name="subjectId" class="form-control form-control-dark" required>
-                            <option value="">-- Choose Target Subject (Learned After) --</option>
-                            <c:forEach var="sub" items="${allSubjects}">
-                                <option value="${sub.subjectId}">${sub.subjectCode} — ${sub.subjectName}</option>
-                            </c:forEach>
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label class="detail-label">Requires Passing</label>
-                        <select name="requiredSubjectId" class="form-control form-control-dark" required>
-                            <option value="">-- Choose Prerequisite Subject (Learned Before) --</option>
-                            <c:forEach var="sub" items="${allSubjects}">
-                                <option value="${sub.subjectId}">${sub.subjectCode} — ${sub.subjectName}</option>
-                            </c:forEach>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary-custom w-100"><i class="bi bi-plus-lg me-1"></i>Link</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </c:if>
-
     <div class="card-dark p-3 mb-3">
         <form method="get" action="${pageContext.request.contextPath}/subject/prerequisites">
             <div class="row g-2">
