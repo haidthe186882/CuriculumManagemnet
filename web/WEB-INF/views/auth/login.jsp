@@ -8,16 +8,16 @@
         <title>Academic Management System — Sign in</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
             :root{
-                --card-radius:14px;
-                --accent:#0b1020;
-                --accent-2:#0f1724
+                --card-radius:24px;
+                --primary-orange:#f95d00;
+                --hover-orange:#ea5200;
             }
             *{
                 box-sizing:border-box;
-                font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial
+                font-family:'Inter',system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial
             }
             body{
                 min-height:100vh;
@@ -25,116 +25,152 @@
                 align-items:center;
                 justify-content:center;
                 margin:0;
-                background:linear-gradient(180deg,#eef6ff 0%, #f3f8ff 100%)
+                background:#f0f4f9;
             }
             .login-wrap{
                 width:100%;
-                max-width:760px;
-                padding:40px
+                max-width:540px;
+                padding:24px;
             }
             .login-card{
                 background:#fff;
                 border-radius:var(--card-radius);
-                padding:36px 36px 28px;
-                box-shadow:0 10px 30px rgba(15,23,42,0.08)
+                padding:36px 36px 30px;
+                box-shadow:0 15px 45px rgba(15,23,42,0.06), 0 0 1px rgba(0,0,0,0.08);
+                border:1px solid #e2e8f0;
+            }
+            .back-welcome-link {
+                color: #64748b;
+                font-size: 13.5px;
+                font-weight: 600;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                transition: all 0.2s ease;
+            }
+            .back-welcome-link:hover {
+                color: var(--primary-orange);
             }
             .logo-circle{
                 width:72px;
                 height:72px;
                 border-radius:50%;
-                background:linear-gradient(180deg,#0b1220,#0b1220);
+                background:linear-gradient(135deg, #f97316, #ea580c);
                 display:flex;
                 align-items:center;
                 justify-content:center;
                 margin:0 auto;
                 color:#fff;
-                font-size:28px
+                font-size:30px;
+                box-shadow:0 8px 20px rgba(249, 93, 0, 0.25);
             }
             .brand-title{
                 font-size:22px;
-                font-weight:600;
+                font-weight:800;
                 text-align:center;
-                margin-top:14px;
-                color:#0b1020
+                margin-top:16px;
+                color:#0f172a
             }
             .brand-sub{
                 font-size:14px;
-                color:#6b7280;
+                color:#64748b;
                 text-align:center;
-                margin-bottom:20px
+                margin-bottom:24px
             }
             .form-label{
                 font-size:14px;
-                color:#111827;
+                color:#1e293b;
                 margin-bottom:8px;
                 font-weight:600
             }
             .form-control{
-                border-radius:10px;
-                border:1px solid #e6eef8;
+                border-radius:12px;
+                border:1px solid #e2e8f0;
                 padding:12px 14px;
-                background:#fbfdff
+                background:#f8fafc;
+                font-size:14px;
+                transition:all 0.2s ease;
+            }
+            .form-control:focus{
+                background:#fff;
+                border-color:var(--primary-orange);
+                box-shadow:0 0 0 3px rgba(249, 93, 0, 0.15);
             }
             .input-with-icon{
                 position:relative
             }
             .input-with-icon .bi-left-icon{
                 position:absolute;
-                left:12px;
+                left:14px;
                 top:50%;
                 transform:translateY(-50%);
-                color:#9aa4b2
+                color:#94a3b8
             }
             .input-with-icon .bi-right-icon{
                 position:absolute;
-                right:12px;
+                right:14px;
                 top:50%;
                 transform:translateY(-50%);
-                color:#9aa4b2
+                color:#94a3b8
             }
-
             .input-with-icon input{
-                padding-left:38px
+                padding-left:42px
             }
             .password-toggle{
                 position:absolute;
-                right:10px;
+                right:14px;
                 top:50%;
                 transform:translateY(-50%);
-                color:#9aa4b2;
+                color:#94a3b8;
                 cursor:pointer
             }
             .controls{
                 display:flex;
                 align-items:center;
-                justify-content:space-between;
-                margin-top:8px;
-                margin-bottom:18px
+                justify-content:flex-end;
+                margin-top:10px;
+                margin-bottom:20px
+            }
+            .forgot-link {
+                color: #64748b;
+                text-decoration: none;
+                font-size: 13.5px;
+                font-weight: 600;
+                transition: color 0.2s ease;
+            }
+            .forgot-link:hover {
+                color: var(--primary-orange);
             }
             .btn-signin{
-                background:#0b1020;
+                background:var(--primary-orange);
                 color:#fff;
-                border-radius:10px;
-                padding:12px 16px;
+                border-radius:12px;
+                height:48px;
                 border:none;
                 width:100%;
-                font-weight:600
+                font-weight:700;
+                font-size:1rem;
+                box-shadow:0 6px 18px rgba(249, 93, 0, 0.3);
+                transition:all 0.3s ease;
             }
             .btn-signin:hover{
-                opacity:0.95
+                background:var(--hover-orange);
+                box-shadow:0 10px 25px rgba(249, 93, 0, 0.45);
+                transform:translateY(-1px);
             }
             .footer-note{
                 text-align:center;
-                color:#9ca3af;
-                margin-top:18px;
+                color:#94a3b8;
+                margin-top:20px;
                 font-size:13px
             }
             @media (max-width:576px){
                 .login-wrap{
-                    padding:18px
+                    padding:16px
                 }
                 .login-card{
-                    padding:24px
+                    padding:24px 20px
                 }
             }
         </style>
@@ -142,14 +178,20 @@
     <body>
         <div class="login-wrap">
             <div class="login-card">
+                <div class="mb-3 text-start">
+                    <a href="${pageContext.request.contextPath}/" class="back-welcome-link">
+                        <i class="bi bi-arrow-left"></i> Back to Welcome Page
+                    </a>
+                </div>
+
                 <div class="text-center">
-                    <div class="logo-circle"><i class="bi bi-mortarboard-fill" style="font-size:28px"></i></div>
+                    <div class="logo-circle"><i class="bi bi-mortarboard-fill"></i></div>
                     <div class="brand-title">Academic Management System</div>
                     <div class="brand-sub">Sign in to continue</div>
                 </div>
 
                 <c:if test="${not empty error}">
-                    <div class="alert alert-danger">${error}</div>
+                    <div class="alert alert-danger" style="border-radius:12px; font-size:14px;">${error}</div>
                 </c:if>
 
                 <form method="post" action="${pageContext.request.contextPath}/login" novalidate>
@@ -171,7 +213,7 @@
                     </div>
 
                     <div class="controls">
-                        <a href="${pageContext.request.contextPath}/forgot-password" style="color:#374151;text-decoration:none">Forgot password?</a>
+                        <a href="${pageContext.request.contextPath}/forgot-password" class="forgot-link">Forgot password?</a>
                     </div>
 
                     <button type="submit" class="btn-signin">Sign in</button>

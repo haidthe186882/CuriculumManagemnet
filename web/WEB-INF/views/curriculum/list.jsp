@@ -121,12 +121,11 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th class="sortable" data-sort="code">Code <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="name">Curriculum Name <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="major">Program <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="credits">Credits <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="version">Version <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="status">Is Active <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
+                                <th class="sortable" data-sort="code">Code</th>
+                                <th class="sortable" data-sort="name">Curriculum Name</th>
+                                <th class="sortable" data-sort="major">Program</th>
+                                <th class="sortable" data-sort="credits">Credits</th>
+                                <th class="sortable" data-sort="status">Is Active</th>
                                 <th>Decision Date</th>
                                 <th>Action</th>
                             </tr>
@@ -135,7 +134,7 @@
                             <c:choose>
                                 <c:when test="${empty curriculums}">
                                     <tr>
-                                        <td colspan="9" class="text-center py-5 text-muted">
+                                        <td colspan="8" class="text-center py-5 text-muted">
                                             <i class="bi bi-inbox display-6 d-block mb-2"></i>
                                             No curriculum found.
                                         </td>
@@ -143,7 +142,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <c:forEach var="c" items="${curriculums}" varStatus="st">
-                                        <tr class="curriculum-row" data-detail-url="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" style="cursor:pointer;">
+                                        <tr>
                                             <td class="text-muted">${(currentPage - 1) * pageSize + st.count}</td>
                                             <td><code style="color:var(--accent);background:rgba(255,106,0,0.06);padding:2px 8px;border-radius:4px;">${c.curriculumCode}</code></td>
                                             <td>
@@ -152,7 +151,6 @@
                                             </td>
                                             <td class="text-muted">${c.majorName}</td>
                                             <td><span class="detail-value">${c.totalCredits}</span> <span class="text-muted" style="font-size:.8rem;">cr</span></td>
-                                            <td class="text-muted">${c.version}</td>
                                             <td>
                                                 <div class="mb-1">
                                                     <c:choose>
@@ -218,23 +216,6 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
                                     document.addEventListener('DOMContentLoaded', function () {
-                                        // Clickable rows
-                                        document.querySelectorAll('.curriculum-row').forEach(row => {
-                                            row.addEventListener('click', function (e) {
-                                                if (e.target.closest('a, button, input, select, form, .modal'))
-                                                    return;
-                                                const url = this.getAttribute('data-detail-url');
-                                                if (url)
-                                                    window.location.href = url;
-                                            });
-                                            row.addEventListener('mouseenter', function () {
-                                                this.style.backgroundColor = 'rgba(255,106,0,0.05)';
-                                            });
-                                            row.addEventListener('mouseleave', function () {
-                                                this.style.backgroundColor = '';
-                                            });
-                                        });
-
                                         // Sortable headers
                                         const sortableHeaders = document.querySelectorAll('th.sortable');
                                         let currentSort = {column: null, direction: 'asc'};
@@ -251,15 +232,7 @@
                                                     currentSort.column = col;
                                                     currentSort.direction = 'asc';
                                                 }
-                                                sortableHeaders.forEach(h => {
-                                                    const i = h.querySelector('i');
-                                                    if (i)
-                                                        i.className = 'bi bi-arrow-down-up';
-                                                });
-                                                const icon = this.querySelector('i');
-                                                if (icon)
-                                                    icon.className = currentSort.direction === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
-                                                const colIdx = {code: 1, name: 2, major: 3, credits: 4, version: 5, status: 6};
+                                                const colIdx = {code: 1, name: 2, major: 3, credits: 4, status: 5};
                                                 rows.sort((a, b) => {
                                                     let av = a.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
                                                     let bv = b.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';

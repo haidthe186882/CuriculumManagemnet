@@ -8,15 +8,16 @@
         <title>Forgot Password — Academic Management System</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
             :root{
-                --card-radius:14px;
-                --accent:#0b1020;
+                --card-radius:24px;
+                --primary-orange:#f95d00;
+                --hover-orange:#ea5200;
             }
             *{
                 box-sizing:border-box;
-                font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial
+                font-family:'Inter',system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial
             }
             body{
                 min-height:100vh;
@@ -24,18 +25,19 @@
                 align-items:center;
                 justify-content:center;
                 margin:0;
-                background:linear-gradient(180deg,#eef6ff 0%, #f3f8ff 100%)
+                background:#f0f4f9;
             }
             .page-wrap{
                 width:100%;
                 max-width:520px;
-                padding:40px
+                padding:24px
             }
             .card-box{
                 background:#fff;
                 border-radius:var(--card-radius);
-                padding:36px 36px 28px;
-                box-shadow:0 10px 30px rgba(15,23,42,0.08);
+                padding:36px 36px 30px;
+                box-shadow:0 15px 45px rgba(15,23,42,0.06), 0 0 1px rgba(0,0,0,0.08);
+                border:1px solid #e2e8f0;
                 animation:fadeUp .5s ease-out
             }
             @keyframes fadeUp{
@@ -44,50 +46,61 @@
             }
             .logo-circle{
                 width:72px;height:72px;border-radius:50%;
-                background:linear-gradient(180deg,#0b1220,#0b1220);
+                background:linear-gradient(135deg, #f97316, #ea580c);
                 display:flex;align-items:center;justify-content:center;
-                margin:0 auto;color:#fff;font-size:28px
+                margin:0 auto;color:#fff;font-size:30px;
+                box-shadow:0 8px 20px rgba(249, 93, 0, 0.25);
             }
             .brand-title{
-                font-size:22px;font-weight:600;text-align:center;
-                margin-top:14px;color:#0b1020
+                font-size:22px;font-weight:800;text-align:center;
+                margin-top:16px;color:#0f172a
             }
             .brand-sub{
-                font-size:14px;color:#6b7280;text-align:center;margin-bottom:24px
+                font-size:14px;color:#64748b;text-align:center;margin-bottom:24px
             }
             .form-label{
-                font-size:14px;color:#111827;margin-bottom:8px;font-weight:600
+                font-size:14px;color:#1e293b;margin-bottom:8px;font-weight:600
             }
             .form-control{
-                border-radius:10px;border:1px solid #e6eef8;
-                padding:12px 14px 12px 40px;background:#fbfdff;
-                transition:border-color .2s,box-shadow .2s
+                border-radius:12px;border:1px solid #e2e8f0;
+                padding:12px 14px 12px 42px;background:#f8fafc;
+                font-size:14px;
+                transition:all .2s ease
             }
             .form-control:focus{
-                border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12);
+                background:#fff;
+                border-color:var(--primary-orange);
+                box-shadow:0 0 0 3px rgba(249, 93, 0, 0.15);
                 outline:none
             }
             .input-icon-wrap{position:relative}
             .input-icon-wrap .icon-left{
-                position:absolute;left:12px;top:50%;transform:translateY(-50%);
-                color:#9aa4b2;font-size:16px
+                position:absolute;left:14px;top:50%;transform:translateY(-50%);
+                color:#94a3b8;font-size:16px
             }
             .btn-primary-custom{
-                background:#0b1020;color:#fff;border-radius:10px;
-                padding:12px 16px;border:none;width:100%;font-weight:600;
-                font-size:15px;cursor:pointer;transition:opacity .2s
+                background:var(--primary-orange);color:#fff;border-radius:12px;
+                height:48px;border:none;width:100%;font-weight:700;
+                font-size:1rem;cursor:pointer;
+                box-shadow:0 6px 18px rgba(249, 93, 0, 0.3);
+                transition:all .3s ease
             }
-            .btn-primary-custom:hover{opacity:.92}
+            .btn-primary-custom:hover{
+                background:var(--hover-orange);
+                box-shadow:0 10px 25px rgba(249, 93, 0, 0.45);
+                transform:translateY(-1px);
+            }
             .btn-primary-custom:disabled{opacity:.6;cursor:not-allowed}
             .back-link{
                 display:flex;align-items:center;gap:6px;
-                color:#6b7280;text-decoration:none;font-size:14px;
-                margin-top:18px;justify-content:center;transition:color .2s
+                color:#64748b;text-decoration:none;font-size:13.5px;
+                font-weight:600;
+                margin-top:20px;justify-content:center;transition:color .2s
             }
-            .back-link:hover{color:#0b1020}
+            .back-link:hover{color:var(--primary-orange)}
             @media(max-width:576px){
-                .page-wrap{padding:18px}
-                .card-box{padding:24px}
+                .page-wrap{padding:16px}
+                .card-box{padding:24px 20px}
             }
         </style>
     </head>
@@ -95,21 +108,21 @@
         <div class="page-wrap">
             <div class="card-box">
                 <div class="text-center">
-                    <div class="logo-circle"><i class="bi bi-shield-lock" style="font-size:28px"></i></div>
+                    <div class="logo-circle"><i class="bi bi-shield-lock"></i></div>
                     <div class="brand-title">Forgot Password</div>
                     <div class="brand-sub">Enter your email to receive a verification code</div>
                 </div>
 
                 <!-- Success message -->
                 <c:if test="${not empty success}">
-                    <div class="alert alert-success d-flex align-items-center" style="border-radius:10px;font-size:14px">
+                    <div class="alert alert-success d-flex align-items-center" style="border-radius:12px;font-size:14px">
                         <i class="bi bi-check-circle-fill me-2"></i>${success}
                     </div>
                 </c:if>
 
                 <!-- Error message -->
                 <c:if test="${not empty error}">
-                    <div class="alert alert-danger d-flex align-items-center" style="border-radius:10px;font-size:14px">
+                    <div class="alert alert-danger d-flex align-items-center" style="border-radius:12px;font-size:14px">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
                     </div>
                 </c:if>
@@ -137,8 +150,6 @@
         </div>
 
         <script>
-            document.getElementById('year').textContent = new Date().getFullYear();
-
             // Simple client-side email validation + loading state
             document.getElementById('forgotForm').addEventListener('submit', function(e) {
                 var email = document.getElementById('emailInput').value.trim();
@@ -153,7 +164,7 @@
             });
 
             document.getElementById('emailInput').addEventListener('input', function() {
-                this.style.borderColor = '#e6eef8';
+                this.style.borderColor = '#e2e8f0';
             });
         </script>
     </body>

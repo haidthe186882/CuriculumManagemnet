@@ -13,28 +13,32 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <%@ include file="/WEB-INF/views/common/styles.jsp" %>
         <style>
-            .assignee{
-                display:flex;
-                align-items:flex-start;
-                gap:6px;
-                margin-bottom:6px;
-            }
-            .assignee i{
-                color:var(--accent);
-                font-size:.95rem;
-                margin-top:2px;
-            }
-            .assignee-name{
-                font-weight:600;
-                color:#111827;
-                font-size:.85rem;
-                line-height:1.2;
-            }
             .assignee-email{
-                display:block;
-                font-size:.74rem;
-                color:var(--muted);
-                line-height:1.3;
+                display:inline-block;
+                font-size:.82rem;
+                color:#111827;
+                font-weight:500;
+            }
+            .assignee-row{
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:6px;
+                margin-bottom:4px;
+            }
+            .btn-remove-assign{
+                background:none;
+                border:none;
+                color:#dc2626;
+                font-size:1rem;
+                line-height:1;
+                padding:0 2px;
+                cursor:pointer;
+                opacity:.7;
+                transition:opacity .12s;
+            }
+            .btn-remove-assign:hover{
+                opacity:1;
             }
             .not-assigned{
                 color:var(--muted);
@@ -183,12 +187,16 @@
                                                         <c:forEach var="a" items="${assignments}">
                                                             <c:if test="${a.subjectId == cs.subject.subjectId and a.assignmentType == 'Designer'}">
                                                                 <c:set var="hasDesigner" value="true"/>
-                                                                <div class="assignee">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                    <div>
-                                                                        <span class="assignee-name">${a.user.fullName}</span>
-                                                                        <span class="assignee-email">${a.user.email}</span>
-                                                                    </div>
+                                                                <div class="assignee-row">
+                                                                    <span class="assignee-email">${a.user.email}</span>
+                                                                    <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
+                                                                        <input type="hidden" name="action" value="unassign">
+                                                                        <input type="hidden" name="assignmentId" value="${a.assignmentId}">
+                                                                        <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                                        <button type="submit" class="btn-remove-assign" title="Remove designer" onclick="return confirm('Remove this assignment?');">
+                                                                            <i class="bi bi-x-circle"></i>
+                                                                        </button>
+                                                                    </form>
                                                                 </div>
                                                             </c:if>
                                                         </c:forEach>
@@ -199,12 +207,16 @@
                                                         <c:forEach var="a" items="${assignments}">
                                                             <c:if test="${a.subjectId == cs.subject.subjectId and a.assignmentType == 'Reviewer'}">
                                                                 <c:set var="hasReviewer" value="true"/>
-                                                                <div class="assignee">
-                                                                    <i class="bi bi-person-fill"></i>
-                                                                    <div>
-                                                                        <span class="assignee-name">${a.user.fullName}</span>
-                                                                        <span class="assignee-email">${a.user.email}</span>
-                                                                    </div>
+                                                                <div class="assignee-row">
+                                                                    <span class="assignee-email">${a.user.email}</span>
+                                                                    <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
+                                                                        <input type="hidden" name="action" value="unassign">
+                                                                        <input type="hidden" name="assignmentId" value="${a.assignmentId}">
+                                                                        <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                                        <button type="submit" class="btn-remove-assign" title="Remove reviewer" onclick="return confirm('Remove this assignment?');">
+                                                                            <i class="bi bi-x-circle"></i>
+                                                                        </button>
+                                                                    </form>
                                                                 </div>
                                                             </c:if>
                                                         </c:forEach>

@@ -188,7 +188,80 @@
                             <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
                         </c:otherwise>
                     </c:choose>
+                            <a href="${pageContext.request.contextPath}/curriculum/roadmap?id=${curriculum.curriculumId}"
+                               class="btn btn-info text-white fw-bold mb-2 w-100">
+                                <i class="bi bi-signpost-2 me-1"></i> Semester Roadmap
+                            </a>
+                            <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
+                               class="btn btn-warning text-dark fw-bold">
+                                <i class="bi bi-collection me-1"></i> View Combos
+                            </a>
+                            <c:if test="${sessionScope.loggedUser.role.roleName eq 'Admin' || sessionScope.loggedUser.role eq 'Admin'}">
+                                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addComboModal">
+                                    <i class="bi bi-plus-circle"></i> Add Combo
+                                </button>
+                            </c:if>
                 </div>
+                               
+                            <!-- Modal Add Combo -->
+                            <div class="modal fade" id="addComboModal" tabindex="-1" aria-labelledby="addComboModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content"> <!-- Đã bỏ card-dark và text-light -->
+                                        <form action="${pageContext.request.contextPath}/curriculum" method="POST">
+                                            <input type="hidden" name="action" value="addCombo">
+                                            <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+
+                                            <div class="modal-header border-bottom">
+                                                <h5 class="modal-title fw-bold text-dark" id="addComboModalLabel">Thêm Combo Mới</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold text-dark">Combo Code <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" name="comboCode" required placeholder="VD: SE_WEB">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold text-dark">Combo Name <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" name="comboName" required placeholder="VD: Combo Phát triển Web">
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <label class="form-label fw-semibold text-dark">English Name</label>
+                                                        <input type="text" class="form-control" name="englishName" placeholder="VD: Web Development Combo">
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <label class="form-label fw-semibold text-dark">Description</label>
+                                                        <textarea class="form-control" name="description" rows="3" placeholder="Nhập mô tả cho combo..."></textarea>
+                                                    </div>
+
+                                                    <!-- Phần chọn danh sách môn học -->
+                                                    <div class="col-md-12 mt-4">
+                                                        <label class="form-label fw-bold text-primary">
+                                                            <i class="bi bi-book"></i> Chọn các môn học cho Combo này (Có thể chọn nhiều)
+                                                        </label>
+                                                        <select name="subjectIds" class="form-select border-primary shadow-sm" multiple size="8">
+                                                            <!-- Lấy danh sách availableSubjects đã được Servlet truyền sang -->
+                                                            <c:forEach var="s" items="${availableSubjects}">
+                                                                <option value="${s.subjectId}">${s.subjectCode} - ${s.subjectName}</option>
+                                                            </c:forEach>
+                                                        </select>
+                                                        <div class="form-text mt-2 text-muted">
+                                                            <i class="bi bi-info-circle"></i> Nhấn giữ <strong>Ctrl</strong> (Windows) hoặc <strong>Cmd</strong> (Mac) để chọn hoặc bỏ chọn nhiều môn.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-footer border-top">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Save Combo</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>           
+
                 <c:if test="${sessionScope.loggedUser.role.roleName == 'Reviewer' and not curriculum.isActive}">
                     <form method="post" action="${pageContext.request.contextPath}/curriculum" class="mb-2">
                         <input type="hidden" name="action" value="approve">
