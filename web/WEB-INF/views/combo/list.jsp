@@ -22,8 +22,8 @@
                 <div class="page-subtitle">Curriculum: ${curriculum.curriculumCode} - ${curriculum.curriculumName}</div>
             </div>
             <div>
-                <a href="${pageContext.request.contextPath}/curriculum?action=detail&id=${curriculum.curriculumId}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Back to Curriculum
+                <a href="${pageContext.request.contextPath}/curriculum/detail?id=${curriculum.curriculumId}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
                 </a>
             </div>
         </div>
