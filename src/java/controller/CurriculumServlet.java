@@ -28,9 +28,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 @WebServlet(name = "CurriculumServlet", urlPatterns = {"/curriculum/*"})
 @MultipartConfig(
@@ -76,6 +78,9 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "/assign":
                 showAssign(req, res);
+                break;
+            case "/roadmap":
+                showRoadmap(req, res);
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
@@ -243,6 +248,56 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
         req.setAttribute("mappings", poDAO.getPoPloMappings(id));
         forward(req, res, "/WEB-INF/views/curriculum/po.jsp");
+    }
+
+    /**
+     * Lo trinh hoc theo ky — nhom mon theo Semester_No.
+     * Doc-only, dung cho Student/Guest va moi role khac.
+     */
+    private void showRoadmap(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        String id = req.getParameter("id");
+        Curriculum c = curriculumDAO.getCurriculumById(id);
+        if (c == null) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+
+        List<CurriculumSubject> subjects = subjectDAO.getSubjectsByCurriculum(id);
+        Map<Integer, List<CurriculumSubject>> bySemester = new TreeMap<>();
+        Map<Integer, Integer> creditsBySemester = new LinkedHashMap<>();
+        int totalCredits = 0;
+        int mandatoryCredits = 0;
+        int electiveCredits = 0;
+        int mandatoryCount = 0;
+        int electiveCount = 0;
+
+        for (CurriculumSubject cs : subjects) {
+            int sem = cs.getSemesterNo() > 0 ? cs.getSemesterNo() : 0;
+            bySemester.computeIfAbsent(sem, k -> new ArrayList<>()).add(cs);
+
+            int credits = (cs.getSubject() != null) ? cs.getSubject().getCredits() : 0;
+            creditsBySemester.merge(sem, credits, Integer::sum);
+            totalCredits += credits;
+            if (cs.isMandatory()) {
+                mandatoryCredits += credits;
+                mandatoryCount++;
+            } else {
+                electiveCredits += credits;
+                electiveCount++;
+            }
+        }
+
+        req.setAttribute("curriculum", c);
+        req.setAttribute("subjectsBySemester", bySemester);
+        req.setAttribute("creditsBySemester", creditsBySemester);
+        req.setAttribute("totalSubjects", subjects.size());
+        req.setAttribute("totalCredits", totalCredits);
+        req.setAttribute("mandatoryCredits", mandatoryCredits);
+        req.setAttribute("electiveCredits", electiveCredits);
+        req.setAttribute("mandatoryCount", mandatoryCount);
+        req.setAttribute("electiveCount", electiveCount);
+        forward(req, res, "/WEB-INF/views/curriculum/roadmap.jsp");
     }
 
     /**

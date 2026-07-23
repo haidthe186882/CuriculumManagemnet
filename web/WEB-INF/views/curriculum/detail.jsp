@@ -188,6 +188,10 @@
                             <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
                         </c:otherwise>
                     </c:choose>
+                            <a href="${pageContext.request.contextPath}/curriculum/roadmap?id=${curriculum.curriculumId}"
+                               class="btn btn-info text-white fw-bold mb-2 w-100">
+                                <i class="bi bi-signpost-2 me-1"></i> Semester Roadmap
+                            </a>
                             <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
                                class="btn btn-warning text-dark fw-bold">
                                 <i class="bi bi-collection me-1"></i> View Combos

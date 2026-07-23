@@ -67,11 +67,13 @@
                             </div>
                         </div>
                     </div>
-                    <a href="${pageContext.request.contextPath}/profile"
-                        class="nav-link ${activeMenu == 'profile' ? 'active' : ''}"
-                        style="border-radius:8px;margin-bottom:0.25rem;">
-                        <i class="bi bi-person-circle"></i> My Profile
-                    </a>
+                    <c:if test="${sessionScope.loggedUser.role.roleName != 'Guest'}">
+                        <a href="${pageContext.request.contextPath}/profile"
+                            class="nav-link ${activeMenu == 'profile' ? 'active' : ''}"
+                            style="border-radius:8px;margin-bottom:0.25rem;">
+                            <i class="bi bi-person-circle"></i> My Profile
+                        </a>
+                    </c:if>
                     <a href="${pageContext.request.contextPath}/logout" class="nav-link text-danger"
                         style="border-radius:8px;">
                         <i class="bi bi-box-arrow-right"></i> Logout
