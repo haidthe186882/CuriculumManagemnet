@@ -83,7 +83,7 @@ public class SyllabusDAO {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
-                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID WHERE 1=1");
+                        + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID WHERE 1=1");
         if (activeOnly) {
             sql.append(" AND sy.Is_Active = 1");
         }
@@ -173,7 +173,8 @@ public class SyllabusDAO {
             ps.setString(9, syllabus.getScoringScale());
             ps.setDouble(10, syllabus.getMinAvgMarkToPass());
             ps.setString(11, syllabus.getDecisionNo());
-            ps.setDate(12, syllabus.getApprovedDate() != null ? new java.sql.Date(syllabus.getApprovedDate().getTime()) : null);
+            ps.setDate(12, syllabus.getApprovedDate() != null ? new java.sql.Date(syllabus.getApprovedDate().getTime())
+                    : null);
             ps.setInt(13, legacyStatus);
             ps.setString(14, workflowStatus);
             return ps.executeUpdate() > 0;
@@ -187,9 +188,12 @@ public class SyllabusDAO {
         String workflowStatus = normalizeWorkflowStatus(status, STATUS_DRAFT);
         int legacyStatus = mapWorkflowStatusToLegacyCode(workflowStatus);
         // Is_Active nghia la "day la ban ghi Syllabus hien hanh cua Subject" (dung boi
-        // getActiveSyllabusIdBySubject/getSyllabusBySubject...), KHONG PHAI "da Published".
-        // Neu gan theo Published thi ngay sau khi Submit for Review, Syllabus se "bien mat"
-        // khoi moi truy van tim syllabus hien hanh cua subject -> gay ra hang loat loi day
+        // getActiveSyllabusIdBySubject/getSyllabusBySubject...), KHONG PHAI "da
+        // Published".
+        // Neu gan theo Published thi ngay sau khi Submit for Review, Syllabus se "bien
+        // mat"
+        // khoi moi truy van tim syllabus hien hanh cua subject -> gay ra hang loat loi
+        // day
         // chuyen (assign lai bi tao trung, khong tim thay syllabus...).
         boolean active = true;
         String sql = "UPDATE Syllabuses SET Status = ?, Workflow_Status = ?, Is_Active = ? WHERE Syllabus_ID = ?";
@@ -266,9 +270,12 @@ public class SyllabusDAO {
         // chinh Designer bam "Submit for Review" (design/list -> submitForReview()).
         // Neu khong Reviewer se thay Syllabus ngay ca khi Designer chua lam gi ca.
         String workflowStatus = STATUS_DRAFT;
-        // Is_Active=1 (KHONG phai 0): day la ban ghi Syllabus dang dung cho Subject nay,
-        // can duoc getActiveSyllabusIdBySubject()/getSyllabusBySubject() tim thay - neu de
-        // 0 se bi coi la "khong co syllabus nao" va tao nham 1 Syllabus TRUNG LAP o lan assign/save sau.
+        // Is_Active=1 (KHONG phai 0): day la ban ghi Syllabus dang dung cho Subject
+        // nay,
+        // can duoc getActiveSyllabusIdBySubject()/getSyllabusBySubject() tim thay - neu
+        // de
+        // 0 se bi coi la "khong co syllabus nao" va tao nham 1 Syllabus TRUNG LAP o lan
+        // assign/save sau.
         String sql = "UPDATE Syllabuses SET Syllabus_Name=?, English_Name=?, Version=?, Description=?, "
                 + "Time_Allocation=?, Student_Tasks=?, Tools=?, Scoring_Scale=?, Min_Avg_Mark_To_Pass=?, "
                 + "Decision_No=?, Approved_Date=?, Status=?, Workflow_Status=?, Is_Active=1 WHERE Syllabus_ID=?";
@@ -284,7 +291,8 @@ public class SyllabusDAO {
             ps.setString(8, syllabus.getScoringScale());
             ps.setDouble(9, syllabus.getMinAvgMarkToPass());
             ps.setString(10, syllabus.getDecisionNo());
-            ps.setDate(11, syllabus.getApprovedDate() != null ? new java.sql.Date(syllabus.getApprovedDate().getTime()) : null);
+            ps.setDate(11, syllabus.getApprovedDate() != null ? new java.sql.Date(syllabus.getApprovedDate().getTime())
+                    : null);
             ps.setInt(12, Syllabus.STATUS_DRAFT);
             ps.setString(13, workflowStatus);
             ps.setString(14, syllabusId);
@@ -333,6 +341,42 @@ public class SyllabusDAO {
         return list;
     }
 
+    public List<SyllabusMaterial> getDownloadableMaterialsBySyllabusId(String syllabusId) {
+        List<SyllabusMaterial> list = new ArrayList<>();
+        // Get materials with a valid download link (both official and teacher uploaded active materials)
+        String sql = "SELECT * FROM Materials WHERE Syllabus_ID = ? AND Download_Link IS NOT NULL AND LTRIM(RTRIM(Download_Link)) <> '' AND (Is_Active IS NULL OR Is_Active = 1) ORDER BY Is_Main_Material DESC";
+        try (Connection con = new DBContext().getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, syllabusId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                SyllabusMaterial material = new SyllabusMaterial();
+                material.setMaterialId(rs.getString("Material_ID"));
+                material.setSyllabusId(rs.getString("Syllabus_ID"));
+                material.setMaterialDescription(rs.getString("Material_Description"));
+                material.setAuthor(rs.getString("Author"));
+                material.setPublisher(rs.getString("Publisher"));
+                material.setPublishedDate(rs.getDate("Published_Date"));
+                material.setEdition(rs.getString("Edition"));
+                material.setIsbn(rs.getString("ISBN"));
+                material.setMainMaterial(rs.getBoolean("Is_Main_Material"));
+                material.setHardCopy(rs.getBoolean("Is_Hard_Copy"));
+                material.setOnline(rs.getBoolean("Is_Online"));
+                material.setLink(rs.getString("Link"));
+                material.setNotes(rs.getString("Notes"));
+                try {
+                    material.setFilePath(rs.getString("Download_Link"));
+                } catch (SQLException ignored) {
+                }
+                list.add(material);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+
     public boolean deleteMaterialsBySyllabus(String syllabusId) {
         String sql = "DELETE FROM Materials WHERE Syllabus_ID = ?";
         try (Connection con = new DBContext().getConnection();
@@ -368,7 +412,8 @@ public class SyllabusDAO {
             ps.setString(9, syllabus.getScoringScale());
             ps.setDouble(10, syllabus.getMinAvgMarkToPass());
             ps.setString(11, syllabus.getDecisionNo());
-            ps.setDate(12, syllabus.getApprovedDate() != null ? new java.sql.Date(syllabus.getApprovedDate().getTime()) : null);
+            ps.setDate(12, syllabus.getApprovedDate() != null ? new java.sql.Date(syllabus.getApprovedDate().getTime())
+                    : null);
             ps.setInt(13, legacyStatus);
             ps.setString(14, workflowStatus);
             ResultSet rs = ps.executeQuery();
@@ -391,7 +436,8 @@ public class SyllabusDAO {
             ps.setString(2, material.getMaterialDescription());
             ps.setString(3, material.getAuthor());
             ps.setString(4, material.getPublisher());
-            ps.setDate(5, material.getPublishedDate() != null ? new java.sql.Date(material.getPublishedDate().getTime()) : null);
+            ps.setDate(5, material.getPublishedDate() != null ? new java.sql.Date(material.getPublishedDate().getTime())
+                    : null);
             ps.setString(6, material.getEdition());
             ps.setString(7, material.getIsbn());
             ps.setBoolean(8, material.isMainMaterial());
@@ -422,12 +468,12 @@ public class SyllabusDAO {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT sy.Syllabus_ID, s.Subject_Code, sy.Syllabus_Name, s.Subject_ID, "
-                + "after_sub.Subject_ID AS After_Sub_ID, after_sub.Subject_Code AS After_Sub_Code, after_sub.Subject_Name AS After_Sub_Name "
-                + "FROM Syllabuses sy "
-                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
-                + "LEFT JOIN Subject_Prerequisites sp ON s.Subject_ID = sp.Required_Subject_ID "
-                + "LEFT JOIN Subjects after_sub ON sp.Subject_ID = after_sub.Subject_ID AND after_sub.Is_Active = 1 "
-                + "WHERE sy.Is_Active = 1 ");
+                        + "after_sub.Subject_ID AS After_Sub_ID, after_sub.Subject_Code AS After_Sub_Code, after_sub.Subject_Name AS After_Sub_Name "
+                        + "FROM Syllabuses sy "
+                        + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID "
+                        + "LEFT JOIN Subject_Prerequisites sp ON s.Subject_ID = sp.Required_Subject_ID "
+                        + "LEFT JOIN Subjects after_sub ON sp.Subject_ID = after_sub.Subject_ID AND after_sub.Is_Active = 1 "
+                        + "WHERE sy.Is_Active = 1 ");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append("AND s.Subject_Code LIKE ? ");
         }
@@ -510,7 +556,7 @@ public class SyllabusDAO {
         List<Syllabus> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT sy.*, s.Subject_Code, s.Subject_Name, s.Credits FROM Syllabuses sy "
-                + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID WHERE sy.Workflow_Status = ?");
+                        + "JOIN Subjects s ON sy.Subject_ID = s.Subject_ID WHERE sy.Workflow_Status = ?");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (sy.Syllabus_Name LIKE ? OR s.Subject_Code LIKE ? OR s.Subject_Name LIKE ?)");
         }
@@ -548,14 +594,14 @@ public class SyllabusDAO {
         List<CurriculumSubject> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT sa.Assignment_ID, sa.Syllabus_ID, syl.Subject_ID, syl.Workflow_Status, "
-                + "s.Subject_Code, s.Subject_Name, s.Credits, cs.Curriculum_ID, cs.Semester_No, "
-                + "c.Curriculum_Code, c.Curriculum_Name "
-                + "FROM Syllabus_Assignments sa "
-                + "JOIN Syllabuses syl ON sa.Syllabus_ID = syl.Syllabus_ID "
-                + "JOIN Subjects s ON syl.Subject_ID = s.Subject_ID "
-                + "LEFT JOIN Curriculum_Subjects cs ON s.Subject_ID = cs.Subject_ID "
-                + "LEFT JOIN Curriculums c ON cs.Curriculum_ID = c.Curriculum_ID "
-                + "WHERE sa.User_ID = ? AND sa.Assignment_Type = 'Designer'");
+                        + "s.Subject_Code, s.Subject_Name, s.Credits, cs.Curriculum_ID, cs.Semester_No, "
+                        + "c.Curriculum_Code, c.Curriculum_Name "
+                        + "FROM Syllabus_Assignments sa "
+                        + "JOIN Syllabuses syl ON sa.Syllabus_ID = syl.Syllabus_ID "
+                        + "JOIN Subjects s ON syl.Subject_ID = s.Subject_ID "
+                        + "LEFT JOIN Curriculum_Subjects cs ON s.Subject_ID = cs.Subject_ID "
+                        + "LEFT JOIN Curriculums c ON cs.Curriculum_ID = c.Curriculum_ID "
+                        + "WHERE sa.User_ID = ? AND sa.Assignment_Type = 'Designer'");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (s.Subject_Code LIKE ? OR s.Subject_Name LIKE ? OR c.Curriculum_Code LIKE ?)");
         }

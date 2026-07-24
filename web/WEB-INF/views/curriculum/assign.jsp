@@ -114,42 +114,6 @@
             </c:if>
 
             <div class="row g-3">
-                <%-- Bulk assign form: gan Designer/Reviewer cho toan bo Curriculum --%>
-                <div class="col-lg-4">
-                    <div class="card-dark p-3 h-100">
-                        <div class="detail-value mb-2"><i class="bi bi-people-fill me-1"></i>Bulk Assign</div>
-                        <p class="small text-muted mb-3">
-                            Assigns the selected Designer and/or Reviewer to every subject in this
-                            curriculum that is not completed yet.
-                        </p>
-                        <form action="${pageContext.request.contextPath}/curriculum" method="POST">
-                            <input type="hidden" name="action" value="assign">
-                            <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Designer</label>
-                                <select name="designerId" class="form-select form-select-dark w-100">
-                                    <option value="">-- Leave Blank / None --</option>
-                                    <c:forEach var="d" items="${designers}">
-                                        <option value="${d.userId}">${d.fullName} (${d.email})</option>
-                                    </c:forEach>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-bold">Reviewer</label>
-                                <select name="reviewerId" class="form-select form-select-dark w-100">
-                                    <option value="">-- Leave Blank / None --</option>
-                                    <c:forEach var="r" items="${reviewers}">
-                                        <option value="${r.userId}">${r.fullName} (${r.email})</option>
-                                    </c:forEach>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary-custom w-100">
-                                <i class="bi bi-check2-circle me-1"></i>Save Assignments
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
                 <%-- Currently assigned staff, per subject --%>
                 <div class="col-lg-8">
                     <div class="card-dark p-0 h-100">

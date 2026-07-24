@@ -192,7 +192,7 @@
                                                     <a href="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" class="btn btn-sm btn-outline-warning">
                                                         <i class="bi bi-eye"></i> View
                                                     </a>
-                                                    <c:if test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
+                                                    <c:if test="${not c.isPublic and sessionScope.loggedUser.role.roleName == 'Admin'}">
                                                         <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${c.curriculumId}" class="btn btn-sm btn-outline-primary">
                                                             <i class="bi bi-person-plus"></i> Assign
                                                         </a>

@@ -75,13 +75,13 @@
                     <c:if test="${sessionScope.loggedUser.role.roleName != 'Guest'}">
                         <div class="col-12 mt-2">
                             <c:choose>
-                                <c:when test="${empty materials}">
+                                <c:when test="${empty downloadMaterials}">
                                     <button class="btn btn-primary-custom" id="downloadMaterialBtn" disabled title="No material link available">
                                         <i class="bi bi-download me-1"></i>Download Material (Unavailable)
                                     </button>
                                 </c:when>
-                                <c:when test="${materials.size() == 1}">
-                                    <a href="${materials[0].link}"
+                                <c:when test="${downloadMaterials.size() == 1}">
+                                    <a href="${pageContext.request.contextPath}${downloadMaterials[0].filePath}"
                                        target="_blank" class="btn btn-primary-custom" id="downloadMaterialBtn">
                                         <i class="bi bi-download me-1"></i>Download Material
                                     </a>
@@ -92,9 +92,9 @@
                                             <i class="bi bi-download me-1"></i>Download Material
                                         </button>
                                         <ul class="dropdown-menu shadow" aria-labelledby="downloadMaterialBtn" style="border-radius: 10px; border: 1px solid var(--border); padding: 6px 0; min-width: 280px;">
-                                            <c:forEach var="mat" items="${materials}">
+                                            <c:forEach var="mat" items="${downloadMaterials}">
                                                 <li>
-                                                    <a class="dropdown-item py-2 px-3" href="${mat.link}" target="_ blank" style="font-size: 0.9rem; color: #1f2937; white-space: normal; font-weight: 500;">
+                                                    <a class="dropdown-item py-2 px-3" href="${pageContext.request.contextPath}${mat.filePath}" target="_blank" style="font-size: 0.9rem; color: #1f2937; white-space: normal; font-weight: 500;">
                                                         ${mat.materialDescription}
                                                     </a>
                                                 </li>
