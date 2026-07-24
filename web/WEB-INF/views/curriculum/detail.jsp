@@ -37,7 +37,7 @@
             <c:if test="${canDesign}">
                 <a href="${pageContext.request.contextPath}/curriculum/edit?id=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                     <i class="bi bi-pencil me-1"></i>Edit
-                </a>
+                </a>               
             </c:if>
             <c:if test="${canEdit}">
                 <c:choose>
@@ -54,14 +54,15 @@
                         <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-inline">
                             <input type="hidden" name="action" value="publish">
                             <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
-                            <button type="submit" class="btn btn-primary-custom" ${canPublish ? '' : 'disabled title="All subjects must be Approved before publishing"'}>
+                            <button type="submit" class="btn btn-primary-custom" ${canPublish ? '' : 'disabled'}
+                                    title="${canPublish ? '' : (creditsMismatch ? 'Total subject credits does not match this curriculum\'s Total Credits' : 'All subjects must be Approved before publishing')}">
                                 <i class="bi bi-globe2 me-1"></i>Publish
                             </button>
                         </form>
                     </c:otherwise>
                 </c:choose>
             </c:if>
-            <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
+            <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin' and not curriculum.isPublic}">
                 <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}" class="btn btn-secondary-custom">
                     <i class="bi bi-person-plus me-1"></i>Assign
                 </a>
@@ -117,6 +118,15 @@
                     </li>
                 </c:forEach>
             </ul>
+        </div>
+    </c:if>
+
+    <c:if test="${creditsMismatch and not curriculum.isPublic and not empty subjects}">
+        <div class="mb-3" style="background: rgba(255,206,102,0.12); border:1px solid rgba(255,206,102,0.3); border-radius:10px; padding: 0.8rem 1rem; color:#b45309;">
+            <i class="bi bi-calculator me-1"></i>
+            Total subject credits does not match this curriculum's declared Total Credits
+            (<strong>${curriculum.totalCredits}</strong>). Adjust the subject list (Add/Remove) or update
+            Total Credits before this curriculum can be published.
         </div>
     </c:if>
 
@@ -179,24 +189,26 @@
         <div class="col-md-4">
             <div class="card-dark p-4">
                 <div class="detail-label">isActive</div>
-                <div class="mb-3">
+                <div class="mb-3 d-flex flex-column align-items-start gap-2">
                     <c:choose>
                         <c:when test="${curriculum.isActive}">
-                            <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Active</span>
+                            <span class="badge-status badge-approved m-0"><i class="bi bi-check-circle me-1"></i>Active</span>
                         </c:when>
                         <c:otherwise>
-                            <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
+                            <span class="badge-status badge-draft m-0"><i class="bi bi-pencil me-1"></i>Inactive</span>
                         </c:otherwise>
                     </c:choose>
-                            <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
-                               class="btn btn-warning text-dark fw-bold">
-                                <i class="bi bi-collection me-1"></i> View Combos
-                            </a>
-                            <c:if test="${sessionScope.loggedUser.role.roleName eq 'Admin' || sessionScope.loggedUser.role eq 'Admin'}">
-                                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addComboModal">
-                                    <i class="bi bi-plus-circle"></i> Add Combo
-                                </button>
-                            </c:if>
+
+                    <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
+                       class="btn btn-warning btn-sm text-dark fw-bold">
+                        <i class="bi bi-collection me-1"></i> View Combos
+                    </a>
+
+                    <c:if test="${sessionScope.loggedUser.role.roleName eq 'Admin' || sessionScope.loggedUser.role eq 'Admin'}">
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addComboModal">
+                            <i class="bi bi-plus-circle me-1"></i> Add Combo
+                        </button>
+                    </c:if>
                 </div>
                                
                             <!-- Modal Add Combo -->
@@ -277,8 +289,20 @@
     </div>
 
     <div class="card-dark mb-4">
+    <c:set var="creditSum" value="0"/>
+    <c:forEach var="csCredit" items="${subjects}">
+        <c:set var="creditSum" value="${creditSum + csCredit.subject.credits}"/>
+    </c:forEach>
     <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-        <h6 class="mb-0">Subjects in Curriculum</h6>
+        <div class="d-flex align-items-center gap-2">
+            <h6 class="mb-0">Subjects in Curriculum</h6>
+            <c:if test="${not empty subjects and creditSum != curriculum.totalCredits}">
+                <span class="badge-status badge-rejected" style="font-size:0.75rem;"
+                      title="Sum of subject credits (${creditSum}) does not match Total Credits declared on this curriculum (${curriculum.totalCredits}).">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Credits mismatch: ${creditSum} / ${curriculum.totalCredits}
+                </span>
+            </c:if>
+        </div>
         <c:if test="${curriculum.status != 0}">
             <span class="text-muted" style="font-size:0.78rem;"><i class="bi bi-lock me-1"></i>Locked (not Draft)</span>
         </c:if>
@@ -320,13 +344,13 @@
         <div class="table-responsive">
             <table class="table table-dark-custom mb-0">
                 <thead><tr><th>#</th><th>Code</th><th>Subject</th><th>Semester</th><th>Credits</th><th>PreRequisite</th><th>Syllabus</th><th>Design Status</th>
-                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}"><th>Assign</th></c:if>
+                    <c:if test="${canEdit}"><th>Assign</th></c:if>
                     <c:if test="${canDesign}"><th>Action</th></c:if>
                 </tr></thead>
                 <tbody>
                     <c:choose>
                         <c:when test="${empty subjects}">
-                            <tr><td colspan="${8 + (sessionScope.loggedUser.role.roleName == 'Admin' ? 1 : 0) + (canDesign ? 1 : 0)}" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
+                            <tr><td colspan="10" class="text-center py-4 text-muted">No subjects linked yet.</td></tr>
                         </c:when>
                         <c:otherwise>
                             <c:forEach var="cs" items="${subjects}" varStatus="st">
@@ -369,11 +393,36 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <c:if test="${sessionScope.loggedUser.role.roleName == 'Admin'}">
-                                        <td>
-                                            <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${curriculum.curriculumId}#subj-${cs.subject.subjectId}" class="btn btn-sm btn-outline-primary" title="Assign Designer/Reviewer for this subject">
-                                                <i class="bi bi-person-plus"></i> Assign
-                                            </a>
+                                    <c:if test="${canEdit}">
+                                        <td style="min-width:240px;">
+                                            <c:if test="${cs.subject.syllabusStatusCode != 2}">
+                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1">
+                                                    <input type="hidden" name="action" value="assignSubject">
+                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
+                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
+                                                        <option value="">-- Designer --</option>
+                                                        <c:forEach var="d" items="${designers}">
+                                                            <option value="${d.userId}">${d.fullName}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    <input type="hidden" name="assignmentType" value="Designer">
+                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Designer"><i class="bi bi-person-plus"></i></button>
+                                                </form>
+                                                <form method="post" action="${pageContext.request.contextPath}/curriculum" class="d-flex gap-1 mt-1">
+                                                    <input type="hidden" name="action" value="assignSubject">
+                                                    <input type="hidden" name="curriculumId" value="${curriculum.curriculumId}">
+                                                    <input type="hidden" name="subjectId" value="${cs.subject.subjectId}">
+                                                    <select name="userId" class="form-control form-control-dark form-control-sm" required>
+                                                        <option value="">-- Reviewer --</option>
+                                                        <c:forEach var="r" items="${reviewers}">
+                                                            <option value="${r.userId}">${r.fullName}</option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    <input type="hidden" name="assignmentType" value="Reviewer">
+                                                    <button type="submit" class="btn btn-action btn-view" title="Assign Reviewer"><i class="bi bi-person-plus"></i></button>
+                                                </form>
+                                            </c:if>
                                         </td>
                                     </c:if>
                                     <c:if test="${canDesign}">

@@ -629,14 +629,15 @@ public class SyllabusDAO {
         List<CurriculumSubject> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT sa.Assignment_ID, sa.Syllabus_ID, syl.Subject_ID, syl.Workflow_Status, "
-                        + "s.Subject_Code, s.Subject_Name, s.Credits, cs.Curriculum_ID, cs.Semester_No, "
-                        + "c.Curriculum_Code, c.Curriculum_Name "
-                        + "FROM Syllabus_Assignments sa "
-                        + "JOIN Syllabuses syl ON sa.Syllabus_ID = syl.Syllabus_ID "
-                        + "JOIN Subjects s ON syl.Subject_ID = s.Subject_ID "
-                        + "LEFT JOIN Curriculum_Subjects cs ON s.Subject_ID = cs.Subject_ID "
-                        + "LEFT JOIN Curriculums c ON cs.Curriculum_ID = c.Curriculum_ID "
-                        + "WHERE sa.User_ID = ? AND sa.Assignment_Type = 'Reviewer' AND syl.Workflow_Status = ?");
+                + "s.Subject_Code, s.Subject_Name, s.Credits, "
+                + "(SELECT TOP 1 cs.Curriculum_ID FROM Curriculum_Subjects cs WHERE cs.Subject_ID = s.Subject_ID) AS Curriculum_ID, "
+                + "(SELECT TOP 1 cs.Semester_No FROM Curriculum_Subjects cs WHERE cs.Subject_ID = s.Subject_ID) AS Semester_No, "
+                + "(SELECT TOP 1 c.Curriculum_Code FROM Curriculum_Subjects cs JOIN Curriculums c ON cs.Curriculum_ID = c.Curriculum_ID WHERE cs.Subject_ID = s.Subject_ID) AS Curriculum_Code, "
+                + "(SELECT TOP 1 c.Curriculum_Name FROM Curriculum_Subjects cs JOIN Curriculums c ON cs.Curriculum_ID = c.Curriculum_ID WHERE cs.Subject_ID = s.Subject_ID) AS Curriculum_Name "
+                + "FROM Syllabus_Assignments sa "
+                + "JOIN Syllabuses syl ON sa.Syllabus_ID = syl.Syllabus_ID "
+                + "JOIN Subjects s ON syl.Subject_ID = s.Subject_ID "
+                + "WHERE sa.User_ID = ? AND sa.Assignment_Type = 'Reviewer' AND syl.Workflow_Status = ?");
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (s.Subject_Code LIKE ? OR s.Subject_Name LIKE ? OR c.Curriculum_Code LIKE ?)");
         }

@@ -151,6 +151,8 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "unassign":
                 doUnassign(req, res);
+            case "addCombo":
+                doAddCombo(req, res);
                 break;
             case "addCombo":
                 doAddCombo(req, res);
@@ -203,7 +205,17 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("curriculum", c);
         req.setAttribute("subjects", subjectsInCurriculum);
         req.setAttribute("incompleteSubjects", incompleteSubjects);
-        req.setAttribute("canPublish", incompleteSubjects.isEmpty() && !subjectsInCurriculum.isEmpty());
+
+        // Tong tin chi cac subject phai khop voi Total Credits khai bao tren
+        // Curriculum truoc khi duoc phep Publish (canh bao "Credits mismatch"
+        // hien tren bang Subjects va chan nut Publish, xem detail.jsp).
+        int creditSum = 0;
+        for (CurriculumSubject cs : subjectsInCurriculum) {
+            if (cs.getSubject() != null) creditSum += cs.getSubject().getCredits();
+        }
+        boolean creditsMatch = subjectsInCurriculum.isEmpty() || creditSum == c.getTotalCredits();
+        req.setAttribute("creditsMismatch", !creditsMatch);
+        req.setAttribute("canPublish", incompleteSubjects.isEmpty() && !subjectsInCurriculum.isEmpty() && creditsMatch);
         req.setAttribute("reviews", reviewDAO.getReviewsByCurriculum(id));
         req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
         req.setAttribute("pos", poDAO.getPOsByCurriculum(id));
@@ -221,7 +233,11 @@ public class CurriculumServlet extends HttpServlet {
             req.setAttribute("successMessage", "Curriculum has been unpublished.");
         } else if ("assigned".equals(msg)) {
             req.setAttribute("successMessage", "Assignment saved.");
-        } else if ("comboAdded".equals(msg)) {
+        } else if ("creditMismatch".equals(msg)) {
+            req.setAttribute("errorMessage", "Cannot publish: total subject credits (" + req.getParameter("creditSum")
+                    + ") does not match this curriculum's Total Credits (" + req.getParameter("creditExpected")
+                    + "). Adjust the subject list or the Total Credits value first.");
+        }else if ("comboAdded".equals(msg)) {
             req.setAttribute("successMessage", "Combo created and subjects added successfully!");
         } else if ("comboAddFailed".equals(msg)) {
             req.setAttribute("errorMessage", "Failed to add Combo. Combo Code might already exist.");
@@ -488,10 +504,8 @@ public class CurriculumServlet extends HttpServlet {
             }
         }
 
-        // =========================================================================
-        // 4. ĐOẠN CODE TỰ ĐỘNG SINH COMBO
-        // Gọi hàm tự động sinh Combo ngay sau khi mọi thứ đã được tạo thành công
-        // =========================================================================
+        // 4. Tu dong sinh Combo mac dinh ngay sau khi Curriculum va cac du lieu
+        // lien quan (PLO/PO/Subject) da duoc tao thanh cong.
         dao.ComboDAO comboDAO = new dao.ComboDAO();
         comboDAO.generateDefaultCombos(newId, c.getMajorId());
 
@@ -823,8 +837,9 @@ public class CurriculumServlet extends HttpServlet {
 
     /**
      * Admin bam "Publish": chi cho phep khi TAT CA subject trong Curriculum
-     * da "hoan thanh" (co Syllabus va Syllabus.Status = Approved). Neu con
-     * subject chua xong, tu choi va bao cho Admin biet con thieu subject nao.
+     * da "hoan thanh" (co Syllabus va Syllabus.Status = Approved), va tong
+     * Credits cua cac subject phai khop voi Total Credits khai bao. Neu con
+     * thieu dieu kien nao, tu choi va bao cho Admin biet ly do.
      */
     private void doPublish(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
         if (!requireRole(req, res, "Admin"))
@@ -848,6 +863,23 @@ public class CurriculumServlet extends HttpServlet {
             return;
         }
 
+        // Chan Publish neu tong Credits cua cac subject trong Curriculum khong khop
+        // voi Total Credits da khai bao (canh bao hien o trang detail cung dua tren
+        // cung 1 phep tinh nay, xem curriculum/detail.jsp).
+        Curriculum curriculumForCheck = curriculumDAO.getCurriculumById(curriculumId);
+        List<CurriculumSubject> subjectsForCheck = subjectDAO.getSubjectsByCurriculum(curriculumId);
+        int creditSum = 0;
+        for (CurriculumSubject cs : subjectsForCheck) {
+            if (cs.getSubject() != null) creditSum += cs.getSubject().getCredits();
+        }
+        if (curriculumForCheck != null && !subjectsForCheck.isEmpty()
+                && creditSum != curriculumForCheck.getTotalCredits()) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId
+                    + "&msg=creditMismatch&creditSum=" + creditSum
+                    + "&creditExpected=" + curriculumForCheck.getTotalCredits());
+            return;
+        }
+
         curriculumDAO.setPublic(curriculumId, true);
         res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=published");
     }
@@ -864,8 +896,9 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     /**
-     * Admin gan 1 Designer hoac 1 Reviewer cho 1 Subject cu the trong trang
-     * chi tiet Curriculum (thay vi gan hang loat qua doAssign).
+     * Admin gan 1 Designer hoac 1 Reviewer cho 1 Subject cu the, goi tu trang
+     * chi tiet Curriculum hoac tu trang Assign rieng (dua vao hidden field
+     * "returnTo" de biet quay lai trang nao sau khi luu).
      */
     private void doAssignSubject(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
         if (!requireRole(req, res, "Admin"))
@@ -1039,7 +1072,7 @@ public class CurriculumServlet extends HttpServlet {
         res.sendRedirect(req.getContextPath() + "/curriculum/list");
         return false;
     }
-
+    
     private void doAddCombo(HttpServletRequest req, HttpServletResponse res) throws IOException {
         // Kiểm tra bảo mật: Chỉ Admin mới được thực hiện
         if (!requireRole(req, res, "Admin")) {
