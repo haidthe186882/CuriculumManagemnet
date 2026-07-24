@@ -155,9 +155,6 @@ public class CurriculumServlet extends HttpServlet {
             case "addCombo":
                 doAddCombo(req, res);
                 break;
-            case "addCombo":
-                doAddCombo(req, res);
-                break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
         }
