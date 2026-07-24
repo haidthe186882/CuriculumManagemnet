@@ -610,7 +610,7 @@ public class SyllabusServlet extends HttpServlet {
         req.setAttribute("syllabus", s);
         req.setAttribute("clos", cloDAO.getCLOsBySyllabus(id));
         req.setAttribute("sessions", sessionDAO.getSessionsBySyllabus(id));
-        req.setAttribute("materials", syllabusDAO.getMaterialsBySyllabusId(id));
+        req.setAttribute("downloadMaterials", syllabusDAO.getDownloadableMaterialsBySyllabusId(id));
         req.getRequestDispatcher("/WEB-INF/views/syllabus/detail.jsp").forward(req, res);
     }
 

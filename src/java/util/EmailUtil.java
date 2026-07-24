@@ -24,7 +24,7 @@ public class EmailUtil {
      * Sends a 6-digit OTP code to the specified email address.
      *
      * @param toEmail recipient email address
-     * @param otp the 6-digit OTP string
+     * @param otp     the 6-digit OTP string
      *
      */
     public static void sendOTP(String toEmail, String otp) throws MessagingException {
