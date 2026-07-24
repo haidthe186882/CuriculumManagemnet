@@ -148,13 +148,13 @@
                         <div class="semester-title">
                             <span class="semester-badge">
                                 <c:choose>
-                                    <c:when test="${sem == 0}">?</c:when>
+                                    <c:when test="${sem == '0'}">?</c:when>
                                     <c:otherwise>${sem}</c:otherwise>
                                 </c:choose>
                             </span>
                             <span>
                                 <c:choose>
-                                    <c:when test="${sem == 0}">Unassigned semester</c:when>
+                                    <c:when test="${sem == '0'}">Unassigned semester</c:when>
                                     <c:otherwise>Semester ${sem}</c:otherwise>
                                 </c:choose>
                             </span>

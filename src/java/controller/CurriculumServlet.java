@@ -265,7 +265,7 @@ public class CurriculumServlet extends HttpServlet {
     }
 
     /**
-     * Lo trinh hoc theo ky — nhom mon theo Semester_No.
+     * Lo trinh hoc theo ky - nhom mon theo Semester_No.
      * Doc-only, dung cho Student/Guest va moi role khac.
      */
     private void showRoadmap(HttpServletRequest req, HttpServletResponse res)
@@ -278,28 +278,27 @@ public class CurriculumServlet extends HttpServlet {
         }
 
         List<CurriculumSubject> subjects = subjectDAO.getSubjectsByCurriculum(id);
-        Map<Integer, List<CurriculumSubject>> bySemester = new TreeMap<>();
-        Map<Integer, Integer> creditsBySemester = new LinkedHashMap<>();
+        // Dung TreeMap<Integer,...> de sap xep theo ky, roi doi sang String key
+        // de JSP EL (${creditsBySemester[sem]}) lookup on dinh.
+        Map<Integer, List<CurriculumSubject>> sorted = new TreeMap<>();
+        Map<Integer, Integer> creditsSorted = new TreeMap<>();
         int totalCredits = 0;
-        int mandatoryCredits = 0;
-        int electiveCredits = 0;
-        int mandatoryCount = 0;
-        int electiveCount = 0;
 
         for (CurriculumSubject cs : subjects) {
             int sem = cs.getSemesterNo() > 0 ? cs.getSemesterNo() : 0;
-            bySemester.computeIfAbsent(sem, k -> new ArrayList<>()).add(cs);
+            sorted.computeIfAbsent(sem, k -> new ArrayList<>()).add(cs);
 
             int credits = (cs.getSubject() != null) ? cs.getSubject().getCredits() : 0;
-            creditsBySemester.merge(sem, credits, Integer::sum);
+            creditsSorted.merge(sem, credits, Integer::sum);
             totalCredits += credits;
-            if (cs.isMandatory()) {
-                mandatoryCredits += credits;
-                mandatoryCount++;
-            } else {
-                electiveCredits += credits;
-                electiveCount++;
-            }
+        }
+
+        Map<String, List<CurriculumSubject>> bySemester = new LinkedHashMap<>();
+        Map<String, Integer> creditsBySemester = new LinkedHashMap<>();
+        for (Map.Entry<Integer, List<CurriculumSubject>> e : sorted.entrySet()) {
+            String key = String.valueOf(e.getKey());
+            bySemester.put(key, e.getValue());
+            creditsBySemester.put(key, creditsSorted.get(e.getKey()));
         }
 
         req.setAttribute("curriculum", c);
@@ -307,10 +306,6 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("creditsBySemester", creditsBySemester);
         req.setAttribute("totalSubjects", subjects.size());
         req.setAttribute("totalCredits", totalCredits);
-        req.setAttribute("mandatoryCredits", mandatoryCredits);
-        req.setAttribute("electiveCredits", electiveCredits);
-        req.setAttribute("mandatoryCount", mandatoryCount);
-        req.setAttribute("electiveCount", electiveCount);
         forward(req, res, "/WEB-INF/views/curriculum/roadmap.jsp");
     }
 
