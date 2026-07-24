@@ -189,24 +189,31 @@
         <div class="col-md-4">
             <div class="card-dark p-4">
                 <div class="detail-label">isActive</div>
-                <div class="mb-3 d-flex align-items-center flex-wrap gap-2">
+                <div class="mb-3 d-flex flex-column align-items-start gap-2">
                     <c:choose>
                         <c:when test="${curriculum.isActive}">
-                            <span class="badge-status badge-approved"><i class="bi bi-check-circle me-1"></i>Active</span>
+                            <span class="badge-status badge-approved m-0"><i class="bi bi-check-circle me-1"></i>Active</span>
                         </c:when>
                         <c:otherwise>
-                            <span class="badge-status badge-draft"><i class="bi bi-pencil me-1"></i>Inactive</span>
+                            <span class="badge-status badge-draft m-0"><i class="bi bi-pencil me-1"></i>Inactive</span>
                         </c:otherwise>
                     </c:choose>
-                            <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
-                               class="btn btn-warning text-dark fw-bold">
-                                <i class="bi bi-collection me-1"></i> View Combos
-                            </a>
-                            <c:if test="${sessionScope.loggedUser.role.roleName eq 'Admin' || sessionScope.loggedUser.role eq 'Admin'}">
-                                <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addComboModal">
-                                    <i class="bi bi-plus-circle"></i> Add Combo
-                                </button>
-                            </c:if>
+
+                    <a href="${pageContext.request.contextPath}/curriculum/roadmap?id=${curriculum.curriculumId}"
+                       class="btn btn-info btn-sm text-white fw-bold">
+                        <i class="bi bi-signpost-2 me-1"></i> Semester Roadmap
+                    </a>
+
+                    <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
+                       class="btn btn-warning btn-sm text-dark fw-bold">
+                        <i class="bi bi-collection me-1"></i> View Combos
+                    </a>
+
+                    <c:if test="${sessionScope.loggedUser.role.roleName eq 'Admin' || sessionScope.loggedUser.role eq 'Admin'}">
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addComboModal">
+                            <i class="bi bi-plus-circle me-1"></i> Add Combo
+                        </button>
+                    </c:if>
                 </div>
                                
                             <!-- Modal Add Combo -->

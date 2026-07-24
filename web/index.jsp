@@ -113,7 +113,7 @@
 			padding: 0.9rem 2.25rem;
 			border-radius: 14px;
 			border: none;
-                        box-shadow: 0 8px 20px rgba(249, 93, 0, 0.3);
+			box-shadow: 0 8px 20px rgba(249, 93, 0, 0.3);
 			transition: all 0.3s ease;
 			display: inline-flex;
 			align-items: center;
@@ -231,7 +231,7 @@
 		</div>
 
 		<!-- Auto-redirect notice -->
-                <div class="redirect-note">
+		<div class="redirect-note">
 			<i class="bi bi-info-circle me-1"></i> Or, if you already have a session, you will be redirected.
 		</div>
 	</div>

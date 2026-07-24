@@ -199,6 +199,11 @@
                         </c:otherwise>
                     </c:choose>
 
+                    <a href="${pageContext.request.contextPath}/curriculum/roadmap?id=${curriculum.curriculumId}"
+                       class="btn btn-info btn-sm text-white fw-bold">
+                        <i class="bi bi-signpost-2 me-1"></i> Semester Roadmap
+                    </a>
+
                     <a href="${pageContext.request.contextPath}/combo?action=list&curriculumId=${curriculum.curriculumId}" 
                        class="btn btn-warning btn-sm text-dark fw-bold">
                         <i class="bi bi-collection me-1"></i> View Combos

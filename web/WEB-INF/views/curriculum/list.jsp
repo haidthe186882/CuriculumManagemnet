@@ -142,7 +142,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <c:forEach var="c" items="${curriculums}" varStatus="st">
-                                        <tr class="curriculum-row" data-detail-url="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" style="cursor:pointer;">
+                                        <tr>
                                             <td class="text-muted">${(currentPage - 1) * pageSize + st.count}</td>
                                             <td><code style="color:var(--accent);background:rgba(255,106,0,0.06);padding:2px 8px;border-radius:4px;">${c.curriculumCode}</code></td>
                                             <td>
@@ -216,23 +216,6 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <script>
                                     document.addEventListener('DOMContentLoaded', function () {
-                                        // Clickable rows
-                                        document.querySelectorAll('.curriculum-row').forEach(row => {
-                                            row.addEventListener('click', function (e) {
-                                                if (e.target.closest('a, button, input, select, form, .modal'))
-                                                    return;
-                                                const url = this.getAttribute('data-detail-url');
-                                                if (url)
-                                                    window.location.href = url;
-                                            });
-                                            row.addEventListener('mouseenter', function () {
-                                                this.style.backgroundColor = 'rgba(255,106,0,0.05)';
-                                            });
-                                            row.addEventListener('mouseleave', function () {
-                                                this.style.backgroundColor = '';
-                                            });
-                                        });
-
                                         // Sortable headers
                                         const sortableHeaders = document.querySelectorAll('th.sortable');
                                         let currentSort = {column: null, direction: 'asc'};

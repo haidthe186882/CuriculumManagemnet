@@ -28,9 +28,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 @WebServlet(name = "CurriculumServlet", urlPatterns = { "/curriculum/*" })
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
@@ -76,6 +78,9 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "/assign":
                 showAssign(req, res);
+                break;
+            case "/roadmap":
+                showRoadmap(req, res);
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
@@ -257,6 +262,51 @@ public class CurriculumServlet extends HttpServlet {
         req.setAttribute("plos", ploDAO.getPLOsByCurriculum(id));
         req.setAttribute("mappings", poDAO.getPoPloMappings(id));
         forward(req, res, "/WEB-INF/views/curriculum/po.jsp");
+    }
+
+    /**
+     * Lo trinh hoc theo ky - nhom mon theo Semester_No.
+     * Doc-only, dung cho Student/Guest va moi role khac.
+     */
+    private void showRoadmap(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        String id = req.getParameter("id");
+        Curriculum c = curriculumDAO.getCurriculumById(id);
+        if (c == null) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/list");
+            return;
+        }
+
+        List<CurriculumSubject> subjects = subjectDAO.getSubjectsByCurriculum(id);
+        // Dung TreeMap<Integer,...> de sap xep theo ky, roi doi sang String key
+        // de JSP EL (${creditsBySemester[sem]}) lookup on dinh.
+        Map<Integer, List<CurriculumSubject>> sorted = new TreeMap<>();
+        Map<Integer, Integer> creditsSorted = new TreeMap<>();
+        int totalCredits = 0;
+
+        for (CurriculumSubject cs : subjects) {
+            int sem = cs.getSemesterNo() > 0 ? cs.getSemesterNo() : 0;
+            sorted.computeIfAbsent(sem, k -> new ArrayList<>()).add(cs);
+
+            int credits = (cs.getSubject() != null) ? cs.getSubject().getCredits() : 0;
+            creditsSorted.merge(sem, credits, Integer::sum);
+            totalCredits += credits;
+        }
+
+        Map<String, List<CurriculumSubject>> bySemester = new LinkedHashMap<>();
+        Map<String, Integer> creditsBySemester = new LinkedHashMap<>();
+        for (Map.Entry<Integer, List<CurriculumSubject>> e : sorted.entrySet()) {
+            String key = String.valueOf(e.getKey());
+            bySemester.put(key, e.getValue());
+            creditsBySemester.put(key, creditsSorted.get(e.getKey()));
+        }
+
+        req.setAttribute("curriculum", c);
+        req.setAttribute("subjectsBySemester", bySemester);
+        req.setAttribute("creditsBySemester", creditsBySemester);
+        req.setAttribute("totalSubjects", subjects.size());
+        req.setAttribute("totalCredits", totalCredits);
+        forward(req, res, "/WEB-INF/views/curriculum/roadmap.jsp");
     }
 
     /**
