@@ -151,6 +151,7 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "unassign":
                 doUnassign(req, res);
+                break;
             case "addCombo":
                 doAddCombo(req, res);
                 break;
