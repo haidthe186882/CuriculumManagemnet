@@ -151,6 +151,8 @@ public class CurriculumServlet extends HttpServlet {
                 break;
             case "unassign":
                 doUnassign(req, res);
+            case "addCombo":
+                doAddCombo(req, res);
                 break;
             default:
                 res.sendRedirect(req.getContextPath() + "/curriculum/list");
@@ -232,6 +234,10 @@ public class CurriculumServlet extends HttpServlet {
             req.setAttribute("errorMessage", "Cannot publish: total subject credits (" + req.getParameter("creditSum")
                     + ") does not match this curriculum's Total Credits (" + req.getParameter("creditExpected")
                     + "). Adjust the subject list or the Total Credits value first.");
+        }else if ("comboAdded".equals(msg)) {
+            req.setAttribute("successMessage", "Combo created and subjects added successfully!");
+        } else if ("comboAddFailed".equals(msg)) {
+            req.setAttribute("errorMessage", "Failed to add Combo. Combo Code might already exist.");
         }
         forward(req, res, "/WEB-INF/views/curriculum/detail.jsp");
     }
@@ -1006,5 +1012,34 @@ public class CurriculumServlet extends HttpServlet {
         }
         res.sendRedirect(req.getContextPath() + "/curriculum/list");
         return false;
+    }
+    
+    private void doAddCombo(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        // Kiểm tra bảo mật: Chỉ Admin mới được thực hiện
+        if (!requireRole(req, res, "Admin")) {
+            return;
+        }
+
+        String curriculumId = req.getParameter("curriculumId");
+        if (!checkEditPermission(req, res, curriculumId)) {
+            return;
+        }
+
+        String comboCode = req.getParameter("comboCode");
+        String comboName = req.getParameter("comboName");
+        String englishName = req.getParameter("englishName");
+        String description = req.getParameter("description");
+
+        // Lấy mảng các môn học người dùng đã quét khối chọn
+        String[] subjectIds = req.getParameterValues("subjectIds");
+
+        dao.ComboDAO comboDAO = new dao.ComboDAO();
+        boolean ok = comboDAO.addCustomCombo(curriculumId, comboCode, comboName, englishName, description, subjectIds);
+
+        if (ok) {
+            res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=comboAdded");
+        } else {
+            res.sendRedirect(req.getContextPath() + "/curriculum/detail?id=" + curriculumId + "&msg=comboAddFailed");
+        }
     }
 }
