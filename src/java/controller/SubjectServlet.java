@@ -74,18 +74,13 @@ public class SubjectServlet extends HttpServlet {
         User user = getLoggedUser(req);
         boolean canAddSyllabus = false;
         if (user != null && subject != null) {
-            String primaryRole = user.getRole() != null ? user.getRole().getRoleName() : "";
-            boolean isAdmin = "Admin".equalsIgnoreCase(primaryRole) || user.hasRole("Admin");
-            if (isAdmin) {
-                canAddSyllabus = true;
-            } else {
-                // Chi cho phep Designer da duoc Admin gan (Syllabus_Assignments) vao
-                // chinh Syllabus cua Subject nay duoc them/sua noi dung.
-                String syllabusId = syllabus != null ? syllabus.getSyllabusId()
-                        : syllabusDAO.getActiveSyllabusIdBySubject(id);
-                canAddSyllabus = syllabusId != null
-                        && designDAO.isAssignedToSyllabus(user.getUserId(), syllabusId, "Designer");
-            }
+            // Chi cho phep Designer da duoc Admin gan (Syllabus_Assignments) vao
+            // chinh Syllabus cua Subject nay duoc them/sua noi dung. Admin KHONG
+            // duoc tu fill noi dung Syllabus.
+            String syllabusId = syllabus != null ? syllabus.getSyllabusId()
+                    : syllabusDAO.getActiveSyllabusIdBySubject(id);
+            canAddSyllabus = syllabusId != null
+                    && designDAO.isAssignedToSyllabus(user.getUserId(), syllabusId, "Designer");
         }
         // Chi cho phep them/sua noi dung khi Syllabus dang o trang thai Draft.
         // Neu da Submit for Review (PendingReview) hoac da Approved, khoa lai —

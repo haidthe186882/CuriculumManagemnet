@@ -173,7 +173,6 @@ public class ReviewServlet extends HttpServlet {
             return;
         }
 
-        String decision = req.getParameter("decision");
         String overallComment = req.getParameter("overallComment");
         List<SyllabusReviewItem> items = extractReviewItems(req);
         if (items.isEmpty()) {
@@ -181,20 +180,30 @@ public class ReviewServlet extends HttpServlet {
             return;
         }
 
-        boolean approved = "approve".equalsIgnoreCase(decision) || "accepted".equalsIgnoreCase(decision);
+        // Calculate total score
+        double totalScore = 0;
+        for (SyllabusReviewItem item : items) {
+            totalScore += item.getScore();
+        }
+
+        // Auto-route based on total score (threshold: 90/100)
+        boolean highPass = totalScore >= 90.0;
+
         boolean saved = reviewDAO.addSyllabusReview(
                 syllabusId,
                 user.getUserId(),
-                approved ? "Approved" : "Rejected",
+                highPass ? "Approved" : "Rejected",
                 overallComment,
                 items);
         if (saved) {
-            if (approved) {
+            if (highPass) {
+                // Score >= 90: auto-approve for Admin to publish
                 syllabusDAO.approveForPublish(syllabusId);
-                res.sendRedirect(req.getContextPath() + "/syllabus/detail?id=" + syllabusId + "&msg=approvedForPublish");
+                res.sendRedirect(req.getContextPath() + "/syllabus/detail?id=" + syllabusId + "&msg=approvedForPublish&score=" + String.format("%.1f", totalScore));
             } else {
+                // Score < 90: send back to Designer for revision
                 syllabusDAO.requestChanges(syllabusId);
-                res.sendRedirect(req.getContextPath() + "/syllabus/detail?id=" + syllabusId + "&msg=changesRequested");
+                res.sendRedirect(req.getContextPath() + "/syllabus/detail?id=" + syllabusId + "&msg=changesRequested&score=" + String.format("%.1f", totalScore));
             }
             return;
         }

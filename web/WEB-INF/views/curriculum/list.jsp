@@ -121,12 +121,11 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th class="sortable" data-sort="code">Code <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="name">Curriculum Name <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="major">Program <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="credits">Credits <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="version">Version <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
-                                <th class="sortable" data-sort="status">Is Active <i class="bi bi-arrow-down-up" style="font-size:.75rem;opacity:.5;"></i></th>
+                                <th class="sortable" data-sort="code">Code</th>
+                                <th class="sortable" data-sort="name">Curriculum Name</th>
+                                <th class="sortable" data-sort="major">Program</th>
+                                <th class="sortable" data-sort="credits">Credits</th>
+                                <th class="sortable" data-sort="status">Is Active</th>
                                 <th>Decision Date</th>
                                 <th>Action</th>
                             </tr>
@@ -135,7 +134,7 @@
                             <c:choose>
                                 <c:when test="${empty curriculums}">
                                     <tr>
-                                        <td colspan="9" class="text-center py-5 text-muted">
+                                        <td colspan="8" class="text-center py-5 text-muted">
                                             <i class="bi bi-inbox display-6 d-block mb-2"></i>
                                             No curriculum found.
                                         </td>
@@ -152,7 +151,6 @@
                                             </td>
                                             <td class="text-muted">${c.majorName}</td>
                                             <td><span class="detail-value">${c.totalCredits}</span> <span class="text-muted" style="font-size:.8rem;">cr</span></td>
-                                            <td class="text-muted">${c.version}</td>
                                             <td>
                                                 <div class="mb-1">
                                                     <c:choose>
@@ -194,7 +192,7 @@
                                                     <a href="${pageContext.request.contextPath}/curriculum/detail?id=${c.curriculumId}" class="btn btn-sm btn-outline-warning">
                                                         <i class="bi bi-eye"></i> View
                                                     </a>
-                                                    <c:if test="${not c.isActive and sessionScope.loggedUser.role.roleName == 'Admin'}">
+                                                    <c:if test="${not c.isPublic and sessionScope.loggedUser.role.roleName == 'Admin'}">
                                                         <a href="${pageContext.request.contextPath}/curriculum/assign?curriculumId=${c.curriculumId}" class="btn btn-sm btn-outline-primary">
                                                             <i class="bi bi-person-plus"></i> Assign
                                                         </a>
@@ -251,15 +249,7 @@
                                                     currentSort.column = col;
                                                     currentSort.direction = 'asc';
                                                 }
-                                                sortableHeaders.forEach(h => {
-                                                    const i = h.querySelector('i');
-                                                    if (i)
-                                                        i.className = 'bi bi-arrow-down-up';
-                                                });
-                                                const icon = this.querySelector('i');
-                                                if (icon)
-                                                    icon.className = currentSort.direction === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
-                                                const colIdx = {code: 1, name: 2, major: 3, credits: 4, version: 5, status: 6};
+                                                const colIdx = {code: 1, name: 2, major: 3, credits: 4, status: 5};
                                                 rows.sort((a, b) => {
                                                     let av = a.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
                                                     let bv = b.cells[colIdx[col]]?.textContent.trim().toLowerCase() || '';
