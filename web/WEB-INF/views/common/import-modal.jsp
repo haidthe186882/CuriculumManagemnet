@@ -13,7 +13,7 @@
                         <i class="bi bi-file-earmark-excel me-2" style="color:#16a34a;"></i>Import curriculum from Excel
                     </h5>
                     <p class="mb-0 mt-1" style="font-size:0.8rem;color:#6b7280;">
-                        Upload an <code>.xlsx</code> file — Intro (info), PLO, PO, Mapping, Subject
+                        Upload an <code>.xlsx</code> file Intro (info), PLO, PO, Mapping, Subject
                     </p>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -41,7 +41,7 @@
                      onkeydown="if(event.key==='Enter')this.click()">
                     <i class="bi bi-cloud-upload import-drop-icon"></i>
                     <p class="import-drop-text">Drop your Excel file here</p>
-                    <span class="import-drop-sub">or click to browse — .xlsx only</span>
+                    <span class="import-drop-sub">or click to browse .xlsx only</span>
                 </div>
                 <input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none"
                        onchange="importHandleFile(this)">
